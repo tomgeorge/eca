@@ -165,6 +165,11 @@ interface ChatPromptParams {
     model?: ChatModel;
 
     /**
+     * The mode used by server to handle chat communication and actions.
+     */
+    mode?: 'agent' | 'ask';
+
+    /**
      * Optional context about the current workspace state.
      * Can include multiple different types of context.
      */

@@ -374,8 +374,6 @@ interface FileChangeContent {
 }
 ```
 
-### `doc` (:leftwards_arrow_with_hook:)
+### Completion (:leftwards_arrow_with_hook:)
 
-### `edit` (:leftwards_arrow_with_hook:)
-
-### `fix` (:leftwards_arrow_with_hook:)
+### Documentation (:leftwards_arrow_with_hook:)

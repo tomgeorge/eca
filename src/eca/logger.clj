@@ -5,6 +5,10 @@
   (binding [*out* *err*]
     (apply println args)))
 
+(defn error [& args]
+  (binding [*out* *err*]
+    (apply println (concat ["[ERROR]"] args))))
+
 (defn format-time-delta-ms [start-time end-time]
   (format "%.0fms" (float (/ (- end-time start-time) 1000000))))
 

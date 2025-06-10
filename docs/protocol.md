@@ -298,12 +298,7 @@ interface ChatPromptResponse {
      */
     chatId: string;
 
-    status: 'success' | 'connection-error';
-
-    /**
-     * Message with details about the sent chat prompt.
-     */ 
-    resultMessage: string;
+    status: 'success';
 }
 ```
 

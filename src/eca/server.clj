@@ -4,6 +4,7 @@
    [eca.db :as db]
    [eca.handlers :as handlers]
    [eca.logger :as logger]
+   [eca.messenger :as messenger]
    [eca.nrepl :as nrepl]
    [lsp4clj.io-server :as io-server]
    [lsp4clj.liveness-probe :as liveness-probe]
@@ -36,6 +37,9 @@
 (defmethod lsp.server/receive-notification "exit" [_ {:keys [server]} _params]
   (exit server))
 
+(defmethod lsp.server/receive-request "chat/prompt" [_ components params]
+  (handlers/chat-prompt components params))
+
 (defn ^:private monitor-server-logs [log-ch]
   ;; NOTE: if this were moved to `initialize`, after timbre has been configured,
   ;; the server's startup logs and traces would appear in the regular log file
@@ -54,11 +58,22 @@
     (swap! db* assoc :port nrepl-port)
     ;; Add components to db* so it's possible to manualy call funcstions
     ;; which expect specific components
-    (swap! db* assoc-in [:dev :components] components)))
+    (swap! db* assoc-in [:dev :components] components)
+    ;; In the development environment, make the db* atom available globally as
+    ;; db/db*, so it can be inspected in the nREPL.
+    (alter-var-root #'db/db* (constantly db*))))
+
+(defrecord ^:private ServerMessenger [server db*]
+  messenger/IMessenger
+
+  (chat-content-received [_this content]
+    (lsp.server/discarding-stdout
+     (lsp.server/send-notification server "chat/contentReceived" content))))
 
 (defn start-server! [server]
   (let [db* (atom db/initial-db)
         components {:db* db*
+                    :messenger (->ServerMessenger server db*)
                     :server server}]
     (logger/info "[server]" "Starting server...")
     (monitor-server-logs (:log-ch server))

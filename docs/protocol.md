@@ -133,7 +133,18 @@ interface ClientCapabilities {
 _Response:_
 
 ```typescript
-interface InitializedResult {}
+interface InitializeResult {
+    
+    /*
+     * The models supported by the server.
+     */
+    models: string[];
+    
+    /*
+     * The chat welcome message when chat is cleared or in a new state.
+     */
+    chatWelcomeMessage: string;
+}
 ```
 
 ### Initialized (:arrow_right:)
@@ -322,6 +333,11 @@ interface ChatContentReceivedParams {
      * The content received from the LLM
      */
     content: ChatContent;
+    
+    /**
+     * The owner of this content.
+     */
+    role: 'user' | 'system' | 'assistant';
 
     /**
      * Whether this is the final content or more is coming
@@ -344,6 +360,7 @@ interface ChatContentReceivedParams {
  */
 type ChatContent = 
     | TextContent 
+    | TemporaryTextContent 
     | FileChangeContent;
 
 /**
@@ -368,6 +385,17 @@ interface TextContent {
          */
         language?: string;
     }];
+}
+
+/**
+ * Temporary text, used to pin some text in the chat until it's complete.
+ */
+interface TemporaryTextContent {
+    type: 'temporary-text';
+    /**
+     * The text content
+     */
+    text: string;
 }
 
 /**

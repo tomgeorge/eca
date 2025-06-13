@@ -28,3 +28,8 @@
    :eca/chat-prompt
    (let [config (config/all)]
      (f.chat/prompt params db* messenger config))))
+
+(defn chat-query-context [{:keys [db*]} params]
+  (logger/logging-task
+   :eca/chat-query-context
+   (f.chat/query-context params db*)))

@@ -1,6 +1,6 @@
-# ECA protocol
+# ECA Protocol
 
-The ECA (Editor Code Assistant) protocol is JSON-RPC 2.0 based protocol heavily insipired by the [LSP (Language Server Protocol)](https://microsoft.github.io/language-server-protocol/), that enables communication between multiple code editors/IDEs and ECA process (server), which will interact with multiple LLMs. It follows similar patterns to the LSP but is specifically designed for AI code assistance features.
+The ECA (Editor Code Assistant) protocol is JSON-RPC 2.0-based protocol heavily insipired by the [LSP (Language Server Protocol)](https://microsoft.github.io/language-server-protocol/), that enables communication between multiple code editors/IDEs and ECA process (server), which will interact with multiple LLMs. It follows similar patterns to the LSP but is specifically designed for AI code assistance features.
 
 Key characteristics:
 - Provides a protocol standard so different editors can use the same language to offer AI features.
@@ -12,11 +12,11 @@ Key characteristics:
 ## Base Protocol
 
 The base protocol consists of a header and a content part (comparable to HTTP). The header and content part are
-separated by a '\r\n'.
+separated by a `\r\n`.
 
 ### Header Part
 
-The header part consists of header fields. Each header field is comprised of a name and a value, separated by ': ' (a colon and a space). The structure of header fields conforms to the [HTTP semantic](https://tools.ietf.org/html/rfc7230#section-3.2). Each header field is terminated by '\r\n'. Considering the last header field and the overall header itself are each terminated with '\r\n', and that at least one header is mandatory, this means that two '\r\n' sequences always immediately precede the content part of a message.
+The header part consists of header fields. Each header field is comprised of a name and a value, separated by `: ` (a colon and a space). The structure of header fields conforms to the [HTTP semantic](https://tools.ietf.org/html/rfc7230#section-3.2). Each header field is terminated by `\r\n`. Considering the last header field and the overall header itself are each terminated with `\r\n`, and that at least one header is mandatory, this means that two `\r\n` sequences always immediately precede the content part of a message.
 
 Currently the following header fields are supported:
 
@@ -26,7 +26,7 @@ Currently the following header fields are supported:
 | Content-Type      | string      | The mime type of the content part. Defaults to application/vscode-jsonrpc; charset=utf-8 |
 {: .table .table-bordered .table-responsive}
 
-The header part is encoded using the 'ascii' encoding. This includes the '\r\n' separating the header and content part.
+The header part is encoded using the 'ascii' encoding. This includes the `\r\n` separating the header and content part.
 
 ### Content Part
 
@@ -119,8 +119,7 @@ interface WorkspaceFolder {
     uri: string;
 
     /**
-     * The name of the workspace folder. Used to refer to this
-     * workspace folder in the user interface.
+     * The name of the workspace folder. Used to refer to this folder in the user interface.
      */
     name: string;
 }
@@ -239,17 +238,17 @@ interface ChatPromptParams {
     mode?: 'agent' | 'ask';
 
     /**
-     * Optional context about the current workspace state.
+     * Optional contexts about the current workspace.
      * Can include multiple different types of context.
      */
-    context?: ChatContext[];
+    contexts?: ChatContext[];
 }
 
 type ChatModel = 
     | 'o4-mini'
     | "auto";
 
-type ChatContext = FileContext | WebContext | TerminalContext | CodeContext;
+type ChatContext = FileContext | DirectoryContext | WebContext | CodeContext;
 
 /**
  * Context related to a file in the workspace
@@ -258,6 +257,17 @@ interface FileContext {
     type: 'file';
     /**
      * Path to the file
+     */
+    path: string;
+}
+
+/**
+ * Context related to a directory in the workspace
+ */
+interface DirectoryContext {
+    type: 'directory';
+    /**
+     * Path to the directory
      */
     path: string;
 }
@@ -440,6 +450,50 @@ interface FileChangeContent {
             endLine: number;
         };
     }];
+}
+```
+
+### Chat Query Context (:leftwards_arrow_with_hook:)
+
+A request sent from client to server, querying for the available context to user add to prompt calls.
+
+_Request:_ 
+
+* method: `chat/queryContext`
+* params: `ChatQueryParams` defined as follows:
+
+```typescript
+interface ChatQueryContextParams {
+    /**
+     * The chat session identifier.
+     */
+    chatId: string;
+
+    /**
+     * The query to filter results, blank string returns all available contexts.
+     */
+    query: string;
+    
+    /**
+     * The already considered contexts.
+     */
+    contexts: ChatContext[];
+}
+```
+
+_Response:_
+
+```typescript
+interface ChatQueryContextResponse {
+    /**
+     * The chat session identifier.
+     */
+    chatId: string;
+
+    /**
+     * The returned available contexts.
+     */
+    contexts: ChatContext[];
 }
 ```
 

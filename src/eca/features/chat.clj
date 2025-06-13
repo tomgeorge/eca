@@ -1,7 +1,10 @@
 (ns eca.features.chat
   (:require
+   [babashka.fs :as fs]
+   [clojure.set :as set]
    [eca.llm-api :as llm-api]
-   [eca.messenger :as messenger]))
+   [eca.messenger :as messenger]
+   [eca.shared :as shared]))
 
 (defn ^:private raw-context->refined [context]
   (mapv (fn [{:keys [type path]}]
@@ -14,13 +17,13 @@
 
 (defn ^:private behavior->prompt-input [behavior]
   (case (keyword behavior)
-    :agent "Help making the necessary changes explaining what you have done showing quick diffs and suggesting to change itself."
-    :ask "Only answer questions."
-    :manual "Help suggesting what needs to be changed but not changing anything."
+    :agent "Help suggesting what needs to be changed if requested, offering help to make itself."
+    :ask "Only answer questions and doubts."
+    :manual "Help suggesting what needs to be changed."
     ""))
 
 (defn ^:private build-prompt [message behavior refined-context]
-  (format (str "You are an expert AI coding tool called ECA (Editor Code Assistant). Respond always in markdown as if the chat is in markdown mode.\n"
+  (format (str "You are an expert AI coding tool called ECA (Editor Code Assistant). Structure your answer in markdown *WITHOUT* using markdown code block.\n"
                "Your behavior is to '%s'.\n"
                "The user is asking: '%s'\n"
                "Context: %s")
@@ -35,7 +38,7 @@
                      "\n")) "" refined-context)))
 
 (defn prompt
-  [{:keys [message model behavior context chat-id request-id]}
+  [{:keys [message model behavior contexts chat-id request-id]}
    db*
    messenger
    config]
@@ -51,7 +54,7 @@
       :role :user
       :content {:type :text
                 :text (str message "\n")}})
-    (when (seq context)
+    (when (seq contexts)
       (messenger/chat-content-received
        messenger
        {:chat-id chat-id
@@ -60,7 +63,7 @@
         :role :system
         :content {:type :temporary-text
                   :text "Parsing given context..."}}))
-    (let [refined-context (raw-context->refined context)]
+    (let [refined-context (raw-context->refined contexts)]
       (messenger/chat-content-received
        messenger
        {:chat-id chat-id
@@ -92,3 +95,26 @@
                                                   :text (str "\nError: " (ex-message e))}}))}))
     {:chat-id chat-id
      :status :success}))
+
+(set/difference
+ (set [{:file "bla" :type :foo}
+       {:file "blow" :type :foo}])
+ (set [{:file "bla" :type :foo}]))
+
+(defn query-context
+  [{:keys [query contexts chat-id]}
+   db*]
+  (let [all-contexts (into []
+                           (comp
+                            (map :uri)
+                            (map shared/uri->filename)
+                            (mapcat #(fs/glob % (str "**" (or query "") "**")))
+                            (map (fn [file-or-dir]
+                                   {:type (if (fs/directory? file-or-dir)
+                                            "directory"
+                                            "file")
+                                    :path (str (fs/canonicalize file-or-dir))})))
+                           (:workspace-folders @db*))]
+    {:chat-id chat-id
+     :contexts (set/difference (set all-contexts)
+                               (set contexts))}))

@@ -40,6 +40,9 @@
 (defmethod lsp.server/receive-request "chat/prompt" [_ components params]
   (handlers/chat-prompt components params))
 
+(defmethod lsp.server/receive-request "chat/queryContext" [_ components params]
+  (handlers/chat-query-context components params))
+
 (defn ^:private monitor-server-logs [log-ch]
   ;; NOTE: if this were moved to `initialize`, after timbre has been configured,
   ;; the server's startup logs and traces would appear in the regular log file

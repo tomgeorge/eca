@@ -5,6 +5,7 @@
         com.github.clojure-lsp/lsp4clj {:mvn/version "1.13.1"}
         borkdude/dynaload {:mvn/version "0.3.5"}
         clj-python/libpython-clj {:mvn/version "2.026"}
+        babashka/fs {:mvn/version "0.5.26"}
         hato/hato {:mvn/version "1.0.0"}
         cheshire/cheshire {:mvn/version "6.0.0"}}
  :aliases

@@ -5,6 +5,7 @@
    :workspace-folders []
    :client-capabilities {}
    :chats []
+   :chat-behavior :agent
    :models ["o4-mini"]
    :default-model "o4-mini"})
 

@@ -92,7 +92,12 @@ interface InitializeParams {
     /**
      * User provided initialization options.
      */
-    initializationOptions?: Any;
+    initializationOptions?: {
+        /*
+         * The chat behavior.
+         */
+         chatBehavior?: 'agent' | 'ask' | 'manual';
+    };
     
     /**
      * The capabilities provided by the client (editor or tool)
@@ -139,6 +144,11 @@ interface InitializeResult {
      * The models supported by the server.
      */
     models: string[];
+    
+    /*
+     * The chat behavior.
+     */
+    chatBehavior: 'agent' | 'ask' | 'manual';
     
     /*
      * The chat welcome message when chat is cleared or in a new state.
@@ -236,10 +246,7 @@ interface ChatPromptParams {
 }
 
 type ChatModel = 
-    | 'gpt-4'
-    | 'gpt-3.5-turbo'
-    | 'claude-2'
-    | "codellama-34b"
+    | 'o4-mini'
     | "auto";
 
 type ChatContext = FileContext | WebContext | TerminalContext | CodeContext;
@@ -253,20 +260,6 @@ interface FileContext {
      * Path to the file
      */
     path: string;
-    /**
-     * Selected lines in the file, if any
-     */
-    selection?: {
-        startLine: number;
-        endLine: number;
-    };
-    /**
-     * Current cursor position, if any
-     */
-    cursor?: {
-        line: number;
-        character: number;
-    };
 }
 
 /**

@@ -8,13 +8,20 @@
    [eca.shared :as shared]))
 
 (defn ^:private raw-context->refined [context]
-  (mapv (fn [{:keys [type path]}]
-          (case type
-            "file" {:type :file
-                    :path path
-                    :content-map (llm-api/refine-file-context path)}
-            nil))
-        context))
+  (mapcat (fn [{:keys [type path]}]
+            (case type
+              "file" [{:type :file
+                       :path path
+                       :content-map (llm-api/refine-file-context path)}]
+              "directory" (->> (fs/glob path "**")
+                               (remove fs/directory?)
+                               (map (fn [path]
+                                      (let [filename (str (fs/canonicalize path))]
+                                        {:type :file
+                                         :path filename
+                                         :content-map (llm-api/refine-file-context filename)}))))
+              nil))
+          context))
 
 (defn ^:private behavior->prompt-input [behavior]
   (case (keyword behavior)
@@ -97,30 +104,23 @@
     {:chat-id chat-id
      :status :success}))
 
-(set/difference
- (set [{:file "bla" :type :foo}
-       {:file "blow" :type :foo}])
- (set [{:file "bla" :type :foo}]))
-
-
-
 (defn query-context
   [{:keys [query contexts chat-id]}
    db*]
   (let [config (config/all)
         all-contexts (into []
                            (comp
-                             (map :uri)
-                             (map shared/uri->filename)
-                             (mapcat (fn [root-filename]
-                                       (let [ignores (config/index-ignores-patterns root-filename config)]
-                                         (->> (fs/glob root-filename (str "**" (or query "") "**"))
-                                              (remove #(shared/any-path-matches? % root-filename ignores))))))
-                             (map (fn [file-or-dir]
-                                    {:type (if (fs/directory? file-or-dir)
-                                             "directory"
-                                             "file")
-                                     :path (str (fs/canonicalize file-or-dir))})))
+                            (map :uri)
+                            (map shared/uri->filename)
+                            (mapcat (fn [root-filename]
+                                      (let [ignores (config/index-ignores-patterns root-filename config)]
+                                        (->> (fs/glob root-filename (str "**" (or query "") "**"))
+                                             (remove #(shared/any-path-matches? % root-filename ignores))))))
+                            (map (fn [file-or-dir]
+                                   {:type (if (fs/directory? file-or-dir)
+                                            "directory"
+                                            "file")
+                                    :path (str (fs/canonicalize file-or-dir))})))
                            (:workspace-folders @db*))]
     {:chat-id chat-id
      :contexts (set/difference (set all-contexts)

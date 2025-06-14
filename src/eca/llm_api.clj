@@ -5,6 +5,7 @@
 (set! *warn-on-reflection* true)
 
 (defn refine-file-context [path]
+  ;; TODO ask LLM for the most relevant parts of the path
   (slurp path))
 
 (defn complete! [{:keys [model message config on-message-received on-error]}]

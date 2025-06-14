@@ -499,4 +499,8 @@ interface ChatQueryContextResponse {
 
 ### Completion (:leftwards_arrow_with_hook:)
 
+Soon
+
 ### Documentation (:leftwards_arrow_with_hook:)
+
+Soon

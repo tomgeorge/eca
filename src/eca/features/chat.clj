@@ -108,20 +108,25 @@
   [{:keys [query contexts chat-id]}
    db*]
   (let [config (config/all)
-        all-contexts (into []
-                           (comp
-                            (map :uri)
-                            (map shared/uri->filename)
-                            (mapcat (fn [root-filename]
-                                      (let [ignores (config/index-ignores-patterns root-filename config)]
-                                        (->> (fs/glob root-filename (str "**" (or query "") "**"))
-                                             (remove #(shared/any-path-matches? % root-filename ignores))))))
-                            (map (fn [file-or-dir]
-                                   {:type (if (fs/directory? file-or-dir)
-                                            "directory"
-                                            "file")
-                                    :path (str (fs/canonicalize file-or-dir))})))
-                           (:workspace-folders @db*))]
+        all-subfiles-and-dirs (into []
+                                    (comp
+                                     (map :uri)
+                                     (map shared/uri->filename)
+                                     (mapcat (fn [root-filename]
+                                               (let [ignores (config/index-ignores-patterns root-filename config)]
+                                                 (->> (fs/glob root-filename (str "**" (or query "") "**"))
+                                                      (remove #(shared/any-path-matches? % root-filename ignores))))))
+                                     (map (fn [file-or-dir]
+                                            {:type (if (fs/directory? file-or-dir)
+                                                     "directory"
+                                                     "file")
+                                             :path (str (fs/canonicalize file-or-dir))})))
+                                    (:workspace-folders @db*))
+        root-dirs (mapv (fn [{:keys [uri]}] {:type "directory"
+                                             :path (shared/uri->filename uri)})
+                        (:workspace-folders @db*))
+        all-contexts (concat root-dirs
+                             all-subfiles-and-dirs)]
     {:chat-id chat-id
      :contexts (set/difference (set all-contexts)
                                (set contexts))}))

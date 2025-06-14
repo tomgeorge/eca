@@ -2,6 +2,7 @@
   (:require
    [babashka.fs :as fs]
    [clojure.set :as set]
+   [eca.config :as config]
    [eca.llm-api :as llm-api]
    [eca.messenger :as messenger]
    [eca.shared :as shared]))
@@ -101,19 +102,25 @@
        {:file "blow" :type :foo}])
  (set [{:file "bla" :type :foo}]))
 
+
+
 (defn query-context
   [{:keys [query contexts chat-id]}
    db*]
-  (let [all-contexts (into []
+  (let [config (config/all)
+        all-contexts (into []
                            (comp
-                            (map :uri)
-                            (map shared/uri->filename)
-                            (mapcat #(fs/glob % (str "**" (or query "") "**")))
-                            (map (fn [file-or-dir]
-                                   {:type (if (fs/directory? file-or-dir)
-                                            "directory"
-                                            "file")
-                                    :path (str (fs/canonicalize file-or-dir))})))
+                             (map :uri)
+                             (map shared/uri->filename)
+                             (mapcat (fn [root-filename]
+                                       (let [ignores (config/index-ignores-patterns root-filename config)]
+                                         (->> (fs/glob root-filename (str "**" (or query "") "**"))
+                                              (remove #(shared/any-path-matches? % root-filename ignores))))))
+                             (map (fn [file-or-dir]
+                                    {:type (if (fs/directory? file-or-dir)
+                                             "directory"
+                                             "file")
+                                     :path (str (fs/canonicalize file-or-dir))})))
                            (:workspace-folders @db*))]
     {:chat-id chat-id
      :contexts (set/difference (set all-contexts)

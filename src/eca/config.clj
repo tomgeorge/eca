@@ -13,9 +13,10 @@
    [clojure.string :as string]))
 
 (def initial-config
-  {:openai-api-key nil})
+  {:openai-api-key nil
+   :index {:ignore-files [".gitignore"]}})
 
-(defn safe-read-json-string [raw-string]
+(defn ^:private safe-read-json-string [raw-string]
   (try
     (json/parse-string raw-string (fn [key]
                                     (csk/->kebab-case (keyword key))))
@@ -51,3 +52,17 @@
   (string/trim (slurp (io/resource "ECA_VERSION"))))
 
 (def eca-version (memoize eca-version*))
+
+(defn ^:private index-ignores-patterns* [root-filename config]
+  (concat []
+          (into []
+                (comp
+                  (keep (fn [file]
+                          (when (.exists (io/file root-filename file))
+                            (slurp (io/file root-filename file)))))
+                  (mapcat string/split-lines)
+                  (remove string/blank?)
+                  (map #(str "glob:" %)))
+                (get-in config [:index :ignore-files]))))
+
+(def index-ignores-patterns (memoize index-ignores-patterns*))

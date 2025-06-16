@@ -125,7 +125,7 @@ jobs:
 
       - name: Build Linux native image
         env:
-          ECA_JAR: "../eca.jar"
+          ECA_JAR: "eca.jar"
           ECA_XMX: "-J-Xmx6g"
         run: |
           bb native-cli
@@ -188,7 +188,7 @@ jobs:
 
       - name: Build static Linux native image
         env:
-          ECA_JAR: "../eca.jar"
+          ECA_JAR: "eca.jar"
           ECA_XMX: "-J-Xmx6g"
           ECA_STATIC: true
           ECA_MUSL: true
@@ -252,7 +252,7 @@ jobs:
 
       - name: Build MacOS native image
         env:
-          ECA_JAR: "../eca.jar"
+          ECA_JAR: "eca.jar"
           ECA_XMX: "-J-Xmx6g"
         run: |
           bb native-cli
@@ -309,7 +309,7 @@ jobs:
 
       - name: Build MacOS native image
         env:
-          ECA_JAR: "../eca.jar"
+          ECA_JAR: "eca.jar"
           ECA_XMX: "-J-Xmx6g"
         run: |
           bb native-cli
@@ -391,7 +391,7 @@ jobs:
 
       - name: Build Windows native image
         env:
-          ECA_JAR: ..\eca.jar
+          ECA_JAR: eca.jar
           ECA_XMX: "-J-Xmx7g"
         run: |
           bb native-cli

@@ -24,4 +24,9 @@
           :replace-deps {io.github.clojure/tools.build {:tag "v0.10.7" :sha "573711e"}
                          com.github.ericdallo/deps-bin {:mvn/version "1.0.0"}
                          slipset/deps-deploy {:mvn/version "0.2.2"}}
-          :ns-default build}}}
+          :ns-default build}
+  :native {:jvm-opts ["-server"
+                      "-Dborkdude.dynaload.aot=true"
+                      "-Dclojure.compiler.direct-linking=true"
+                      "-Dclojure.spec.skip-macros=true"]
+                    :extra-deps {com.github.clj-easy/graal-build-time {:mvn/version "1.0.5"}}}}}

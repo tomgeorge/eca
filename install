@@ -73,7 +73,7 @@ if [[ "$checksum" != "" ]] && [[ "$version" == "" ]]; then
 fi
 
 if [[ "$version" == "" ]]; then
-  version="$(curl -sL https://raw.githubusercontent.com/ericdallo/eca/master/lib/resources/ECA_VERSION)"
+  version="$(curl -sL https://raw.githubusercontent.com/editor-code-assistant/eca/master/resources/ECA_VERSION)"
 fi
 
 case "$(uname -s)" in
@@ -98,9 +98,9 @@ case "$platform-$arch" in
 esac
 
 if [[ "$version" == "nightly" ]]; then
-    download_url="https://github.com/eca/eca-dev-builds/releases/latest/download/$filename"
+    download_url="https://github.com/editor-code-assistant/eca-dev-builds/releases/latest/download/$filename"
 else
-    download_url="https://github.com/eca/eca/releases/download/$version/$filename"
+    download_url="https://github.com/editor-code-assistant/eca/releases/download/$version/$filename"
 fi
 
 # Running this part in a subshell so when it finishes we go back to the previous directory

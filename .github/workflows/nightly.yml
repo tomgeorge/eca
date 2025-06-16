@@ -42,8 +42,8 @@ jobs:
           token: ${{ secrets.ECA_TOKEN }}
           tag_name: ${{ steps.dev-tag.outputs.tag}}
           prerelease: false
-          repository: ericdallo/eca-dev-builds
-          body: https://github.com/ericdallo/eca/commit/${{ steps.commit-hash.outputs.hash }}
+          repository: editor-code-assistant/eca-dev-builds
+          body: https://github.com/editor-code-assistant/eca/commit/${{ steps.commit-hash.outputs.hash }}
 
   build-jar:
     needs: release-dev-build
@@ -81,7 +81,7 @@ jobs:
         with:
           repo_token: ${{ secrets.ECA_TOKEN }}
           prerelease: false
-          repo_name: ericdallo/eca-dev-builds
+          repo_name: editor-code-assistant/eca-dev-builds
           file: eca.jar
           asset_name: eca.jar
           tag: ${{ needs.release-dev-build.outputs.tag}}
@@ -94,7 +94,7 @@ jobs:
         with:
           repo_token: ${{ secrets.ECA_TOKEN }}
           prerelease: false
-          repo_name: ericdallo/eca-dev-builds
+          repo_name: editor-code-assistant/eca-dev-builds
           file: eca.jar.sha256
           asset_name: eca.jar.sha256
           tag: ${{ needs.release-dev-build.outputs.tag}}
@@ -143,7 +143,7 @@ jobs:
         with:
           repo_token: ${{ secrets.ECA_TOKEN }}
           prerelease: false
-          repo_name: ericdallo/eca-dev-builds
+          repo_name: editor-code-assistant/eca-dev-builds
           file: eca-native-linux-amd64.zip
           asset_name: eca-native-linux-amd64.zip
           tag: ${{ needs.release-dev-build.outputs.tag}}
@@ -156,7 +156,7 @@ jobs:
         with:
           repo_token: ${{ secrets.ECA_TOKEN }}
           prerelease: false
-          repo_name: ericdallo/eca-dev-builds
+          repo_name: editor-code-assistant/eca-dev-builds
           file: eca-native-linux-amd64.zip.sha256
           asset_name: eca-native-linux-amd64.zip.sha256
           tag: ${{ needs.release-dev-build.outputs.tag}}
@@ -208,7 +208,7 @@ jobs:
         with:
           repo_token: ${{ secrets.ECA_TOKEN }}
           prerelease: false
-          repo_name: ericdallo/eca-dev-builds
+          repo_name: editor-code-assistant/eca-dev-builds
           file: eca-native-static-linux-amd64.zip
           asset_name: eca-native-static-linux-amd64.zip
           tag: ${{ needs.release-dev-build.outputs.tag}}
@@ -221,7 +221,7 @@ jobs:
         with:
           repo_token: ${{ secrets.ECA_TOKEN }}
           prerelease: false
-          repo_name: ericdallo/eca-dev-builds
+          repo_name: editor-code-assistant/eca-dev-builds
           file: eca-native-static-linux-amd64.zip.sha256
           asset_name: eca-native-static-linux-amd64.zip.sha256
           tag: ${{ needs.release-dev-build.outputs.tag}}
@@ -265,7 +265,7 @@ jobs:
         with:
           repo_token: ${{ secrets.ECA_TOKEN }}
           prerelease: false
-          repo_name: ericdallo/eca-dev-builds
+          repo_name: editor-code-assistant/eca-dev-builds
           file: eca-native-macos-amd64.zip
           asset_name: eca-native-macos-amd64.zip
           tag: ${{ needs.release-dev-build.outputs.tag}}
@@ -278,7 +278,7 @@ jobs:
         with:
           repo_token: ${{ secrets.ECA_TOKEN }}
           prerelease: false
-          repo_name: ericdallo/eca-dev-builds
+          repo_name: editor-code-assistant/eca-dev-builds
           file: eca-native-macos-amd64.zip.sha256
           asset_name: eca-native-macos-amd64.zip.sha256
           tag: ${{ needs.release-dev-build.outputs.tag}}
@@ -322,7 +322,7 @@ jobs:
         with:
           repo_token: ${{ secrets.ECA_TOKEN }}
           prerelease: false
-          repo_name: ericdallo/eca-dev-builds
+          repo_name: editor-code-assistant/eca-dev-builds
           file: eca-native-macos-aarch64.zip
           asset_name: eca-native-macos-aarch64.zip
           tag: ${{ needs.release-dev-build.outputs.tag}}
@@ -335,7 +335,7 @@ jobs:
         with:
           repo_token: ${{ secrets.ECA_TOKEN }}
           prerelease: false
-          repo_name: ericdallo/eca-dev-builds
+          repo_name: editor-code-assistant/eca-dev-builds
           file: eca-native-macos-aarch64.zip.sha256
           asset_name: eca-native-macos-aarch64.zip.sha256
           tag: ${{ needs.release-dev-build.outputs.tag}}
@@ -410,7 +410,7 @@ jobs:
         with:
           repo_token: ${{ secrets.ECA_TOKEN }}
           prerelease: false
-          repo_name: ericdallo/eca-dev-builds
+          repo_name: editor-code-assistant/eca-dev-builds
           file: eca-native-windows-amd64.zip
           asset_name: eca-native-windows-amd64.zip
           tag: ${{ needs.release-dev-build.outputs.tag}}
@@ -423,7 +423,7 @@ jobs:
         with:
           repo_token: ${{ secrets.ECA_TOKEN }}
           prerelease: false
-          repo_name: ericdallo/eca-dev-builds
+          repo_name: editor-code-assistant/eca-dev-builds
           file: eca-native-windows-amd64.zip.sha256
           asset_name: eca-native-windows-amd64.zip.sha256
           tag: ${{ needs.release-dev-build.outputs.tag}}

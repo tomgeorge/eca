@@ -27,3 +27,13 @@
   []
   (build "debug-cli")
   (mv-here (fs/path (eca-bin-filename :script))))
+
+(defn prod-jar []
+  (build "prod-jar")
+  (mv-here "target/eca.jar"))
+
+(defn native-cli
+  "Build the native `eca[.exe]` cli executable with `graalvm`."
+  []
+  (build "native-cli")
+  (mv-here (fs/path (eca-bin-filename :native))))

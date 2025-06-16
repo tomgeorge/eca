@@ -70,6 +70,12 @@ jobs:
       - name: Generate jar for native
         run: bb prod-jar
 
+      - name: Upload jar
+        uses: actions/upload-artifact@v4
+        with:
+          path: eca.jar
+          name: eca.jar
+
       - name: Upload to dev release
         uses: svenstaro/upload-release-action@v2
         with:

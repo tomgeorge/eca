@@ -92,7 +92,7 @@
                                                    :is-complete (boolean finish-reason)
                                                    :content {:type :text
                                                              :text message}}))
-                          :on-error (fn [e]
+                          :on-error (fn [{:keys [message exception]}]
                                       (messenger/chat-content-received
                                        messenger
                                        {:chat-id chat-id
@@ -100,7 +100,7 @@
                                         :is-complete true
                                         :role :system
                                         :content {:type :text
-                                                  :text (str "\nError: " (ex-message e))}}))}))
+                                                  :text (or message (ex-message exception))}}))}))
     {:chat-id chat-id
      :status :success}))
 

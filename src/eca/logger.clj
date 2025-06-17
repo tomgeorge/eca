@@ -1,9 +1,15 @@
 (ns eca.logger)
 
-;; TODO create better logger capability.
-(defn info [& args]
+(defn ^:private stderr-print [& args]
   (binding [*out* *err*]
     (apply println args)))
+
+;; TODO create better logger capability.
+(defn info [& args]
+  (apply stderr-print args))
+
+(defn warn [& args]
+  (apply stderr-print args))
 
 (defn format-time-delta-ms [start-time end-time]
   (format "%.0fms" (float (/ (- end-time start-time) 1000000))))

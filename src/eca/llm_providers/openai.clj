@@ -3,7 +3,10 @@
    [cheshire.core :as json]
    [clojure.java.io :as io]
    [clojure.string :as str]
+   [eca.logger :as logger]
    [hato.client :as http]))
+
+(def ^:private logger-tag "[OPENAI]")
 
 (def ^:private url "https://api.openai.com/v1/chat/completions")
 
@@ -29,12 +32,15 @@
      {:headers {"Authorization" (str "Bearer " api-key)
                 "Content-Type" "application/json"}
       :body (json/generate-string body)
+      :throw-exceptions? false
       :async? true
       :as :stream}
      (fn [{:keys [status body]}]
        (try
          (if (not= 200 status)
-           (on-error status)
+           (do
+             (logger/warn logger-tag "Unexpected response status" status)
+             (on-error {:message (str "OpenAI response status: " status)}))
            (with-open [rdr (io/reader body)]
              (doseq [line (line-seq rdr)]
                (when (str/starts-with? line "data: ")
@@ -43,7 +49,6 @@
                      (doseq [message (raw-data->messages data)]
                        (on-message-received message))))))))
          (catch Exception e
-           ;; TODO improve error handling
-           (println "-->" e))))
+           (on-error {:exception e}))))
      (fn [e]
-       (on-error e)))))
+       (on-error {:exception e})))))

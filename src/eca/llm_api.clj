@@ -16,4 +16,4 @@
                  :api-key (:openai-api-key config)}
                 {:on-message-received on-message-received
                  :on-error on-error})
-    (on-error (str "Unsupported model: " model))))
+    (on-error {:msg (str "ECA Unsupported model: " model)})))

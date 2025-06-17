@@ -528,6 +528,6 @@ interface ChatQueryContextResponse {
 
 Soon
 
-### Documentation (:leftwards_arrow_with_hook:)
+### Edit (:leftwards_arrow_with_hook:)
 
 Soon

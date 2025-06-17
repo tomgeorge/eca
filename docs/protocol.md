@@ -244,6 +244,9 @@ interface ChatPromptParams {
     contexts?: ChatContext[];
 }
 
+/**
+ * The currently supported models, auto means let server decide.
+ */
 type ChatModel = 
     | 'o4-mini'
     | 'gpt-4.1'

@@ -96,7 +96,7 @@ interface InitializeParams {
         /*
          * The chat behavior.
          */
-         chatBehavior?: 'agent' | 'ask' | 'manual';
+         chatBehavior?: ChatBehavior;
     };
     
     /**
@@ -132,6 +132,8 @@ interface ClientCapabilities {
         fix?: boolean;
     }
 }
+
+type ChatBehavior = 'agent' | 'ask';
 ```
 
 _Response:_
@@ -142,12 +144,12 @@ interface InitializeResult {
     /*
      * The models supported by the server.
      */
-    models: string[];
+    models: ChatModel[];
     
     /*
      * The chat behavior.
      */
-    chatBehavior: 'agent' | 'ask' | 'manual';
+    chatBehavior: ChatBehavior;
     
     /*
      * The chat welcome message when chat is cleared or in a new state.
@@ -329,6 +331,11 @@ interface ChatPromptResponse {
      * Unique identifier for this chat session
      */
     chatId: string;
+    
+    /*
+     * The model used for this chat request.
+     */
+    model: ChatModel;
 
     status: 'success';
 }

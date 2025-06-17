@@ -59,7 +59,7 @@
   (when-let [nrepl-port (nrepl/setup-nrepl)]
     ;; Save the port in the db, so it can be reported in server-info.
     (swap! db* assoc :port nrepl-port)
-    ;; Add components to db* so it's possible to manualy call funcstions
+    ;; Add components to db* so it's possible to manualy call functions
     ;; which expect specific components
     (swap! db* assoc-in [:dev :components] components)
     ;; In the development environment, make the db* atom available globally as

@@ -30,8 +30,7 @@
    :behavior (format "Your behavior is to '%s'."
                      (case (keyword behavior)
                        :agent "Help suggesting what needs to be changed if requested, offering help to make itself."
-                       :ask "Only answer questions and doubts."
-                       :manual "Help suggesting what needs to be changed."
+                       :chat "Help suggesting what needs to be changed not suggesting to fix it itself."
                        ""))
    :context (format "<context>\n%s\n</context>"
                     (reduce (fn [msg {:keys [type path content-map]}]

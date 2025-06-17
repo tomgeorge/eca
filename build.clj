@@ -5,8 +5,6 @@
    [clojure.string :as string]
    [clojure.tools.build.api :as b]))
 
-(def lib 'com.github.editor-code-assistant/eca)
-(def current-version (string/trim (slurp (io/resource "ECA_VERSION"))))
 (def class-dir "target/classes")
 (def basis {:project "deps.edn"})
 (def file "target/eca.jar")

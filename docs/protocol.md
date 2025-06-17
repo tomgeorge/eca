@@ -250,6 +250,9 @@ interface ChatPromptParams {
 type ChatModel = 
     | 'o4-mini'
     | 'gpt-4.1'
+    | 'claude-sonnet-4-0'
+    | 'claude-opus-4-0'
+    | 'claude-3-5-haiku-latest'
     | "auto";
 
 type ChatContext = FileContext | DirectoryContext | WebContext | CodeContext;

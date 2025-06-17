@@ -14,6 +14,7 @@
 
 (def initial-config
   {:openai-api-key nil
+   :anthropic-api-key nil
    :index {:ignore-files [".gitignore"]}})
 
 (defn ^:private safe-read-json-string [raw-string]

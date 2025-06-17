@@ -18,10 +18,15 @@
              finish_reason (assoc :finish-reason finish_reason)))
          choices)))
 
-(defn completion! [{:keys [model messages temperature api-key]
+(defn ^:private ->message [{:keys [role behavior context]} user-prompt]
+  (format "%s\n%s\n%s\nThe user is asking: '%s'"
+          role behavior context user-prompt))
+
+(defn completion! [{:keys [model user-prompt context temperature api-key]
                     :or {temperature 1.0}}
                    {:keys [on-message-received on-error]}]
-  (let [body {:model model
+  (let [messages [{:role "user" :content (->message context user-prompt)}]
+        body {:model model
               :messages messages
               :temperature temperature
               :stream true}

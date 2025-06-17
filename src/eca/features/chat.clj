@@ -23,27 +23,23 @@
               nil))
           context))
 
-(defn ^:private behavior->prompt-input [behavior]
-  (case (keyword behavior)
-    :agent "Help suggesting what needs to be changed if requested, offering help to make itself."
-    :ask "Only answer questions and doubts."
-    :manual "Help suggesting what needs to be changed."
-    ""))
-
-(defn ^:private build-prompt [message behavior refined-context]
-  (format (str "You are an expert AI coding tool called ECA (Editor Code Assistant). Structure your answer in markdown *WITHOUT* using markdown code block.\n"
-               "Your behavior is to '%s'.\n"
-               "The user is asking: '%s'\n"
-               "Context: %s")
-          (behavior->prompt-input behavior)
-          message
-          (reduce (fn [msg {:keys [type path content-map]}]
-                    (str
-                     msg
-                     (case type
-                       :file (str path ":\n" content-map)
-                       "")
-                     "\n")) "" refined-context)))
+(defn ^:private build-context [behavior refined-context]
+  {:role (str "You are an expert AI coding tool called ECA (Editor Code Assistant).\n"
+              "Structure your answer in markdown *WITHOUT* using markdown code block.")
+   :behavior (format "Your behavior is to '%s'."
+                     (case (keyword behavior)
+                       :agent "Help suggesting what needs to be changed if requested, offering help to make itself."
+                       :ask "Only answer questions and doubts."
+                       :manual "Help suggesting what needs to be changed."
+                       ""))
+   :context (format "<context>\n%s\n</context>"
+                    (reduce (fn [msg {:keys [type path content-map]}]
+                              (str
+                               msg
+                               (case type
+                                 :file (str path ":\n" content-map)
+                                 "")
+                               "\n")) "" refined-context))})
 
 (defn prompt
   [{:keys [message model behavior contexts chat-id request-id]}
@@ -71,7 +67,8 @@
         :role :system
         :content {:type :temporary-text
                   :text "Parsing given context..."}}))
-    (let [refined-context (raw-context->refined contexts)]
+    (let [refined-contexts (raw-context->refined contexts)
+          context (build-context (or behavior (:chat-behavior @db*)) refined-contexts)]
       (messenger/chat-content-received
        messenger
        {:chat-id chat-id
@@ -81,7 +78,8 @@
         :content {:type :temporary-text
                   :text "Generating..."}})
       (llm-api/complete! {:model (or model (:default-model @db*))
-                          :message (build-prompt message (or behavior (:chat-behavior @db*)) refined-context)
+                          :user-prompt message
+                          :context context
                           :config config
                           :on-message-received (fn [{:keys [message finish-reason]}]
                                                  (messenger/chat-content-received

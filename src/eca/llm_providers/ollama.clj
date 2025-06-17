@@ -31,15 +31,15 @@
       message (assoc :message (:content message))
       done_reason (assoc :finish-reason done_reason))))
 
-(defn ^:private context->system [{:keys [role behavior context]}]
-  (format "%s\n%s\n%s\n"
-          role behavior context))
+(defn ^:private ->message [{:keys [role behavior context]} user-prompt]
+  (format "%s\n%s\n%s\nThe user is asking: '%s'"
+          role behavior context user-prompt))
 
 (defn completion! [{:keys [model user-prompt context host port keep-alive]
                     :or {keep-alive "5m"}}
                    {:keys [on-message-received on-error]}]
   (let [body {:model model
-              :messages [{:role "user" :content user-prompt}]
+              :messages [{:role "user" :content (->message context user-prompt)}]
               :stream true
               :keep_alive keep-alive}]
     (http/post

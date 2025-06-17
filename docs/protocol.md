@@ -219,6 +219,11 @@ interface ChatPromptParams {
      * The chat session identifier. If not provided, a new chat session will be created.
      */
     chatId?: string;
+    
+    /**
+     * This message unique identifier used to match with next async messages.
+     */
+    requestId: string;
 
     /**
      * The message from the user in native language

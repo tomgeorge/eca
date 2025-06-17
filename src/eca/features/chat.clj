@@ -2,6 +2,7 @@
   (:require
    [babashka.fs :as fs]
    [clojure.set :as set]
+   [clojure.string :as string]
    [eca.config :as config]
    [eca.llm-api :as llm-api]
    [eca.messenger :as messenger]
@@ -41,6 +42,11 @@
                                  "")
                                "\n")) "" refined-context))})
 
+(defn ^:private default-model [db]
+  (if-let [ollama-model (first (filter #(string/starts-with? % config/ollama-model-prefix) (:models db)))]
+    ollama-model
+    (:default-model db)))
+
 (defn prompt
   [{:keys [message model behavior contexts chat-id request-id]}
    db*
@@ -77,7 +83,7 @@
         :role :system
         :content {:type :temporary-text
                   :text "Generating..."}})
-      (llm-api/complete! {:model (or model (:default-model @db*))
+      (llm-api/complete! {:model (or model (default-model @db*))
                           :user-prompt message
                           :context context
                           :config config

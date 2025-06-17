@@ -11,7 +11,7 @@
 (defn all-models [db]
   (let [config (config/all)]
     (concat (:models db)
-            (mapv #(str "ollama:" (:model %))
+            (mapv #(str config/ollama-model-prefix (:model %))
                   (llm-providers.ollama/list-running-models {:host (:host (:ollama config))
                                                              :port (:port (:ollama config))})))))
 
@@ -41,11 +41,11 @@
      {:on-message-received on-message-received
       :on-error on-error})
 
-    (string/starts-with? model "ollama:")
+    (string/starts-with? model config/ollama-model-prefix)
     (llm-providers.ollama/completion!
      {:host (-> config :ollama :host)
       :port (-> config :ollama :port)
-      :model (string/replace-first model "ollama:" "")
+      :model (string/replace-first model config/ollama-model-prefix "")
       :context context
       :user-prompt user-prompt}
      {:on-message-received on-message-received

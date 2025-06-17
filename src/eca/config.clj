@@ -70,3 +70,5 @@
                 (get-in config [:index :ignore-files]))))
 
 (def index-ignores-patterns (memoize index-ignores-patterns*))
+
+(def ollama-model-prefix "ollama:")

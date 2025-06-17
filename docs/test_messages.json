@@ -21,12 +21,13 @@ Content-Length: 69
     "method":"initialized",
     "params":{}
 }
-Content-Length: 110
+Content-Length: 138
 
 {
     "jsonrpc":"2.0",
     "method":"chat/prompt",
     "params":{
+        "requestId": "123",
         "message": "Hi"
     },
     "id":3

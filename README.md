@@ -15,7 +15,17 @@ An OSS editor agnostic tool that aims to bridge LLMs <-> Editors, giving the bes
 
 ## Installation
 
-TODO
+Stable release:
+
+```bash
+sudo bash <(curl -s https://raw.githubusercontent.com/editor-code-assistant/eca/master/install)
+```
+
+nightly build:
+
+```bash
+sudo bash <(curl -s https://raw.githubusercontent.com/editor-code-assistant/eca/master/install) --version nightly
+```
 
 ## Usage
 

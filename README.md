@@ -1,6 +1,6 @@
 # ECA (Editor Code Assistant)
 
-:warning: The project is still alpha and experimental, with bugs and missing features, but being consistenly improved.
+:warning: The project is still alpha and experimental, with bugs and missing features, but being consistently improved.
 
 ## Rationale 
 
@@ -10,7 +10,7 @@ An OSS editor agnostic tool that aims to bridge LLMs <-> Editors, giving the bes
 - **Chat** interface: ask questions, review diffs, work together with an agent in your codebase.
 - **AI-powered completions**, docs & refactorings.
 - **Streaming responses** and structured error handling.
-- **Pluggable models**: Ollama, OpenAI, local LLMs, more on the way.
+- **Pluggable models**: Ollama local models, OpenAI, Anthropic, more on the way.
 - **Single configuration**: Configure eca behavior making it feel the same in any editor.
 
 ## Installation
@@ -40,10 +40,10 @@ The protocol can be found [here](./docs/protocol.md), it follows the same standa
 - Centralize roadmap in a Github Project.
 - Error handling
 - Support more editors: VScode, IntelliJ and Vim.
-- Support more model options like thinking.
-- Support more models.
 - Improve docs
+- Support more model options like thinking.
 - Improve context passed to LLM, creating a repo map or translating to embedded vectors.
+- Support more models.
 - Support MCP configuration.
 - Code completion using AI.
 - Doc generation using AI.

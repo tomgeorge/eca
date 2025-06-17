@@ -1,18 +1,27 @@
 (ns eca.llm-api
   (:require
+   [clojure.string :as string]
+   [eca.config :as config]
    [eca.llm-providers.anthropic :as llm-providers.anthropic]
+   [eca.llm-providers.ollama :as llm-providers.ollama]
    [eca.llm-providers.openai :as llm-providers.openai]))
 
 (set! *warn-on-reflection* true)
+
+(defn all-models [db]
+  (let [config (config/all)]
+    (concat (:models db)
+            (mapv #(str "ollama:" (:model %))
+                  (llm-providers.ollama/list-running-models {:host (:host (:ollama config))
+                                                             :port (:port (:ollama config))})))))
 
 (defn refine-file-context [path]
   ;; TODO ask LLM for the most relevant parts of the path
   (slurp path))
 
 (defn complete! [{:keys [model context user-prompt config on-message-received on-error]}]
-  (case model
-    ("o4-mini"
-     "gpt-4.1")
+  (cond
+    (contains? #{"o4-mini" "gpt-4.1"} model)
     (llm-providers.openai/completion!
      {:model model
       :context context
@@ -20,9 +29,10 @@
       :api-key (:openai-api-key config)}
      {:on-message-received on-message-received
       :on-error on-error})
-    ("claude-sonnet-4-0"
-     "claude-opus-4-0"
-     "claude-3-5-haiku-latest")
+
+    (contains? #{"claude-sonnet-4-0"
+                 "claude-opus-4-0"
+                 "claude-3-5-haiku-latest"} model)
     (llm-providers.anthropic/completion!
      {:model model
       :context context
@@ -30,4 +40,16 @@
       :api-key (:anthropic-api-key config)}
      {:on-message-received on-message-received
       :on-error on-error})
+
+    (string/starts-with? model "ollama:")
+    (llm-providers.ollama/completion!
+     {:host (-> config :ollama :host)
+      :port (-> config :ollama :port)
+      :model (string/replace-first model "ollama:" "")
+      :context context
+      :user-prompt user-prompt}
+     {:on-message-received on-message-received
+      :on-error on-error})
+
+    :else
     (on-error {:msg (str "ECA Unsupported model: " model)})))

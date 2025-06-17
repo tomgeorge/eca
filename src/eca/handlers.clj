@@ -3,19 +3,21 @@
    [eca.config :as config]
    [eca.db :as db]
    [eca.features.chat :as f.chat]
-   [eca.logger :as logger]))
+   [eca.logger :as logger]
+   [eca.llm-api :as llm-api]))
 
 (defn initialize [{:keys [db*]} params]
   (logger/logging-task
-   :eca/initialize
-   (swap! db* assoc
-          :client-info (:client-info params)
-          :workspace-folders (:workspace-folders params)
-          :client-capabilities (:capabilities params)
-          :chat-behavior (or (-> params :initialization-options :chat-behavior) (:chat-behavior @db*)))
-   {:models (:models @db*)
-    :chat-behavior (:chat-behavior @db*)
-    :chat-welcome-message "Welcome to ECA! What you have in mind?\n\n"}))
+      :eca/initialize
+      (let [config (config/all)]
+        (swap! db* assoc
+               :client-info (:client-info params)
+               :workspace-folders (:workspace-folders params)
+               :client-capabilities (:capabilities params)
+               :chat-behavior (or (-> params :initialization-options :chat-behavior) (:chat-behavior @db*)))
+        {:models (llm-api/all-models @db*)
+         :chat-behavior (:chat-behavior @db*)
+         :chat-welcome-message (:welcome-message (:chat config))})))
 
 (defn shutdown [{:keys [db*]}]
   (logger/logging-task

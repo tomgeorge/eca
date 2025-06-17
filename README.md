@@ -40,7 +40,8 @@ The protocol can be found [here](./docs/protocol.md), it follows the same standa
 - Centralize roadmap in a Github Project.
 - Error handling
 - Support more editors: VScode, IntelliJ and Vim.
-- Support ollama and more models.
+- Support more model options like thinking.
+- Support more models.
 - Improve docs
 - Improve context passed to LLM, creating a repo map or translating to embedded vectors.
 - Support MCP configuration.

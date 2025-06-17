@@ -15,6 +15,9 @@
 (def initial-config
   {:openai-api-key nil
    :anthropic-api-key nil
+   :ollama {:host "http://localhost"
+            :port 11434}
+   :chat {:welcome-message "Welcome to ECA! What you have in mind?\n\n"}
    :index {:ignore-files [".gitignore"]}})
 
 (defn ^:private safe-read-json-string [raw-string]
@@ -58,12 +61,12 @@
   (concat []
           (into []
                 (comp
-                  (keep (fn [file]
-                          (when (.exists (io/file root-filename file))
-                            (slurp (io/file root-filename file)))))
-                  (mapcat string/split-lines)
-                  (remove string/blank?)
-                  (map #(str "glob:" %)))
+                 (keep (fn [file]
+                         (when (.exists (io/file root-filename file))
+                           (slurp (io/file root-filename file)))))
+                 (mapcat string/split-lines)
+                 (remove string/blank?)
+                 (map #(str "glob:" %)))
                 (get-in config [:index :ignore-files]))))
 
 (def index-ignores-patterns (memoize index-ignores-patterns*))

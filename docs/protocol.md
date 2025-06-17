@@ -253,7 +253,13 @@ type ChatModel =
     | 'claude-sonnet-4-0'
     | 'claude-opus-4-0'
     | 'claude-3-5-haiku-latest'
-    | "auto";
+    | 'auto'
+    OllamaRunningModel;
+    
+/**
+ * Ollama running models available locally.
+ */
+type OllamaRunningModel = string
 
 type ChatContext = FileContext | DirectoryContext | WebContext | CodeContext;
 

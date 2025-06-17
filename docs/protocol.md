@@ -146,6 +146,8 @@ interface InitializeResult {
      */
     models: ChatModel[];
     
+    defaultModel: ChatModel;
+    
     /*
      * The chat behavior.
      */

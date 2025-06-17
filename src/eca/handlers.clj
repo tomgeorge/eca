@@ -3,21 +3,28 @@
    [eca.config :as config]
    [eca.db :as db]
    [eca.features.chat :as f.chat]
-   [eca.logger :as logger]
-   [eca.llm-api :as llm-api]))
+   [eca.llm-api :as llm-api]
+   [eca.logger :as logger]))
+
+(defn ^:private initialize-extra-models! [db*]
+  (let [config (config/all)]
+    (when-let [ollama-models (seq (llm-api/extra-models config))]
+      (swap! db* update :models concat (map #(str config/ollama-model-prefix (:model %)) ollama-models)))))
 
 (defn initialize [{:keys [db*]} params]
   (logger/logging-task
-      :eca/initialize
-      (let [config (config/all)]
-        (swap! db* assoc
-               :client-info (:client-info params)
-               :workspace-folders (:workspace-folders params)
-               :client-capabilities (:capabilities params)
-               :chat-behavior (or (-> params :initialization-options :chat-behavior) (:chat-behavior @db*)))
-        {:models (llm-api/all-models @db*)
-         :chat-behavior (:chat-behavior @db*)
-         :chat-welcome-message (:welcome-message (:chat config))})))
+   :eca/initialize
+   (let [config (config/all)]
+     (swap! db* assoc
+            :client-info (:client-info params)
+            :workspace-folders (:workspace-folders params)
+            :client-capabilities (:capabilities params)
+            :chat-behavior (or (-> params :initialization-options :chat-behavior) (:chat-behavior @db*)))
+     (initialize-extra-models! db*)
+     {:models (:models @db*)
+      :chat-default-model (f.chat/default-model @db*)
+      :chat-behavior (:chat-behavior @db*)
+      :chat-welcome-message (:welcome-message (:chat config))})))
 
 (defn shutdown [{:keys [db*]}]
   (logger/logging-task

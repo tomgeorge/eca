@@ -8,12 +8,9 @@
 
 (set! *warn-on-reflection* true)
 
-(defn all-models [db]
-  (let [config (config/all)]
-    (concat (:models db)
-            (mapv #(str config/ollama-model-prefix (:model %))
-                  (llm-providers.ollama/list-running-models {:host (:host (:ollama config))
-                                                             :port (:port (:ollama config))})))))
+(defn extra-models [config]
+  (llm-providers.ollama/list-running-models {:host (:host (:ollama config))
+                                             :port (:port (:ollama config))}))
 
 (defn refine-file-context [path]
   ;; TODO ask LLM for the most relevant parts of the path

@@ -41,7 +41,7 @@
                                  "")
                                "\n")) "" refined-context))})
 
-(defn ^:private default-model [db]
+(defn default-model [db]
   (if-let [ollama-model (first (filter #(string/starts-with? % config/ollama-model-prefix) (:models db)))]
     ollama-model
     (:default-model db)))
@@ -73,7 +73,8 @@
         :content {:type :temporary-text
                   :text "Parsing given context..."}}))
     (let [refined-contexts (raw-context->refined contexts)
-          context (build-context (or behavior (:chat-behavior @db*)) refined-contexts)]
+          context (build-context (or behavior (:chat-behavior @db*)) refined-contexts)
+          chosen-model (or model (default-model @db*))]
       (messenger/chat-content-received
        messenger
        {:chat-id chat-id
@@ -82,7 +83,7 @@
         :role :system
         :content {:type :temporary-text
                   :text "Generating..."}})
-      (llm-api/complete! {:model (or model (default-model @db*))
+      (llm-api/complete! {:model chosen-model
                           :user-prompt message
                           :context context
                           :config config
@@ -103,9 +104,10 @@
                                         :is-complete true
                                         :role :system
                                         :content {:type :text
-                                                  :text (str (or message (ex-message exception)) "\n")}}))}))
-    {:chat-id chat-id
-     :status :success}))
+                                                  :text (str (or message (ex-message exception)) "\n")}}))})
+      {:chat-id chat-id
+       :model chosen-model
+       :status :success})))
 
 (defn query-context
   [{:keys [query contexts chat-id]}

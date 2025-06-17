@@ -10,10 +10,11 @@
 
 (defn complete! [{:keys [model message config on-message-received on-error]}]
   (case model
-    "o4-mini" (llm-providers.openai/completion!
-                {:model model
-                 :messages [{:role "user" :content message}]
-                 :api-key (:openai-api-key config)}
-                {:on-message-received on-message-received
-                 :on-error on-error})
+    ("o4-mini"
+     "gpt-4.1") (llm-providers.openai/completion!
+                 {:model model
+                  :messages [{:role "user" :content message}]
+                  :api-key (:openai-api-key config)}
+                 {:on-message-received on-message-received
+                  :on-error on-error})
     (on-error {:msg (str "ECA Unsupported model: " model)})))

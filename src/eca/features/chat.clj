@@ -100,7 +100,7 @@
                                         :is-complete true
                                         :role :system
                                         :content {:type :text
-                                                  :text (or message (ex-message exception))}}))}))
+                                                  :text (str (or message (ex-message exception)) "\n")}}))}))
     {:chat-id chat-id
      :status :success}))
 

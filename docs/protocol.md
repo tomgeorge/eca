@@ -246,6 +246,7 @@ interface ChatPromptParams {
 
 type ChatModel = 
     | 'o4-mini'
+    | 'gpt-4.1'
     | "auto";
 
 type ChatContext = FileContext | DirectoryContext | WebContext | CodeContext;

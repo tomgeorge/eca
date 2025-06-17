@@ -35,13 +35,11 @@
   (format "%s\n%s\n%s\nThe user is asking: '%s'"
           role behavior context user-prompt))
 
-(defn completion! [{:keys [model user-prompt context host port keep-alive]
-                    :or {keep-alive "5m"}}
+(defn completion! [{:keys [model user-prompt context host port]}
                    {:keys [on-message-received on-error]}]
   (let [body {:model model
               :messages [{:role "user" :content (->message context user-prompt)}]
-              :stream true
-              :keep_alive keep-alive}]
+              :stream true}]
     (http/post
      (format chat-url host port)
      {:body (json/generate-string body)

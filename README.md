@@ -4,7 +4,7 @@
 
 :warning: The project is still alpha and experimental, with bugs and missing features, but being consistently improved.
 
-![demo](./demo.png)
+![demo](./images/demo.png)
 
 __Demo using [eca-emacs](https://github.com/editor-code-assistant/eca-emacs)__
 

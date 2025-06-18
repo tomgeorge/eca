@@ -69,6 +69,13 @@ Via env var during server process spawn:
 ECA_CONFIG='{"my_config": "my_value"}' eca server
 ```
 
+## Supported editors
+
+- Emacs
+- VsCode: WIP
+- Intellij: Planned
+- Vim: Planned, help welcome
+
 ## Protocol
 
 The protocol can be found [here](./docs/protocol.md), it follows the same standard of LSP documentation, defining how server and client communicate with each other.

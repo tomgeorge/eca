@@ -51,7 +51,7 @@ Content-Length: ...\r\n
 
 The protocol defines a set of lifecycle messages that manage the connection and state between the client (editor) and server (code assistant):
 
-### Initialize (:leftwards_arrow_with_hook:)
+### Initialize (↩️)
 
 The first request sent from client to server. This message:
 - Establishes the connection
@@ -160,7 +160,7 @@ interface InitializeResult {
 }
 ```
 
-### Initialized (:arrow_right:)
+### Initialized (➡️)
 
 A notification sent from the client to the server after receiving the initialize response. This message:
 - Confirms that the client is ready to receive requests
@@ -176,7 +176,7 @@ _Notification:_
 interface InitializedParams {}
 ```
 
-### Shutdown (:leftwards_arrow_with_hook:)
+### Shutdown (↩️)
 
 A request sent from the client to the server to gracefully shut down the connection. This message:
 - Allows the server to clean up resources
@@ -193,7 +193,7 @@ _Response:_
 * result: null
 * error: code and message set in case an exception happens during shutdown request.
 
-### Exit (:arrow_right:)
+### Exit (➡️)
 
 A notification sent from the client to the server to terminate the connection. This message:
 - Should be sent after a shutdown request
@@ -207,7 +207,7 @@ _Notification:_
 
 ## Code Assistant Features
 
-### Chat Prompt (:leftwards_arrow_with_hook:)
+### Chat Prompt (↩️)
 
 A request sent from client to server, starting or continuing a chat in natural language as an agent.
 Used for broader questions or continuous discussion of project/files.
@@ -343,7 +343,7 @@ interface ChatPromptResponse {
 }
 ```
 
-### Chat Content Received (:arrow_left:)
+### Chat Content Received (⬅️)
 
 A server notification with a new content from the LLM.
 
@@ -481,7 +481,7 @@ interface FileChangeContent {
 }
 ```
 
-### Chat Query Context (:leftwards_arrow_with_hook:)
+### Chat Query Context (↩️)
 
 A request sent from client to server, querying for the available context to user add to prompt calls.
 
@@ -525,10 +525,10 @@ interface ChatQueryContextResponse {
 }
 ```
 
-### Completion (:leftwards_arrow_with_hook:)
+### Completion (↩️)
 
 Soon
 
-### Edit (:leftwards_arrow_with_hook:)
+### Edit (↩️)
 
 Soon

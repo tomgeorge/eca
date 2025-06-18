@@ -1,6 +1,12 @@
 # ECA (Editor Code Assistant)
 
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
+
 :warning: The project is still alpha and experimental, with bugs and missing features, but being consistently improved.
+
+![demo](./demo.png)
+
+__Demo using [eca-emacs](https://github.com/editor-code-assistant/eca-emacs)__
 
 ## Rationale 
 

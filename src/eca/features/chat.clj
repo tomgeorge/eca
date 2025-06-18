@@ -70,8 +70,9 @@
         :request-id request-id
         :is-complete false
         :role :system
-        :content {:type :temporary-text
-                  :text "Parsing given context..."}}))
+        :content {:type :progress
+                  :state :running
+                  :text "Parsing given context"}}))
     (let [refined-contexts (raw-context->refined contexts)
           context (build-context (or behavior (:chat-behavior @db*)) refined-contexts)
           chosen-model (or model (default-model @db*))]
@@ -79,10 +80,10 @@
        messenger
        {:chat-id chat-id
         :request-id request-id
-        :is-complete false
         :role :system
-        :content {:type :temporary-text
-                  :text "Generating..."}})
+        :content {:type :progress
+                  :state :running
+                  :text "Generating"}})
       (llm-api/complete! {:model chosen-model
                           :user-prompt message
                           :context context
@@ -93,18 +94,31 @@
                                                   {:chat-id chat-id
                                                    :request-id request-id
                                                    :role :assistant
-                                                   :is-complete (boolean finish-reason)
                                                    :content {:type :text
-                                                             :text message}}))
+                                                             :text message}})
+                                                 (when finish-reason
+                                                   (messenger/chat-content-received
+                                                    messenger
+                                                    {:chat-id chat-id
+                                                     :request-id request-id
+                                                     :role :system
+                                                     :content {:type :progress
+                                                               :state :finished}})))
                           :on-error (fn [{:keys [message exception]}]
                                       (messenger/chat-content-received
                                        messenger
                                        {:chat-id chat-id
                                         :request-id request-id
-                                        :is-complete true
                                         :role :system
                                         :content {:type :text
-                                                  :text (str (or message (ex-message exception)) "\n")}}))})
+                                                  :text (str (or message (ex-message exception)) "\n")}})
+                                      (messenger/chat-content-received
+                                       messenger
+                                       {:chat-id chat-id
+                                        :request-id request-id
+                                        :role :system
+                                        :content {:type :progress
+                                                  :state :finished}}))})
       {:chat-id chat-id
        :model chosen-model
        :status :success})))

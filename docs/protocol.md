@@ -370,11 +370,6 @@ interface ChatContentReceivedParams {
     role: 'user' | 'system' | 'assistant';
 
     /**
-     * Whether this is the final content or more is coming
-     */
-    isComplete: boolean;
-
-    /**
      * Optional metadata about the generation
      */
     metadata?: {
@@ -390,7 +385,7 @@ interface ChatContentReceivedParams {
  */
 type ChatContent = 
     | TextContent 
-    | TemporaryTextContent 
+    | ProgressContent 
     | FileChangeContent;
 
 /**
@@ -418,14 +413,20 @@ interface TextContent {
 }
 
 /**
- * Temporary text, used to pin some text in the chat until it's complete.
+ * Details about the progress of the chat completion.
  */
-interface TemporaryTextContent {
-    type: 'temporary-text';
+interface ProgressContent {
+    type: 'progress';
+
     /**
-     * The text content
+     * The statue of this progress
      */
-    text: string;
+    state: 'running' | 'finished';
+    
+    /**
+     * The text detailing the progress
+     */
+    text?: string;
 }
 
 /**

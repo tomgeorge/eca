@@ -4,7 +4,7 @@
 
 ## Rationale 
 
-An OSS editor agnostic tool that aims to bridge LLMs <-> Editors, giving the best UX possible with a custom protocol.
+An OpenSource editor agnostic tool that aims to easily link LLMs <-> Editors, giving the best UX possible for AI pair programming using a well-defined protocol.
 
 - **Editor-agnostic** protocol for any editor integrate.
 - **Chat** interface: ask questions, review diffs, work together with an agent in your codebase.
@@ -30,6 +30,39 @@ sudo bash <(curl -s https://raw.githubusercontent.com/editor-code-assistant/eca/
 ## Usage
 
 Editors should spawn server via `eca server` and communicate via stdin/stdout.
+
+## Configuration
+
+Check all available configs [here](./src/eca/config.clj#L15).
+There are 3 ways to configure ECA following following this order of priority:
+
+### InitializationOptions (convenient for editors)
+
+Client editors can pass custom settings when sending the `initialize` request via the `initializationOptions` object:
+
+```javascript
+"initializationOptions": {
+  "chat_behavior": "chat"
+}
+```
+
+### Config file (conveninent for users)
+
+`.eca/config.json`
+
+```javascript
+{
+  "chat_behavior": "chat"
+}
+```
+
+### Env Var
+
+Via env var during server process spawn:
+
+```bash
+ECA_CONFIG='{"my_config": "my_value"}' eca server
+```
 
 ## Protocol
 

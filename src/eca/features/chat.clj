@@ -4,6 +4,7 @@
    [clojure.set :as set]
    [clojure.string :as string]
    [eca.config :as config]
+   [eca.features.index :as f.index]
    [eca.llm-api :as llm-api]
    [eca.messenger :as messenger]
    [eca.shared :as shared]))
@@ -132,9 +133,14 @@
                                      (map :uri)
                                      (map shared/uri->filename)
                                      (mapcat (fn [root-filename]
-                                               (let [ignores (config/index-ignores-patterns root-filename config)]
-                                                 (->> (fs/glob root-filename (str "**" (or query "") "**"))
-                                                      (remove #(shared/any-path-matches? % root-filename ignores))))))
+                                               (let [all-files (fs/glob root-filename (str "**" (or query "") "**"))
+                                                     all-dirs (filter fs/directory? all-files)
+                                                     excluded-dirs (filter #(f.index/ignore? (str %) root-filename config) all-dirs)]
+                                                 (->> all-files
+                                                      (remove (fn [path]
+                                                                (or (some #(fs/starts-with? (str path) %) excluded-dirs)
+                                                                    (f.index/ignore? (str path) root-filename config))))))))
+                                     (take 200) ;; for performance, user can always make query specific for better results.
                                      (map (fn [file-or-dir]
                                             {:type (if (fs/directory? file-or-dir)
                                                      "directory"

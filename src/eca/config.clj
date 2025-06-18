@@ -18,7 +18,7 @@
    :ollama {:host "http://localhost"
             :port 11434}
    :chat {:welcome-message "Welcome to ECA! What you have in mind?\n\n"}
-   :index {:ignore-files [".gitignore"]}})
+   :index {:ignore-files [{:type :gitignore}]}})
 
 (defn ^:private safe-read-json-string [raw-string]
   (try
@@ -56,19 +56,5 @@
   (string/trim (slurp (io/resource "ECA_VERSION"))))
 
 (def eca-version (memoize eca-version*))
-
-(defn ^:private index-ignores-patterns* [root-filename config]
-  (concat []
-          (into []
-                (comp
-                 (keep (fn [file]
-                         (when (.exists (io/file root-filename file))
-                           (slurp (io/file root-filename file)))))
-                 (mapcat string/split-lines)
-                 (remove string/blank?)
-                 (map #(str "glob:" %)))
-                (get-in config [:index :ignore-files]))))
-
-(def index-ignores-patterns (memoize index-ignores-patterns*))
 
 (def ollama-model-prefix "ollama:")

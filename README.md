@@ -11,7 +11,7 @@ _Demo using [eca-emacs](https://github.com/editor-code-assistant/eca-emacs)_
 
 ## Rationale 
 
-<img src="images/rationale.jpg" width="300">
+<img src="images/rationale.jpg" width="500">
 
 An OpenSource editor agnostic tool that aims to easily link LLMs <-> Editors, giving the best UX possible for AI pair programming using a well-defined protocol.
 

@@ -54,7 +54,7 @@
    config]
   (let [chat-id (or chat-id
                     (let [new-id (str (random-uuid))]
-                      (swap! db* update :chats conj {:id new-id})
+                      (swap! db* assoc-in [:chats new-id] {:id new-id})
                       new-id))]
     (messenger/chat-content-received
      messenger
@@ -75,7 +75,8 @@
                   :state :running
                   :text "Parsing given context"}}))
     (let [refined-contexts (raw-context->refined contexts)
-          context (build-context (or behavior (:chat-default-behavior @db*)) refined-contexts)
+          context (build-context (or behavior (:chat-default-behavior @db*))
+                                 refined-contexts)
           chosen-model (or model (default-model @db*))]
       (messenger/chat-content-received
        messenger
@@ -88,8 +89,11 @@
       (llm-api/complete! {:model chosen-model
                           :user-prompt message
                           :context context
+                          :previous-response-id (get-in @db* [:chats chat-id chosen-model :previous-response-id])
                           :config config
-                          :on-message-received (fn [{:keys [message finish-reason]}]
+                          :on-message-received (fn [{:keys [message response-id finish-reason]}]
+                                                 (when response-id
+                                                   (swap! db* assoc-in [:chats chat-id chosen-model :previous-response-id] response-id))
                                                  (messenger/chat-content-received
                                                   messenger
                                                   {:chat-id chat-id

@@ -16,13 +16,14 @@
   ;; TODO ask LLM for the most relevant parts of the path
   (slurp path))
 
-(defn complete! [{:keys [model context user-prompt config on-message-received on-error]}]
+(defn complete! [{:keys [model context user-prompt previous-response-id config on-message-received on-error]}]
   (cond
     (contains? #{"o4-mini" "gpt-4.1"} model)
     (llm-providers.openai/completion!
      {:model model
       :context context
       :user-prompt user-prompt
+      :previous-response-id previous-response-id
       :api-key (:openai-api-key config)}
      {:on-message-received on-message-received
       :on-error on-error})

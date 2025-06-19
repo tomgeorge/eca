@@ -31,9 +31,8 @@
       message (assoc :message (:content message))
       done_reason (assoc :finish-reason done_reason))))
 
-(defn ^:private ->message-with-context [{:keys [role behavior context]} user-prompt]
-  (format "%s\n%s\n%s\nThe user is asking: '%s'"
-          role behavior context user-prompt))
+(defn ^:private ->message-with-context [context user-prompt]
+  (format "%s\nThe user is asking: '%s'" context user-prompt))
 
 (defn completion! [{:keys [model user-prompt context host port past-messages]}
                    {:keys [on-message-received on-error]}]

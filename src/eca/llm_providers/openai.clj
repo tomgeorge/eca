@@ -14,10 +14,6 @@
 
 (def ^:private url "https://api.openai.com/v1/responses")
 
-(defn ^:private ->instructions [{:keys [role behavior context]}]
-  (format "%s\n%s\n%s"
-          role behavior context))
-
 (defn ^:private event-data-seq [^BufferedReader rdr]
   (when-let [event (.readLine rdr)]
     (when (string/starts-with? event "event:")
@@ -34,7 +30,7 @@
   (let [body {:model model
               :input (conj past-messages {:role "user" :content user-prompt})
               :user (str (System/getProperty "user.name") "@ECA")
-              :instructions (->instructions context)
+              :instructions context
               :temperature temperature
               :stream true}
         api-key (or api-key

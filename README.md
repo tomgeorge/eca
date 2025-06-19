@@ -75,8 +75,8 @@ ECA_CONFIG='{"my_config": "my_value"}' eca server
 
 ## Supported editors
 
-- Emacs
-- VsCode: WIP
+- [Emacs](https://github.com/editor-code-assistant/eca-emacs)
+- [VsCode](https://github.com/editor-code-assistant/eca-vscode): WIP
 - Intellij: Planned
 - Vim: Planned, help welcome
 

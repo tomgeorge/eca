@@ -91,12 +91,11 @@ The protocol can be found [here](./docs/protocol.md), it follows the same standa
 - Support more editors: VScode, IntelliJ and Vim.
 - Rules configuration
 - Improve docs
-- Support more model options like thinking.
+- Support more model options like thinking, reasioning.
 - Improve context passed to LLM, creating a repo map or translating to embedded vectors.
 - Support more models.
 - Support MCP configuration.
 - Code completion using AI.
-- Doc generation using AI.
 - Edit/fix me support using AI.
 
 ## Contributing

@@ -75,7 +75,7 @@
                   :state :running
                   :text "Parsing given context"}}))
     (let [refined-contexts (raw-context->refined contexts)
-          context (build-context (or behavior (:chat-behavior @db*)) refined-contexts)
+          context (build-context (or behavior (:chat-default-behavior @db*)) refined-contexts)
           chosen-model (or model (default-model @db*))]
       (messenger/chat-content-received
        messenger

@@ -23,7 +23,8 @@
      (initialize-extra-models! db*)
      {:models (:models @db*)
       :chat-default-model (f.chat/default-model @db*)
-      :chat-behavior (:chat-behavior @db*)
+      :chat-behaviors (:chat-behaviors @db*)
+      :chat-default-behavior (:chat-default-behavior @db*)
       :chat-welcome-message (:welcome-message (:chat config))})))
 
 (defn shutdown [{:keys [db*]}]

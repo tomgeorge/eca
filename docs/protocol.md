@@ -146,12 +146,20 @@ interface InitializeResult {
      */
     models: ChatModel[];
     
+    /*
+     * Default model used by server.
+     */
     defaultModel: ChatModel;
     
     /*
-     * The chat behavior.
+     * The chat behaviors available.
      */
-    chatBehavior: ChatBehavior;
+    chatBehaviors: ChatBehavior[];
+    
+    /*
+     * Default chat behavior used by server.
+     */
+    chatDefaultBehavior: ChatBehavior;
     
     /*
      * The chat welcome message when chat is cleared or in a new state.

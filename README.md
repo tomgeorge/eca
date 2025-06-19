@@ -117,7 +117,6 @@ The protocol can be found [here](./docs/protocol.md), it follows the same standa
 - Centralize roadmap in a Github Project.
 - Error handling
 - Support more editors: VScode, IntelliJ and Vim.
-- Rules configuration
 - Improve docs splitting readme in different doc pages.
 - Support more model options like thinking, reasioning.
 - Improve context passed to LLM, creating a repo map or translating to embedded vectors.

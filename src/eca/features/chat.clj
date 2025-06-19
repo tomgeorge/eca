@@ -77,7 +77,6 @@
               :content {:type :progress
                         :state :running
                         :text "Parsing given context"}}))
-
         db @db*
         rules (config/rules config
                             (:workspace-folders db)

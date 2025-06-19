@@ -31,14 +31,16 @@
       message (assoc :message (:content message))
       done_reason (assoc :finish-reason done_reason))))
 
-(defn ^:private ->message [{:keys [role behavior context]} user-prompt]
+(defn ^:private ->message-with-context [{:keys [role behavior context]} user-prompt]
   (format "%s\n%s\n%s\nThe user is asking: '%s'"
           role behavior context user-prompt))
 
-(defn completion! [{:keys [model user-prompt context host port]}
+(defn completion! [{:keys [model user-prompt context host port past-messages]}
                    {:keys [on-message-received on-error]}]
   (let [body {:model model
-              :messages [{:role "user" :content (->message context user-prompt)}]
+              :messages (if (empty? past-messages)
+                          [{:role "user" :content (->message-with-context context user-prompt)}]
+                          (conj past-messages {:role "user" :content user-prompt}))
               :stream true}]
     (http/post
      (format chat-url host port)

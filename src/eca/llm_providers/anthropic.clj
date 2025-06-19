@@ -23,12 +23,12 @@
   (format "%s\n%s\n%s\n"
           role behavior context))
 
-(defn completion! [{:keys [model user-prompt temperature context max-tokens api-key]
+(defn completion! [{:keys [model user-prompt temperature context max-tokens api-key past-messages]
                     :or {max-tokens 1024
                          temperature 1.0}}
                    {:keys [on-message-received on-error]}]
   (let [body {:model model
-              :messages [{:role "user" :content user-prompt}]
+              :messages (conj past-messages {:role "user" :content user-prompt})
               :max_tokens max-tokens
               :temperature temperature
               ;; TODO support :thinking

@@ -14,22 +14,6 @@
 
 (def ^:private url "https://api.openai.com/v1/responses")
 
-#_(defn ^:private raw-data->response [data]
-    (let [{:keys [id type error output usage]} (json/parse-string data true)]
-      (mapcat (fn [{:keys [type status content]}]
-                (map (fn [{:keys [text]}]
-                       (cond-> {}
-                         text (assoc :message text)
-                         finish_reason (assoc :finish-reason finish_reason)))
-                     content))
-              output)))
-
-#_(raw-data->response
-   {:id "123"
-    :output [{:type "message"
-              :content [{:type "output_text"
-                         :text "olaaa"}]}]})
-
 (defn ^:private ->instructions [{:keys [role behavior context]}]
   (format "%s\n%s\n%s"
           role behavior context))
@@ -44,14 +28,13 @@
                  (json/parse-string (subs data 6) true)]
                 (lazy-seq (event-data-seq rdr))))))))
 
-(defn completion! [{:keys [model user-prompt context temperature api-key previous-response-id]
+(defn completion! [{:keys [model user-prompt context temperature api-key past-messages]
                     :or {temperature 1.0}}
                    {:keys [on-message-received on-error]}]
   (let [body {:model model
-              :input user-prompt
+              :input (conj past-messages {:role "user" :content user-prompt})
               :user (str (System/getProperty "user.name") "@ECA")
               :instructions (->instructions context)
-              :previous_response_id previous-response-id
               :temperature temperature
               :stream true}
         api-key (or api-key
@@ -74,8 +57,7 @@
              (doseq [[event data] (event-data-seq rdr)]
                (case event
                  "response.output_text.delta" (on-message-received {:message (:delta data)})
-                 "response.completed" (on-message-received {:response-id (-> data :response :id)
-                                                            :finish-reason (-> data :response :status)})
+                 "response.completed" (on-message-received {:finish-reason (-> data :response :status)})
                  nil))))
          (catch Exception e
            (on-error {:exception e}))))

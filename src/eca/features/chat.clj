@@ -74,10 +74,14 @@
         :content {:type :progress
                   :state :running
                   :text "Parsing given context"}}))
-    (let [refined-contexts (raw-context->refined contexts)
-          context (build-context (or behavior (:chat-default-behavior @db*))
+    (let [db @db*
+          refined-contexts (raw-context->refined contexts)
+          context (build-context (or behavior (:chat-default-behavior db))
                                  refined-contexts)
-          chosen-model (or model (default-model @db*))]
+          chosen-model (or model (default-model db))
+          past-messages (get-in db [:chats chat-id :messages] [])
+          user-prompt message
+          received-msgs* (atom "")]
       (messenger/chat-content-received
        messenger
        {:chat-id chat-id
@@ -86,22 +90,27 @@
         :content {:type :progress
                   :state :running
                   :text "Generating"}})
+      (swap! db* update-in [:chats chat-id :messages] (fnil conj []) {:role "user" :content user-prompt})
       (llm-api/complete! {:model chosen-model
-                          :user-prompt message
+                          :user-prompt user-prompt
                           :context context
-                          :previous-response-id (get-in @db* [:chats chat-id chosen-model :previous-response-id])
+                          :past-messages past-messages
                           :config config
-                          :on-message-received (fn [{:keys [message response-id finish-reason]}]
-                                                 (when response-id
-                                                   (swap! db* assoc-in [:chats chat-id chosen-model :previous-response-id] response-id))
-                                                 (messenger/chat-content-received
-                                                  messenger
-                                                  {:chat-id chat-id
-                                                   :request-id request-id
-                                                   :role :assistant
-                                                   :content {:type :text
-                                                             :text message}})
+                          :on-message-received (fn [{:keys [message finish-reason]}]
+                                                 (when message
+                                                   (swap! received-msgs* str message)
+                                                   (messenger/chat-content-received
+                                                    messenger
+                                                    {:chat-id chat-id
+                                                     :request-id request-id
+                                                     :role :assistant
+                                                     :content {:type :text
+                                                               :text message}}))
                                                  (when finish-reason
+                                                   (swap! db* update-in [:chats chat-id :messages]
+                                                          (fnil conj [])
+                                                          {:role "assistant"
+                                                           :content @received-msgs*})
                                                    (messenger/chat-content-received
                                                     messenger
                                                     {:chat-id chat-id

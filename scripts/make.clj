@@ -68,8 +68,10 @@
 (defn run-file
   "Starts the server process and send the content of given path as stdin"
   [& [path]]
-  (p/check
-   (p/process {:in (slurp path)
-               :cmd ["clojure" "-M:dev" "-m" "eca.main server"]
-               :out *out*
-               :err *err*})))
+  (-> (p/process {:cmd ["clojure" "-M:dev" "-m" "eca.main" "server"]
+                  :in (slurp path)
+                  :out :string
+                  :err :string})
+      p/check
+      :err
+      println))

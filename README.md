@@ -17,7 +17,6 @@ An OpenSource editor agnostic tool that aims to easily link LLMs <-> Editors, gi
 
 - **Editor-agnostic** protocol for any editor integrate.
 - **Chat** interface: ask questions, review diffs, work together with an agent in your codebase.
-- **AI-powered completions**, docs & refactorings.
 - **Streaming responses** and structured error handling.
 - **Pluggable models**: Ollama local models, OpenAI, Anthropic, more on the way.
 - **Single configuration**: Configure eca behavior making it feel the same in any editor.
@@ -118,8 +117,9 @@ The protocol can be found [here](./docs/protocol.md), it follows the same standa
 - Error handling
 - Support more editors: VScode, IntelliJ and Vim.
 - Improve docs splitting readme in different doc pages.
-- Support more model options like thinking, reasioning.
 - Improve context passed to LLM, creating a repo map or translating to embedded vectors.
+- Support more model options like thinking, reasioning.
+- Support more contexts like documentation.
 - Support more models.
 - Support MCP configuration.
 - Code completion using AI.

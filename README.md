@@ -23,6 +23,8 @@ A Free and OpenSource editor-agnostic tool that aims to easily link LLMs <-> Edi
 
 ## Installation
 
+Eca is written in Clojure and compiled into a native binary via graalvm. You can download the binaries from Github Releases or use the install script for convenience:
+
 Stable release:
 
 ```bash

@@ -2,9 +2,23 @@
   (:require
    [babashka.deps :as deps]
    [babashka.fs :as fs]
-   [babashka.process :as p]))
+   [babashka.process :as p]
+   [babashka.tasks :refer [shell]]
+   [clojure.string :as string]))
 
 (def windows? (#'fs/windows?))
+
+(defn ^:private replace-in-file [file regex content]
+  (as-> (slurp file) $
+    (string/replace $ regex content)
+    (spit file $)))
+
+(defn ^:private add-changelog-entry [tag comment]
+  (replace-in-file "CHANGELOG.md"
+                   #"## Unreleased"
+                   (if comment
+                     (format "## Unreleased\n\n## %s\n\n- %s" tag comment)
+                     (format "## Unreleased\n\n## %s" tag))))
 
 (defn ^:private mv-here [file]
   (fs/move file "." {:replace-existing true}))
@@ -37,3 +51,15 @@
   []
   (build "native-cli")
   (mv-here (fs/path (eca-bin-filename :native))))
+
+(defn tag [& [tag]]
+  (shell "git fetch origin")
+  (shell "git pull origin HEAD")
+  (spit "resources/ECA_VERSION" tag)
+  (add-changelog-entry tag nil)
+  (prod-jar)
+  (shell "git add resources/ECA_VERSION CHANGELOG.md")
+  (shell (format "git commit -m \"Release: %s\"" tag))
+  (shell (str "git tag " tag))
+  (shell "git push origin HEAD")
+  (shell "git push origin --tags"))

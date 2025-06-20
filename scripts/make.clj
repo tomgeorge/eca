@@ -4,6 +4,7 @@
    [babashka.fs :as fs]
    [babashka.process :as p]
    [babashka.tasks :refer [shell]]
+   [clojure.java.io :as io]
    [clojure.string :as string]))
 
 (def windows? (#'fs/windows?))
@@ -63,3 +64,12 @@
   (shell (str "git tag " tag))
   (shell "git push origin HEAD")
   (shell "git push origin --tags"))
+
+(defn run-file
+  "Starts the server process and send the content of given path as stdin"
+  [& [path]]
+  (p/check
+   (p/process {:in (slurp path)
+               :cmd ["clojure" "-M:dev" "-m" "eca.main server"]
+               :out *out*
+               :err *err*})))

@@ -120,3 +120,4 @@ Check the planned work [here](https://github.com/orgs/editor-code-assistant/proj
 ## Contributing
 
 Contributions are very welcome, please open an issue for discussion or a pull request.
+For developer details, check [this doc](./docs/development.md).

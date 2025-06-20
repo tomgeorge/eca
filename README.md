@@ -113,17 +113,7 @@ The protocol can be found [here](./docs/protocol.md), it follows the same standa
 
 ## Roadmap
 
-- Centralize roadmap in a Github Project.
-- Error handling
-- Support more editors: VScode, IntelliJ and Vim.
-- Improve docs splitting readme in different doc pages.
-- Improve context passed to LLM, creating a repo map or translating to embedded vectors.
-- Support more model options like thinking, reasioning.
-- Support more contexts like documentation.
-- Support more models.
-- Support MCP configuration.
-- Code completion using AI.
-- Edit/fix me support using AI.
+Check the planned work [here](https://github.com/orgs/editor-code-assistant/projects/1/views/1).
 
 ## Contributing
 

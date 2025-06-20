@@ -6,7 +6,6 @@
    [eca.config :as config]
    [eca.features.index :as f.index]
    [eca.llm-api :as llm-api]
-   [eca.logger :as logger]
    [eca.messenger :as messenger]
    [eca.shared :as shared]))
 

@@ -215,7 +215,6 @@ jobs:
         with:
           java-version: '21'
           distribution: 'graalvm'
-          native-image-musl: 'true'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build MacOS native image
@@ -263,7 +262,6 @@ jobs:
         with:
           java-version: '21'
           distribution: 'graalvm'
-          native-image-musl: 'true'
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build MacOS native image

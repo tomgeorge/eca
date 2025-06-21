@@ -1,7 +1,6 @@
 (ns eca.features.rules-test
   (:require
    [babashka.fs :as fs]
-   [clojure.string :as string]
    [clojure.test :refer [deftest is testing]]
    [eca.features.rules :as f.rules]
    [eca.test-helper :as h]

@@ -37,7 +37,7 @@
                     fs/exists? (constantly true)
                     fs/list-dir (constantly [])
                     fs/canonicalize identity
-                    fs/file-name (fn [p] (last (string/split (str p) #"/")))
+                    fs/file-name (fn [p] (last (string/split (str p) (re-pattern fs/file-separator))))
                     clojure.core/slurp (constantly "MY_RULE_CONTENT")]
         (let [config {:rules [{:path ".foo/cool-rule.md"}]}
               roots [{:uri (h/file-uri "file:///my/project")}]]

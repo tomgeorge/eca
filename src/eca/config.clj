@@ -8,17 +8,22 @@
   (:require
    [camel-snake-kebab.core :as csk]
    [cheshire.core :as json]
+   [clojure.core.memoize :as memoize]
    [clojure.java.io :as io]
-   [clojure.string :as string]))
+   [clojure.string :as string]
+   [eca.shared :as shared]))
 
 (def ^:private initial-config
   {:openai-api-key nil
    :anthropic-api-key nil
    :rules []
+   :mcp-servers []
    :ollama {:host "http://localhost"
             :port 11434}
    :chat {:welcome-message "Welcome to ECA! What you have in mind?\n\n"}
    :index {:ignore-files [{:type :gitignore}]}})
+
+(def ttl-cache-config-ms 5000)
 
 (defn ^:private safe-read-json-string [raw-string]
   (try
@@ -33,12 +38,18 @@
 
 (def ^:private config-from-envvar (memoize config-from-envvar*))
 
-(defn ^:private config-from-file* []
-  (let [config-file (io/file ".eca" "config.json")]
-    (when (.exists config-file)
-      (safe-read-json-string (slurp config-file)))))
+(defn ^:private config-from-file* [roots]
+  (reduce
+   (fn [final-config {:keys [uri]}]
+     (merge
+      final-config
+      (let [config-file (io/file (shared/uri->filename uri) ".eca" "config.json")]
+        (when (.exists config-file)
+          (safe-read-json-string (slurp config-file))))))
+   {}
+   roots))
 
-(def ^:private config-from-local-file (memoize config-from-file*))
+(def ^:private config-from-local-file (memoize/ttl config-from-file* :ttl/threshold ttl-cache-config-ms))
 
 (defn ^:private deep-merge [& maps]
   (apply merge-with (fn [& args]
@@ -54,7 +65,7 @@
 
 (def ollama-model-prefix "ollama:")
 
-(defn all []
+(defn all [db]
   (deep-merge initial-config
               (config-from-envvar)
-              (config-from-local-file)))
+              (config-from-local-file (:workspace-folders db))))

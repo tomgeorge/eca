@@ -145,7 +145,7 @@
 (defn query-context
   [{:keys [query contexts chat-id]}
    db*]
-  (let [config (config/all)
+  (let [config (config/all @db*)
         all-subfiles-and-dirs (into []
                                     (comp
                                      (map :uri)

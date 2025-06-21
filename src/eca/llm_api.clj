@@ -17,40 +17,46 @@
   (slurp path))
 
 (defn complete!
-  [{:keys [model context user-prompt config on-message-received on-error past-messages]}]
-  (cond
-    (contains? #{"o4-mini" "gpt-4.1"} model)
-    (llm-providers.openai/completion!
-     {:model model
-      :context context
-      :user-prompt user-prompt
-      :past-messages past-messages
-      :api-key (:openai-api-key config)}
-     {:on-message-received on-message-received
-      :on-error on-error})
+  [{:keys [model context user-prompt config on-first-message-received on-message-received on-error past-messages]}]
+  (let [first-message-received* (atom false)
+        on-message-received-wrapper (fn [& args]
+                                      (when-not @first-message-received*
+                                        (reset! first-message-received* true)
+                                        (apply on-first-message-received args))
+                                      (apply on-message-received args))]
+    (cond
+      (contains? #{"o4-mini" "gpt-4.1"} model)
+      (llm-providers.openai/completion!
+       {:model model
+        :context context
+        :user-prompt user-prompt
+        :past-messages past-messages
+        :api-key (:openai-api-key config)}
+       {:on-message-received on-message-received-wrapper
+        :on-error on-error})
 
-    (contains? #{"claude-sonnet-4-0"
-                 "claude-opus-4-0"
-                 "claude-3-5-haiku-latest"} model)
-    (llm-providers.anthropic/completion!
-     {:model model
-      :context context
-      :user-prompt user-prompt
-      :past-messages past-messages
-      :api-key (:anthropic-api-key config)}
-     {:on-message-received on-message-received
-      :on-error on-error})
+      (contains? #{"claude-sonnet-4-0"
+                   "claude-opus-4-0"
+                   "claude-3-5-haiku-latest"} model)
+      (llm-providers.anthropic/completion!
+       {:model model
+        :context context
+        :user-prompt user-prompt
+        :past-messages past-messages
+        :api-key (:anthropic-api-key config)}
+       {:on-message-received on-message-received-wrapper
+        :on-error on-error})
 
-    (string/starts-with? model config/ollama-model-prefix)
-    (llm-providers.ollama/completion!
-     {:host (-> config :ollama :host)
-      :port (-> config :ollama :port)
-      :model (string/replace-first model config/ollama-model-prefix "")
-      :past-messages past-messages
-      :context context
-      :user-prompt user-prompt}
-     {:on-message-received on-message-received
-      :on-error on-error})
+      (string/starts-with? model config/ollama-model-prefix)
+      (llm-providers.ollama/completion!
+       {:host (-> config :ollama :host)
+        :port (-> config :ollama :port)
+        :model (string/replace-first model config/ollama-model-prefix "")
+        :past-messages past-messages
+        :context context
+        :user-prompt user-prompt}
+       {:on-message-received on-message-received-wrapper
+        :on-error on-error})
 
-    :else
-    (on-error {:msg (str "ECA Unsupported model: " model)})))
+      :else
+      (on-error {:msg (str "ECA Unsupported model: " model)}))))

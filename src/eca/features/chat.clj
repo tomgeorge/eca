@@ -87,6 +87,7 @@
         past-messages (get-in db [:chats chat-id :messages] [])
         user-prompt message
         received-msgs* (atom "")]
+    (swap! db* update-in [:chats chat-id :messages] (fnil conj []) {:role "user" :content user-prompt})
     (messenger/chat-content-received
      messenger
      {:chat-id chat-id
@@ -94,50 +95,59 @@
       :role :system
       :content {:type :progress
                 :state :running
-                :text "Generating"}})
-    (swap! db* update-in [:chats chat-id :messages] (fnil conj []) {:role "user" :content user-prompt})
-    (llm-api/complete! {:model chosen-model
-                        :user-prompt user-prompt
-                        :context context-str
-                        :past-messages past-messages
-                        :config config
-                        :on-message-received (fn [{:keys [message finish-reason]}]
-                                               (when message
-                                                 (swap! received-msgs* str message)
-                                                 (messenger/chat-content-received
-                                                  messenger
-                                                  {:chat-id chat-id
-                                                   :request-id request-id
-                                                   :role :assistant
-                                                   :content {:type :text
-                                                             :text message}}))
-                                               (when finish-reason
-                                                 (swap! db* update-in [:chats chat-id :messages]
-                                                        (fnil conj [])
-                                                        {:role "assistant"
-                                                         :content @received-msgs*})
-                                                 (messenger/chat-content-received
-                                                  messenger
-                                                  {:chat-id chat-id
-                                                   :request-id request-id
-                                                   :role :system
-                                                   :content {:type :progress
-                                                             :state :finished}})))
-                        :on-error (fn [{:keys [message exception]}]
-                                    (messenger/chat-content-received
-                                     messenger
-                                     {:chat-id chat-id
-                                      :request-id request-id
-                                      :role :system
-                                      :content {:type :text
-                                                :text (str (or message (ex-message exception)) "\n")}})
-                                    (messenger/chat-content-received
-                                     messenger
-                                     {:chat-id chat-id
-                                      :request-id request-id
-                                      :role :system
-                                      :content {:type :progress
-                                                :state :finished}}))})
+                :text "Waiting model"}})
+    (llm-api/complete!
+     {:model chosen-model
+      :user-prompt user-prompt
+      :context context-str
+      :past-messages past-messages
+      :config config
+      :on-first-message-received (fn [_]
+                                   (messenger/chat-content-received
+                                    messenger
+                                    {:chat-id chat-id
+                                     :request-id request-id
+                                     :role :system
+                                     :content {:type :progress
+                                               :state :running
+                                               :text "Generating"}}))
+      :on-message-received (fn [{:keys [message finish-reason]}]
+                             (when message
+                               (swap! received-msgs* str message)
+                               (messenger/chat-content-received
+                                messenger
+                                {:chat-id chat-id
+                                 :request-id request-id
+                                 :role :assistant
+                                 :content {:type :text
+                                           :text message}}))
+                             (when finish-reason
+                               (swap! db* update-in [:chats chat-id :messages]
+                                      (fnil conj [])
+                                      {:role "assistant"
+                                       :content @received-msgs*})
+                               (messenger/chat-content-received
+                                messenger
+                                {:chat-id chat-id
+                                 :request-id request-id
+                                 :role :system
+                                 :content {:type :progress
+                                           :state :finished}})))
+      :on-error (fn [{:keys [message exception]}]
+                  (messenger/chat-content-received
+                   messenger
+                   {:chat-id chat-id
+                    :request-id request-id
+                    :role :system
+                    :content {:type :text
+                              :text (str (or message (ex-message exception)) "\n")}})
+                  (messenger/chat-content-received
+                   messenger
+                   {:chat-id chat-id
+                    :request-id request-id
+                    :role :system
+                    :content {:type :progress
+                              :state :finished}}))})
     {:chat-id chat-id
      :model chosen-model
      :status :success}))

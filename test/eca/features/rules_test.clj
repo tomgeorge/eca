@@ -43,7 +43,7 @@
               roots [{:uri (h/file-uri "file:///my/project")}]]
           (is (match?
                (m/embeds [{:type :user-config
-                           :path "/my/project/.foo/cool-rule.md"
+                           :path (h/file-path "/my/project/.foo/cool-rule.md")
                            :name "cool-rule.md"
                            :content "MY_RULE_CONTENT"}])
                (f.rules/all config roots vars))))))

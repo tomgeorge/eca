@@ -36,6 +36,13 @@
                     :native ".exe"
                     :script ".bat"))))
 
+(defn ^:private make-literal [a]
+  (.replace a "\"" "\\\""))
+
+(defn ^:private extract-text-between [prefix suffix from-string]
+  (let [pattern (str (make-literal prefix) "([\\s\\S]*?)" (make-literal suffix))]
+    (second (re-find (re-pattern pattern) from-string))))
+
 (defn debug-cli
   "Build the `eca[.bat]` debug executable (suppots `cider-nrepl`)."
   []
@@ -63,6 +70,11 @@
   (shell (str "git tag " tag))
   (shell "git push origin HEAD")
   (shell "git push origin --tags"))
+
+(defn get-last-changelog-entry [version]
+  (println (->> (slurp "CHANGELOG.md")
+                (extract-text-between (str "## " version) "## ")
+                string/trim)))
 
 (defn run-file
   "Starts the server process and send the content of given path as stdin"

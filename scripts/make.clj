@@ -4,7 +4,6 @@
    [babashka.fs :as fs]
    [babashka.process :as p]
    [babashka.tasks :refer [shell]]
-   [clojure.java.io :as io]
    [clojure.string :as string]))
 
 (def windows? (#'fs/windows?))

@@ -86,3 +86,8 @@
       p/check
       :err
       println))
+
+(defn unit-test []
+  (println :running-unit-tests...)
+  (clj! ["-M:test"])
+  (println))

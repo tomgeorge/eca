@@ -6,6 +6,8 @@
          prod-jar make/prod-jar
          native-cli make/native-cli
 
+         test make/unit-test
+
          run-file make/run-file
 
          tag make/tag

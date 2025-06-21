@@ -23,12 +23,12 @@
                     fs/absolute? (constantly true)
                     fs/exists? (constantly true)
                     fs/canonicalize identity
-                    fs/file-name (fn [p] (last (string/split p #"/")))]
-        (let [config {:rules [{:path "/path/to/my-rule.md"}]}]
+                    fs/file-name (constantly "cool-name")]
+        (let [config {:rules [{:path (h/file-path "/path/to/my-rule.md")}]}]
           (is (match?
                (m/embeds [{:type :user-config
-                           :path "/path/to/my-rule.md"
-                           :name "my-rule.md"
+                           :path (h/file-path "/path/to/my-rule.md")
+                           :name "cool-name"
                            :content "MY_RULE_CONTENT"}])
                (f.rules/all config [] vars))))))
 
@@ -37,27 +37,27 @@
                     fs/exists? (constantly true)
                     fs/list-dir (constantly [])
                     fs/canonicalize identity
-                    fs/file-name (fn [p] (last (string/split (str p) (re-pattern fs/file-separator))))
+                    fs/file-name (constantly "cool-name")
                     clojure.core/slurp (constantly "MY_RULE_CONTENT")]
         (let [config {:rules [{:path ".foo/cool-rule.md"}]}
               roots [{:uri (h/file-uri "file:///my/project")}]]
           (is (match?
-               (m/embeds [{:type :user-config
-                           :path (h/file-path "/my/project/.foo/cool-rule.md")
-                           :name "cool-rule.md"
-                           :content "MY_RULE_CONTENT"}])
-               (f.rules/all config roots vars))))))
+                (m/embeds [{:type :user-config
+                            :path (h/file-path "/my/project/.foo/cool-rule.md")
+                            :name "cool-name"
+                            :content "MY_RULE_CONTENT"}])
+                (f.rules/all config roots vars))))))
 
     (testing "file rules"
       (with-redefs [fs/exists? (constantly true)
-                    fs/list-dir (constantly [(fs/path "cool-rule.md")])
+                    fs/list-dir (constantly [(fs/path "cool.md")])
                     fs/canonicalize identity
-                    fs/file-name (fn [p] (last (string/split (str p) #"/")))
+                    fs/file-name (constantly "cool-name")
                     clojure.core/slurp (constantly "MY_RULE_CONTENT")]
         (let [roots [{:uri (h/file-uri "file:///my/project")}]]
           (is (match?
                (m/embeds [{:type :user-file
-                           :path "cool-rule.md"
-                           :name "cool-rule.md"
+                           :path "cool.md"
+                           :name "cool-name"
                            :content "MY_RULE_CONTENT"}])
                (f.rules/all {} roots vars))))))))

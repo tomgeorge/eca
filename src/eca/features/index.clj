@@ -2,6 +2,8 @@
   (:require
    [clojure.java.shell :as shell]))
 
+(set! *warn-on-reflection* true)
+
 (defn ignore? [filename root-filename config]
   (boolean
    (some

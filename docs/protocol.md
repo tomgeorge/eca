@@ -394,7 +394,8 @@ interface ChatContentReceivedParams {
 type ChatContent = 
     | TextContent 
     | ProgressContent 
-    | FileChangeContent;
+    | FileChangeContent
+    | MCPToolCallContent;
 
 /**
  * Simple text message from the LLM
@@ -486,6 +487,33 @@ interface FileChangeContent {
             endLine: number;
         };
     }];
+}
+
+/**
+ * MCP tool calls that LLM may trigger.
+ */
+interface MCPToolCallContent {
+    type: 'mcpToolCall';
+    
+    /**
+     * id of the tool call
+     */
+    id: string;
+    
+    /**
+     * Name of the tool
+     */
+    name: string;
+    
+    /*
+     * Arguments of this tool call
+     */
+    arguments: string[];
+    
+    /**
+     * Whether this call requires manual approval from the user.
+     */
+    manualApproval: boolean;
 }
 ```
 

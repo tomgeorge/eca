@@ -3,8 +3,11 @@
    [eca.config :as config]
    [eca.db :as db]
    [eca.features.chat :as f.chat]
+   [eca.features.mcp :as f.mcp]
    [eca.llm-api :as llm-api]
    [eca.logger :as logger]))
+
+(set! *warn-on-reflection* true)
 
 (defn ^:private initialize-extra-models! [db*]
   (let [config (config/all @db*)]
@@ -14,13 +17,15 @@
 (defn initialize [{:keys [db*]} params]
   (logger/logging-task
    :eca/initialize
+   (swap! db* assoc
+          :client-info (:client-info params)
+          :workspace-folders (:workspace-folders params)
+          :client-capabilities (:capabilities params)
+          :chat-behavior (or (-> params :initialization-options :chat-behavior) (:chat-behavior @db*)))
    (let [config (config/all @db*)]
-     (swap! db* assoc
-            :client-info (:client-info params)
-            :workspace-folders (:workspace-folders params)
-            :client-capabilities (:capabilities params)
-            :chat-behavior (or (-> params :initialization-options :chat-behavior) (:chat-behavior @db*)))
      (initialize-extra-models! db*)
+     ;; TODO initialize async with progress support
+     (f.mcp/initialize! db* config)
      {:models (:models @db*)
       :chat-default-model (f.chat/default-model @db*)
       :chat-behaviors (:chat-behaviors @db*)
@@ -30,6 +35,7 @@
 (defn shutdown [{:keys [db*]}]
   (logger/logging-task
    :eca/shutdown
+   (f.mcp/shutdown! db*)
    (reset! db* db/initial-db)
    nil))
 

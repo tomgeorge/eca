@@ -13,10 +13,13 @@
    [clojure.string :as string]
    [eca.shared :as shared]))
 
+(set! *warn-on-reflection* true)
+
 (def ^:private initial-config
   {:openai-api-key nil
    :anthropic-api-key nil
    :rules []
+   :mcp-timeout-seconds 10
    :mcp-servers []
    :ollama {:host "http://localhost"
             :port 11434}

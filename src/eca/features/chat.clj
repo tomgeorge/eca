@@ -5,10 +5,13 @@
    [clojure.string :as string]
    [eca.config :as config]
    [eca.features.index :as f.index]
+   [eca.features.mcp :as f.mcp]
    [eca.features.rules :as f.rules]
    [eca.llm-api :as llm-api]
    [eca.messenger :as messenger]
    [eca.shared :as shared]))
+
+(set! *warn-on-reflection* true)
 
 (defn ^:private raw-contexts->refined [contexts]
   (mapcat (fn [{:keys [type path]}]
@@ -50,6 +53,19 @@
     ollama-model
     (:default-model db)))
 
+(defn ^:private all-mcp-tools! [chat-id request-id messenger db*]
+  (when-not (f.mcp/tools-cached? @db*)
+    (messenger/chat-content-received
+     messenger
+     {:chat-id chat-id
+      :request-id request-id
+      :role :system
+      :content {:type :progress
+                :state :running
+                :text "Finding MCPs"}})
+    (f.mcp/cache-tools! db*))
+  (f.mcp/list-tools @db*))
+
 (defn prompt
   [{:keys [message model behavior contexts chat-id request-id]}
    db*
@@ -86,6 +102,7 @@
         chosen-model (or model (default-model db))
         past-messages (get-in db [:chats chat-id :messages] [])
         user-prompt message
+        mcp-tools (all-mcp-tools! chat-id request-id messenger db*)
         received-msgs* (atom "")]
     (swap! db* update-in [:chats chat-id :messages] (fnil conj []) {:role "user" :content user-prompt})
     (messenger/chat-content-received
@@ -102,6 +119,7 @@
       :context context-str
       :past-messages past-messages
       :config config
+      :mcp-tools mcp-tools
       :on-first-message-received (fn [_]
                                    (messenger/chat-content-received
                                     messenger
@@ -133,6 +151,17 @@
                                  :role :system
                                  :content {:type :progress
                                            :state :finished}})))
+      :on-tool-called (fn [{:keys [name arguments]}]
+                        (messenger/chat-content-received
+                         messenger
+                         {:chat-id chat-id
+                          :request-id request-id
+                          :role :assistant
+                          :content {:type :mcpToolCall
+                                    :name name
+                                    :arguments arguments
+                                    :manual-approval false}})
+                        (f.mcp/call-tool! name arguments @db*))
       :on-error (fn [{:keys [message exception]}]
                   (messenger/chat-content-received
                    messenger

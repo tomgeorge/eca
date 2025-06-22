@@ -1,5 +1,7 @@
 (ns eca.db)
 
+(set! *warn-on-reflection* true)
+
 (defonce initial-db
   {:client-info {}
    :workspace-folders []

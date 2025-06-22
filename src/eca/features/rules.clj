@@ -4,6 +4,8 @@
    [clojure.string :as string]
    [eca.shared :as shared]))
 
+(set! *warn-on-reflection* true)
+
 (defn ^:private file-rules [roots]
   (->> roots
        (mapcat (fn [{:keys [uri]}]

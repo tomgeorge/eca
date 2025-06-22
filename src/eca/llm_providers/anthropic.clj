@@ -6,6 +6,8 @@
    [eca.logger :as logger]
    [hato.client :as http]))
 
+(set! *warn-on-reflection* true)
+
 (def ^:private logger-tag "[ANTHROPIC]")
 
 (def ^:private url "https://api.anthropic.com/v1/messages")

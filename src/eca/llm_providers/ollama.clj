@@ -5,6 +5,8 @@
    [eca.logger :as logger]
    [hato.client :as http]))
 
+(set! *warn-on-reflection* true)
+
 (def ^:private logger-tag "[OLLAMA]")
 
 (def ^:private chat-url "%s/api/chat")

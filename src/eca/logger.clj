@@ -1,5 +1,7 @@
 (ns eca.logger)
 
+(set! *warn-on-reflection* true)
+
 (defn ^:private stderr-print [& args]
   (binding [*out* *err*]
     (apply println args)))

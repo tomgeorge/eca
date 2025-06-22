@@ -5,6 +5,8 @@
    [java.net URI]
    [java.nio.file Paths]))
 
+(set! *warn-on-reflection* true)
+
 (defn uri->filename [uri]
   (let [uri (URI. uri)]
     (-> uri Paths/get .toString

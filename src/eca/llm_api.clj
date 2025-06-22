@@ -16,14 +16,21 @@
   ;; TODO ask LLM for the most relevant parts of the path
   (slurp path))
 
+(defn ^:private mcp-tool->llm-tool [mcp-tool]
+  (assoc (select-keys mcp-tool [:name :description :parameters])
+         :type "function"))
+
 (defn complete!
-  [{:keys [model context user-prompt config on-first-message-received on-message-received on-error past-messages]}]
+  [{:keys [model context user-prompt config on-first-message-received
+           on-message-received on-error on-tool-called
+           past-messages mcp-tools]}]
   (let [first-message-received* (atom false)
         on-message-received-wrapper (fn [& args]
                                       (when-not @first-message-received*
                                         (reset! first-message-received* true)
                                         (apply on-first-message-received args))
-                                      (apply on-message-received args))]
+                                      (apply on-message-received args))
+        tools (map mcp-tool->llm-tool mcp-tools)]
     (cond
       (contains? #{"o4-mini" "gpt-4.1"} model)
       (llm-providers.openai/completion!
@@ -31,9 +38,11 @@
         :context context
         :user-prompt user-prompt
         :past-messages past-messages
+        :tools tools
         :api-key (:openai-api-key config)}
        {:on-message-received on-message-received-wrapper
-        :on-error on-error})
+        :on-error on-error
+        :on-tool-called on-tool-called})
 
       (contains? #{"claude-sonnet-4-0"
                    "claude-opus-4-0"

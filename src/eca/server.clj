@@ -10,6 +10,8 @@
    [lsp4clj.liveness-probe :as liveness-probe]
    [lsp4clj.server :as lsp.server]))
 
+(set! *warn-on-reflection* true)
+
 (def ^:private logger-tag "[server]")
 
 (defn ^:private log-wrapper-fn

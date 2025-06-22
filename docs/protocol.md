@@ -568,3 +568,11 @@ Soon
 ### Edit (↩️)
 
 Soon
+
+### List MCPs (↩️)
+
+Soon
+
+### Add MCP (↩️)
+
+Soon

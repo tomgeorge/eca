@@ -13,6 +13,7 @@
 ### OpenAI
 
 - [o4-mini](https://platform.openai.com/docs/models/o4-mini)
+- [o3](https://platform.openai.com/docs/models/o3)
 - [gpt-4.1](https://platform.openai.com/docs/models/gpt-4.1)
 
 ### Anthropic

@@ -262,15 +262,15 @@ interface ChatPromptParams {
 }
 
 /**
- * The currently supported models, auto means let server decide.
+ * The currently supported models.
  */
 type ChatModel = 
     | 'o4-mini'
+    | 'o3'
     | 'gpt-4.1'
     | 'claude-sonnet-4-0'
     | 'claude-opus-4-0'
     | 'claude-3-5-haiku-latest'
-    | 'auto'
     OllamaRunningModel;
     
 /**

@@ -4,6 +4,7 @@
 
 - Add env support for mcps
 - Add web_search capability
+- Add `o3` model support.
 
 ## 0.0.3
 

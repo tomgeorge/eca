@@ -11,6 +11,8 @@
    :chat-default-behavior "chat"
    :models {"o4-mini" {:mcp-tools true
                        :web-search false}
+            "o3" {:mcp-tools true
+                  :web-search false}
             "gpt-4.1" {:mcp-tools true
                        :web-search true}
             "claude-sonnet-4-0" {:mcp-tools true

@@ -34,7 +34,9 @@
                 (map mcp-tool->llm-tool mcp-tools))
         web-search (:web-search model-config)]
     (cond
-      (contains? #{"o4-mini" "gpt-4.1"} model)
+      (contains? #{"o4-mini"
+                   "o3"
+                   "gpt-4.1"} model)
       (llm-providers.openai/completion!
        {:model model
         :context context

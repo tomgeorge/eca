@@ -17,7 +17,7 @@
               (fn [models {:keys [model]}]
                 (assoc models
                        (str config/ollama-model-prefix model)
-                       {:mcp-tools (get-in config [:ollama :use-tools] false)}))
+                       {:mcp-tools (get-in config [:ollama :useTools] false)}))
               {}
               ollama-models)))))
 
@@ -37,7 +37,7 @@
       :chat-default-model (f.chat/default-model @db*)
       :chat-behaviors (:chat-behaviors @db*)
       :chat-default-behavior (:chat-default-behavior @db*)
-      :chat-welcome-message (:welcome-message (:chat config))})))
+      :chat-welcome-message (:welcomeMessage (:chat config))})))
 
 (defn shutdown [{:keys [db*]}]
   (logger/logging-task

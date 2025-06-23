@@ -30,14 +30,14 @@
 
 (defn ^:private ->client ^McpSyncClient [transport config]
   (-> (McpClient/sync transport)
-      (.requestTimeout (Duration/ofSeconds (:mcp-timeout-seconds config)))
+      (.requestTimeout (Duration/ofSeconds (:mcpTimeoutSeconds config)))
       (.capabilities (-> (McpSchema$ClientCapabilities/builder)
                          (.roots true)
                          (.build)))
       (.build)))
 
 (defn initialize! [db* config]
-  (doseq [[name server-config] (:mcp-servers config)]
+  (doseq [[name server-config] (:mcpServers config)]
     (try
       (when-not (get-in @db* [:mcp-clients name])
         (let [transport (->transport server-config)

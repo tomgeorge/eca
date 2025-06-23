@@ -6,7 +6,7 @@
 
 ;; a helper config that only looks at :gitignore entries
 (def gitignore-config
-  {:index {:ignore-files [{:type :gitignore}]}})
+  {:index {:ignoreFiles [{:type :gitignore}]}})
 
 (deftest ignore?-test
   (testing "gitignore type"

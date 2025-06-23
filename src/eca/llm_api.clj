@@ -44,7 +44,7 @@
         :past-messages past-messages
         :tools tools
         :web-search web-search
-        :api-key (:openai-api-key config)}
+        :api-key (:openaiApiKey config)}
        {:on-message-received on-message-received-wrapper
         :on-error on-error
         :on-tool-called on-tool-called})
@@ -59,7 +59,7 @@
         :past-messages past-messages
         :tools tools
         :web-search web-search
-        :api-key (:anthropic-api-key config)}
+        :api-key (:anthropicApiKey config)}
        {:on-message-received on-message-received-wrapper
         :on-error on-error
         :on-tool-called on-tool-called})

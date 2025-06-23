@@ -11,7 +11,7 @@ Client editors can pass custom settings when sending the `initialize` request vi
 
 ```javascript
 "initializationOptions": {
-  "chat_behavior": "chat"
+  "chatBehavior": "chat"
 }
 ```
 
@@ -21,7 +21,7 @@ Client editors can pass custom settings when sending the `initialize` request vi
 
 ```javascript
 {
-  "chat_behavior": "chat"
+  "chatBehavior": "chat"
 }
 ```
 
@@ -30,7 +30,7 @@ Client editors can pass custom settings when sending the `initialize` request vi
 Via env var during server process spawn:
 
 ```bash
-ECA_CONFIG='{"my_config": "my_value"}' eca server
+ECA_CONFIG='{"myConfig": "my_value"}' eca server
 ```
 
 ## Rules

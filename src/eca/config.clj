@@ -6,7 +6,6 @@
   3. local config-file: searching from a local `.eca/config.json` file.
   4. `initializatonOptions` sent in `initialize` request."
   (:require
-   [camel-snake-kebab.core :as csk]
    [cheshire.core :as json]
    [clojure.core.memoize :as memoize]
    [clojure.java.io :as io]
@@ -16,23 +15,22 @@
 (set! *warn-on-reflection* true)
 
 (def ^:private initial-config
-  {:openai-api-key nil
-   :anthropic-api-key nil
+  {:openaiApiKey nil
+   :anthropicApiKey nil
    :rules []
-   :mcp-timeout-seconds 10
-   :mcp-servers []
+   :mcpTimeoutSeconds 10
+   :mcpServers []
    :ollama {:host "http://localhost"
             :port 11434
-            :use-tools false}
-   :chat {:welcome-message "Welcome to ECA! What you have in mind?\n\n"}
-   :index {:ignore-files [{:type :gitignore}]}})
+            :useTools false}
+   :chat {:welcomeMessage "Welcome to ECA! What you have in mind?\n\n"}
+   :index {:ignoreFiles [{:type :gitignore}]}})
 
 (def ttl-cache-config-ms 5000)
 
 (defn ^:private safe-read-json-string [raw-string]
   (try
-    (json/parse-string raw-string (fn [key]
-                                    (csk/->kebab-case (keyword key))))
+    (json/parse-string raw-string true)
     (catch Exception _
       nil)))
 

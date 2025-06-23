@@ -14,4 +14,4 @@
                                         :dir root-filename)
                               (catch Exception _ nil))))
         nil))
-    (get-in config [:index :ignore-files]))))
+    (get-in config [:index :ignoreFiles]))))

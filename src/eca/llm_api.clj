@@ -55,7 +55,8 @@
         :tools tools
         :api-key (:anthropic-api-key config)}
        {:on-message-received on-message-received-wrapper
-        :on-error on-error})
+        :on-error on-error
+        :on-tool-called on-tool-called})
 
       (string/starts-with? model config/ollama-model-prefix)
       (llm-providers.ollama/completion!

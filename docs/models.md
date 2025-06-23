@@ -5,7 +5,7 @@
 | model     | MCP | thinking/reasioning |
 |-----------|-----|---------------------|
 | OpenAI    | √   | X                   |
-| Anthropic | X   | X                   |
+| Anthropic | √   | X                   |
 | Ollama    | X   | X                   |
 
 ## Models

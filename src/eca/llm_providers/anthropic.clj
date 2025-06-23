@@ -48,21 +48,51 @@
            api-key past-messages tools]
     :or {max-tokens 1024
          temperature 1.0}}
-   {:keys [on-message-received on-error]}]
-  (let [body {:model model
-              :messages (conj past-messages {:role "user" :content user-prompt})
+   {:keys [on-message-received on-error on-tool-called]}]
+  (let [messages (conj past-messages {:role "user" :content user-prompt})
+        body {:model model
+              :messages messages
               :max_tokens max-tokens
               :temperature temperature
               ;; TODO support :thinking
               :stream true
               :tools (->tools tools)
               :system context}
+        content-block* (atom nil)
         on-response-fn (fn handle-response [event data]
                          (case event
                            "content_block_delta" (case (-> data :delta :type)
                                                    "text_delta" (on-message-received {:message (-> data :delta :text)})
+                                                   "input_json_delta" (swap! content-block* update-in [(:index data) :input-json] str (-> data :delta :partial_json))
                                                    (logger/warn "Unkown response delta type" (-> data :delta :type)))
-                           "message_stop" (on-message-received {:finish-reason (:type data)})
+                           "content_block_start" (case (-> data :content_block :type)
+                                                   "tool_use" (swap! content-block* assoc (:index data) (:content_block data))
+
+                                                   nil)
+                           "message_delta" (case (-> data :delta :stop_reason)
+                                             "tool_use" (doseq [content-block (vals @content-block*)]
+                                                          (when (= "tool_use" (:type content-block))
+                                                            (let [function-name (:name content-block)
+                                                                  function-args (:input-json content-block)
+                                                                  response (on-tool-called {:name function-name
+                                                                                            :arguments (json/parse-string function-args)})
+                                                                  messages (concat messages
+                                                                                   [{:role "assistant"
+                                                                                     :content [(dissoc content-block :input-json)]}]
+                                                                                   (mapv
+                                                                                    (fn [{:keys [_type content]}]
+                                                                                      {:role "user"
+                                                                                       :content [{:type "tool_result"
+                                                                                                  :tool_use_id (:id content-block)
+                                                                                                  :content content}]})
+                                                                                    (:contents response)))]
+                                                              (base-request!
+                                                               {:body (assoc body :messages messages)
+                                                                :api-key api-key
+                                                                :on-error on-error
+                                                                :on-response handle-response}))))
+                                             "end_turn" (on-message-received {:finish-reason (-> data :delta :stop_reason)})
+                                             nil)
                            nil))]
     (base-request!
      {:body body

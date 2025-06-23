@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add env support for mcps
+
 ## 0.0.3
 
 - Fix ollama servers discovery

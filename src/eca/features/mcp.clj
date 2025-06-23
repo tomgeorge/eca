@@ -21,10 +21,11 @@
 
 (def ^:private logger-tag "[MCP]")
 
-(defn ^:private ->transport ^McpTransport [{:keys [command args]}]
+(defn ^:private ->transport ^McpTransport [{:keys [command args env]}]
   (StdioClientTransport.
    (-> (ServerParameters/builder ^String command)
        (.args ^List args)
+       (.env (update-keys env name))
        (.build))))
 
 (defn ^:private ->client ^McpSyncClient [transport config]

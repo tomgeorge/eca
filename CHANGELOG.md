@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Add env support for mcps
+- Add web_search capability
 
 ## 0.0.3
 

@@ -63,43 +63,50 @@
               :tools (->tools tools web-search)
               :system context}
         content-block* (atom nil)
-        on-response-fn (fn handle-response [event data]
-                         (case event
-                           "content_block_delta" (case (-> data :delta :type)
-                                                   "text_delta" (on-message-received {:type :text
-                                                                                      :text (-> data :delta :text)})
-                                                   "input_json_delta" (swap! content-block* update-in [(:index data) :input-json] str (-> data :delta :partial_json))
-                                                   (logger/warn "Unkown response delta type" (-> data :delta :type)))
-                           "content_block_start" (case (-> data :content_block :type)
-                                                   "tool_use" (swap! content-block* assoc (:index data) (:content_block data))
+        on-response-fn
+        (fn handle-response [event data]
+          (case event
+            "content_block_delta" (case (-> data :delta :type)
+                                    "text_delta" (on-message-received {:type :text
+                                                                       :text (-> data :delta :text)})
+                                    "input_json_delta" (swap! content-block* update-in [(:index data) :input-json] str (-> data :delta :partial_json))
+                                    "citations_delta" (case (-> data :delta :citation :type)
+                                                        "web_search_result_location" (on-message-received
+                                                                                      {:type :url
+                                                                                       :title (-> data :delta :citation :title)
+                                                                                       :url (-> data :delta :citation :url)})
+                                                        nil)
+                                    (logger/warn "Unkown response delta type" (-> data :delta :type)))
+            "content_block_start" (case (-> data :content_block :type)
+                                    "tool_use" (swap! content-block* assoc (:index data) (:content_block data))
 
-                                                   nil)
-                           "message_delta" (case (-> data :delta :stop_reason)
-                                             "tool_use" (doseq [content-block (vals @content-block*)]
-                                                          (when (= "tool_use" (:type content-block))
-                                                            (let [function-name (:name content-block)
-                                                                  function-args (:input-json content-block)
-                                                                  response (on-tool-called {:name function-name
-                                                                                            :arguments (json/parse-string function-args)})
-                                                                  messages (concat messages
-                                                                                   [{:role "assistant"
-                                                                                     :content [(dissoc content-block :input-json)]}]
-                                                                                   (mapv
-                                                                                    (fn [{:keys [_type content]}]
-                                                                                      {:role "user"
-                                                                                       :content [{:type "tool_result"
-                                                                                                  :tool_use_id (:id content-block)
-                                                                                                  :content content}]})
-                                                                                    (:contents response)))]
-                                                              (base-request!
-                                                               {:body (assoc body :messages messages)
-                                                                :api-key api-key
-                                                                :on-error on-error
-                                                                :on-response handle-response}))))
-                                             "end_turn" (on-message-received {:type :finish
-                                                                              :finish-reason (-> data :delta :stop_reason)})
-                                             nil)
-                           nil))]
+                                    nil)
+            "message_delta" (case (-> data :delta :stop_reason)
+                              "tool_use" (doseq [content-block (vals @content-block*)]
+                                           (when (= "tool_use" (:type content-block))
+                                             (let [function-name (:name content-block)
+                                                   function-args (:input-json content-block)
+                                                   response (on-tool-called {:name function-name
+                                                                             :arguments (json/parse-string function-args)})
+                                                   messages (concat messages
+                                                                    [{:role "assistant"
+                                                                      :content [(dissoc content-block :input-json)]}]
+                                                                    (mapv
+                                                                     (fn [{:keys [_type content]}]
+                                                                       {:role "user"
+                                                                        :content [{:type "tool_result"
+                                                                                   :tool_use_id (:id content-block)
+                                                                                   :content content}]})
+                                                                     (:contents response)))]
+                                               (base-request!
+                                                {:body (assoc body :messages messages)
+                                                 :api-key api-key
+                                                 :on-error on-error
+                                                 :on-response handle-response}))))
+                              "end_turn" (on-message-received {:type :finish
+                                                               :finish-reason (-> data :delta :stop_reason)})
+                              nil)
+            nil))]
     (base-request!
      {:body body
       :api-key api-key

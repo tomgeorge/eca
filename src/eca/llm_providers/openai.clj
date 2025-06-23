@@ -10,13 +10,20 @@
 
 (def ^:private logger-tag "[OPENAI]")
 
-(def ^:private url "https://api.openai.com/v1/responses")
+(def ^:private openai-url "https://api.openai.com/")
+(def ^:private responses-path "/v1/responses")
 
-(defn ^:private base-request! [{:keys [body api-key on-error on-response]}]
+(defn ^:private url [path]
+  (format "%s%s"
+          (or (System/getenv "OPENAI_API_URL")
+              openai-url)
+          path))
+
+(defn ^:private base-completion-request! [{:keys [body api-key on-error on-response]}]
   (let [api-key (or api-key
                     (System/getenv "OPENAI_API_KEY"))]
     (http/post
-     url
+     (url responses-path)
      {:headers {"Authorization" (str "Bearer " api-key)
                 "Content-Type" "application/json"}
       :body (json/generate-string body)
@@ -58,7 +65,7 @@
                                                                function-args (-> data :item :arguments)
                                                                response (on-tool-called {:name function-name
                                                                                          :arguments (json/parse-string function-args)})]
-                                                           (base-request!
+                                                           (base-completion-request!
                                                             {:body (assoc body :input (concat input
                                                                                               [{:type "function_call"
                                                                                                 :call_id (-> data :item :call_id)
@@ -84,7 +91,7 @@
                                                   (on-message-received {:type :finish
                                                                         :finish-reason (-> data :response :status)}))
                            nil))]
-    (base-request!
+    (base-completion-request!
      {:body body
       :api-key api-key
       :on-error on-error

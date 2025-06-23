@@ -10,7 +10,14 @@
 
 (def ^:private logger-tag "[ANTHROPIC]")
 
-(def ^:private url "https://api.anthropic.com/v1/messages")
+(def ^:private anthropic-url "https://api.anthropic.com")
+(def ^:private messages-path "/v1/messages")
+
+(defn ^:private url [path]
+  (format "%s%s"
+          (or (System/getenv "ANTHROPIC_API_URL")
+              anthropic-url)
+          path))
 
 (defn ^:private ->tools [tools web-search]
   (cond->
@@ -25,7 +32,7 @@
   (let [api-key (or api-key
                     (System/getenv "ANTHROPIC_API_KEY"))]
     (http/post
-     url
+     (url messages-path)
      {:headers {"x-api-key" api-key
                 "anthropic-version" "2023-06-01"
                 "Content-Type" "application/json"}

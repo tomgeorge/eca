@@ -55,15 +55,16 @@
 (defn cache-tools! [db*]
   (let [obj-mapper (ObjectMapper.)]
     (doseq [[name {:keys [client]}] (:mcp-clients @db*)]
-      (doseq [^McpSchema$Tool tool-client (.tools (.listTools ^McpSyncClient client))]
-        (let [tool {:name (.name tool-client)
-                    :mcp-name name
-                    :mcp-client client
-                    :description (.description tool-client)
-                    ;; We convert to json to then read so we have the clojrue map
-                    ;; TODO avoid this converting to clojure map directly
-                    :parameters (json/parse-string (.writeValueAsString obj-mapper (.inputSchema tool-client)) true)}]
-          (swap! db* assoc-in [:mcp-tools (:name tool)] tool))))))
+      (when (.isInitialized client)
+        (doseq [^McpSchema$Tool tool-client (.tools (.listTools ^McpSyncClient client))]
+          (let [tool {:name (.name tool-client)
+                      :mcp-name name
+                      :mcp-client client
+                      :description (.description tool-client)
+                      ;; We convert to json to then read so we have the clojrue map
+                      ;; TODO avoid this converting to clojure map directly
+                      :parameters (json/parse-string (.writeValueAsString obj-mapper (.inputSchema tool-client)) true)}]
+            (swap! db* assoc-in [:mcp-tools (:name tool)] tool)))))))
 
 (defn list-tools [db]
   (vals (:mcp-tools db)))

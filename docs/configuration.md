@@ -76,6 +76,7 @@ interface Config {
     ollama?: {
         host: string;
         port: string;
+        useTools: boolean;
     }
     chat?: {
         welcomeMessage: string;
@@ -99,7 +100,8 @@ interface Config {
   "mcpServers" : [ ],
   "ollama" : {
     "host" : "http://localhost",
-    "port" : 11434
+    "port" : 11434,
+    "useTools": false
   },
   "chat" : {
     "welcomeMessage" : "Welcome to ECA! What you have in mind?\n\n"

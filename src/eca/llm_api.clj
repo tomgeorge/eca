@@ -65,9 +65,11 @@
         :model (string/replace-first model config/ollama-model-prefix "")
         :past-messages past-messages
         :context context
+        :tools tools
         :user-prompt user-prompt}
        {:on-message-received on-message-received-wrapper
-        :on-error on-error})
+        :on-error on-error
+        :on-tool-called on-tool-called})
 
       :else
       (on-error {:msg (str "ECA Unsupported model: " model)}))))

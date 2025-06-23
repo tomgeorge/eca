@@ -31,39 +31,54 @@
       (logger/warn logger-tag "Error listing running models:" (ex-message e))
       [])))
 
-(defn ^:private raw-data->messages [data]
-  (let [{:keys [message done_reason]} (json/parse-string data true)]
-    (cond-> {}
-      message (assoc :message (:content message))
-      done_reason (assoc :finish-reason done_reason))))
-
 (defn ^:private ->message-with-context [context user-prompt]
   (format "%s\nThe user is asking: '%s'" context user-prompt))
 
-(defn completion! [{:keys [model user-prompt context host port past-messages]}
-                   {:keys [on-message-received on-error]}]
-  (let [body {:model model
-              :messages (if (empty? past-messages)
-                          [{:role "user" :content (->message-with-context context user-prompt)}]
-                          (conj past-messages {:role "user" :content user-prompt}))
-              :stream true}]
-    (http/post
-     (format chat-url (base-url host port))
-     {:body (json/generate-string body)
-      :throw-exceptions? false
-      :async? true
-      :as :stream}
-     (fn [{:keys [status body]}]
-       (try
+(defn ^:private base-completion-request! [{:keys [url body on-error on-response]}]
+  (http/post
+   url
+   {:body (json/generate-string body)
+    :throw-exceptions? false
+    :async? true
+    :as :stream}
+   (fn [{:keys [status body]}]
+     (try
+       (if (not= 200 status)
+         (let [body-str (slurp body)]
+           (logger/warn logger-tag "Unexpected response status: %s body: %s" status body-str)
+           (on-error {:message (format "Ollama response status: %s body: %s" status body-str)}))
          (with-open [rdr (io/reader body)]
            (doseq [line (line-seq rdr)]
-             (if (not= 200 status)
-               (let [msg line]
-                 (logger/warn logger-tag "Unexpected response status" status "." msg)
-                 (on-error {:message (str "Ollama response status: " status)}))
-               (when-let [message (raw-data->messages line)]
-                 (on-message-received message)))))
-         (catch Exception e
-           (on-error {:exception e}))))
-     (fn [e]
-       (on-error {:exception e})))))
+             (on-response (json/parse-string line true)))))
+       (catch Exception e
+         (on-error {:exception e}))))
+   (fn [e]
+     (on-error {:exception e}))))
+
+(defn ^:private ->tools [tools]
+  (mapv (fn [tool]
+          {:type "function"
+           :function (select-keys tool [:name :description :parameters])})
+        tools))
+
+(defn completion! [{:keys [model user-prompt context host port past-messages tools]}
+                   {:keys [on-message-received on-error _on-tool-called]}]
+  (let [messagess (if (empty? past-messages)
+                    [{:role "user" :content (->message-with-context context user-prompt)}]
+                    (conj past-messages {:role "user" :content user-prompt}))
+        body {:model model
+              :messages messagess
+              :tools (->tools tools)
+              :stream true}
+        url (format chat-url (base-url host port))
+        on-response-fn (fn handle-response [data]
+                         (let [{:keys [message done_reason]} data]
+                           (on-message-received
+                            (cond-> {}
+                              message (assoc :message (:content message))
+                              done_reason (assoc :finish-reason done_reason)))))]
+    (base-completion-request!
+     {:url url
+      :body body
+      :on-error on-error
+      :on-response on-response-fn})))

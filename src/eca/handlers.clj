@@ -12,7 +12,12 @@
 (defn ^:private initialize-extra-models! [db*]
   (let [config (config/all @db*)]
     (when-let [ollama-models (seq (llm-api/extra-models config))]
-      (swap! db* update :models concat (map #(str config/ollama-model-prefix (:model %)) ollama-models)))))
+      (swap! db* update :models merge
+             (reduce
+              (fn [models {:keys [model]}]
+                (assoc models (str config/ollama-model-prefix model) {:tools (get-in config [:ollama :use-tools] false)}))
+              {}
+              ollama-models)))))
 
 (defn initialize [{:keys [db*]} params]
   (logger/logging-task
@@ -26,7 +31,7 @@
      (initialize-extra-models! db*)
      ;; TODO initialize async with progress support
      (f.mcp/initialize! db* config)
-     {:models (:models @db*)
+     {:models (keys (:models @db*))
       :chat-default-model (f.chat/default-model @db*)
       :chat-behaviors (:chat-behaviors @db*)
       :chat-default-behavior (:chat-default-behavior @db*)

@@ -22,7 +22,8 @@
    :mcp-timeout-seconds 10
    :mcp-servers []
    :ollama {:host "http://localhost"
-            :port 11434}
+            :port 11434
+            :use-tools false}
    :chat {:welcome-message "Welcome to ECA! What you have in mind?\n\n"}
    :index {:ignore-files [{:type :gitignore}]}})
 

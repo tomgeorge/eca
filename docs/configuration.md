@@ -63,7 +63,20 @@ Just add to your config the `:rules` pointing to `.md` files that will be search
 
 ## MCP
 
-TODO
+For MCP servers configuration, use the `mcpServers` config, example:
+
+`.eca/config.json`
+```javascript
+{
+  "mcpServers": {
+    "filesystem": {
+        "command": "npx",
+        "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/greg/dev/eca-emacs"
+      ]
+    }
+  }
+}
+```
 
 ## All configs
 

@@ -52,6 +52,7 @@
         :context context
         :user-prompt user-prompt
         :past-messages past-messages
+        :tools tools
         :api-key (:anthropic-api-key config)}
        {:on-message-received on-message-received-wrapper
         :on-error on-error})

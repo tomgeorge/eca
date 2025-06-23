@@ -2,27 +2,15 @@
   (:require
    [cheshire.core :as json]
    [clojure.java.io :as io]
-   [clojure.string :as string]
+   [eca.llm-util :as llm-util]
    [eca.logger :as logger]
-   [hato.client :as http])
-  (:import
-   [java.io BufferedReader]))
+   [hato.client :as http]))
 
 (set! *warn-on-reflection* true)
 
 (def ^:private logger-tag "[OPENAI]")
 
 (def ^:private url "https://api.openai.com/v1/responses")
-
-(defn ^:private event-data-seq [^BufferedReader rdr]
-  (when-let [event (.readLine rdr)]
-    (when (string/starts-with? event "event:")
-      (when-let [data (.readLine rdr)]
-        (.readLine rdr) ;; blank line
-        (when (string/starts-with? data "data:")
-          (cons [(subs event 7)
-                 (json/parse-string (subs data 6) true)]
-                (lazy-seq (event-data-seq rdr))))))))
 
 (defn ^:private base-request! [{:keys [body api-key on-error on-response]}]
   (let [api-key (or api-key
@@ -42,7 +30,7 @@
              (logger/warn logger-tag "Unexpected response status: %s body: %s" status body-str)
              (on-error {:message (format "OpenAI response status: %s body: %s" status body-str)}))
            (with-open [rdr (io/reader body)]
-             (doseq [[event data] (event-data-seq rdr)]
+             (doseq [[event data] (llm-util/event-data-seq rdr)]
                (on-response event data))))
          (catch Exception e
            (on-error {:exception e}))))

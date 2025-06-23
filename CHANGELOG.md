@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.0.3
+
 - Fix ollama servers discovery
 - Fix `.eca/config.json` read from workspace root
 - Add support for MCP servers

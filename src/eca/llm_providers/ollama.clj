@@ -75,8 +75,8 @@
                          (let [{:keys [message done_reason]} data]
                            (on-message-received
                             (cond-> {}
-                              message (assoc :message (:content message))
-                              done_reason (assoc :finish-reason done_reason)))))]
+                              message (assoc :type :text :text (:content message))
+                              done_reason (assoc :type :finish :finish-reason done_reason)))))]
     (base-completion-request!
      {:url url
       :body body

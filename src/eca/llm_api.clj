@@ -21,7 +21,7 @@
          :type "function"))
 
 (defn complete!
-  [{:keys [model context user-prompt config on-first-message-received
+  [{:keys [model model-config context user-prompt config on-first-message-received
            on-message-received on-error on-tool-called
            past-messages mcp-tools]}]
   (let [first-message-received* (atom false)
@@ -30,7 +30,9 @@
                                         (reset! first-message-received* true)
                                         (apply on-first-message-received args))
                                       (apply on-message-received args))
-        tools (map mcp-tool->llm-tool mcp-tools)]
+        tools (when (:mcp-tools model-config)
+                (map mcp-tool->llm-tool mcp-tools))
+        web-search (:web-search model-config)]
     (cond
       (contains? #{"o4-mini" "gpt-4.1"} model)
       (llm-providers.openai/completion!
@@ -39,6 +41,7 @@
         :user-prompt user-prompt
         :past-messages past-messages
         :tools tools
+        :web-search web-search
         :api-key (:openai-api-key config)}
        {:on-message-received on-message-received-wrapper
         :on-error on-error
@@ -53,6 +56,7 @@
         :user-prompt user-prompt
         :past-messages past-messages
         :tools tools
+        :web-search web-search
         :api-key (:anthropic-api-key config)}
        {:on-message-received on-message-received-wrapper
         :on-error on-error

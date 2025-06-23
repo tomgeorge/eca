@@ -393,6 +393,7 @@ interface ChatContentReceivedParams {
  */
 type ChatContent = 
     | TextContent 
+    | URLContent 
     | ProgressContent 
     | FileChangeContent
     | MCPToolCallContent;
@@ -419,6 +420,23 @@ interface TextContent {
          */
         language?: string;
     }];
+}
+
+/**
+ * URL content message from the LLM
+ */
+interface URLContent {
+    type: 'url';
+
+    /**
+     * The URL title
+     */
+    title: string;
+
+    /**
+     * The URL link
+     */
+    url: string;
 }
 
 /**

@@ -49,7 +49,7 @@
    "</contexts>"))
 
 (defn default-model [db]
-  (if-let [ollama-model (first (filter #(string/starts-with? % config/ollama-model-prefix) (:models db)))]
+  (if-let [ollama-model (first (filter #(string/starts-with? % config/ollama-model-prefix) (vals (:models db))))]
     ollama-model
     (:default-model db)))
 
@@ -116,6 +116,7 @@
                 :text "Waiting model"}})
     (llm-api/complete!
      {:model chosen-model
+      :model-config (get-in db [:models chosen-model])
       :user-prompt user-prompt
       :context context-str
       :past-messages past-messages
@@ -130,28 +131,37 @@
                                      :content {:type :progress
                                                :state :running
                                                :text "Generating"}}))
-      :on-message-received (fn [{:keys [message finish-reason]}]
-                             (when message
-                               (swap! received-msgs* str message)
-                               (messenger/chat-content-received
-                                messenger
-                                {:chat-id chat-id
-                                 :request-id request-id
-                                 :role :assistant
-                                 :content {:type :text
-                                           :text message}}))
-                             (when finish-reason
-                               (swap! db* update-in [:chats chat-id :messages]
-                                      (fnil conj [])
-                                      {:role "assistant"
-                                       :content @received-msgs*})
-                               (messenger/chat-content-received
-                                messenger
-                                {:chat-id chat-id
-                                 :request-id request-id
-                                 :role :system
-                                 :content {:type :progress
-                                           :state :finished}})))
+      :on-message-received (fn [{:keys [type] :as msg}]
+                             (case type
+                               :text (do
+                                       (swap! received-msgs* str (:text msg))
+                                       (messenger/chat-content-received
+                                        messenger
+                                        {:chat-id chat-id
+                                         :request-id request-id
+                                         :role :assistant
+                                         :content {:type :text
+                                                   :text (:text msg)}}))
+                               :url (messenger/chat-content-received
+                                     messenger
+                                     {:chat-id chat-id
+                                      :request-id request-id
+                                      :role :assistant
+                                      :content {:type :url
+                                                :title (:title msg)
+                                                :url (:url msg)}})
+                               :finish (do
+                                         (swap! db* update-in [:chats chat-id :messages]
+                                                (fnil conj [])
+                                                {:role "assistant"
+                                                 :content @received-msgs*})
+                                         (messenger/chat-content-received
+                                          messenger
+                                          {:chat-id chat-id
+                                           :request-id request-id
+                                           :role :system
+                                           :content {:type :progress
+                                                     :state :finished}}))))
       :on-tool-called (fn [{:keys [name arguments]}]
                         (messenger/chat-content-received
                          messenger

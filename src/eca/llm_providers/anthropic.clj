@@ -12,10 +12,14 @@
 
 (def ^:private url "https://api.anthropic.com/v1/messages")
 
-(defn ^:private ->tools [tools]
-  (mapv (fn [tool]
-          (assoc (select-keys tool [:name :description])
-                 :input_schema (:parameters tool))) tools))
+(defn ^:private ->tools [tools web-search]
+  (cond->
+   (mapv (fn [tool]
+           (assoc (select-keys tool [:name :description])
+                  :input_schema (:parameters tool))) tools)
+    web-search (conj {:type "web_search_20250305"
+                      :name "web_search"
+                      :max_uses 10})))
 
 (defn ^:private base-request! [{:keys [body api-key on-error on-response]}]
   (let [api-key (or api-key
@@ -45,7 +49,7 @@
 
 (defn completion!
   [{:keys [model user-prompt temperature context max-tokens
-           api-key past-messages tools]
+           api-key past-messages tools web-search]
     :or {max-tokens 1024
          temperature 1.0}}
    {:keys [on-message-received on-error on-tool-called]}]
@@ -56,13 +60,14 @@
               :temperature temperature
               ;; TODO support :thinking
               :stream true
-              :tools (->tools tools)
+              :tools (->tools tools web-search)
               :system context}
         content-block* (atom nil)
         on-response-fn (fn handle-response [event data]
                          (case event
                            "content_block_delta" (case (-> data :delta :type)
-                                                   "text_delta" (on-message-received {:message (-> data :delta :text)})
+                                                   "text_delta" (on-message-received {:type :text
+                                                                                      :text (-> data :delta :text)})
                                                    "input_json_delta" (swap! content-block* update-in [(:index data) :input-json] str (-> data :delta :partial_json))
                                                    (logger/warn "Unkown response delta type" (-> data :delta :type)))
                            "content_block_start" (case (-> data :content_block :type)
@@ -91,7 +96,8 @@
                                                                 :api-key api-key
                                                                 :on-error on-error
                                                                 :on-response handle-response}))))
-                                             "end_turn" (on-message-received {:finish-reason (-> data :delta :stop_reason)})
+                                             "end_turn" (on-message-received {:type :finish
+                                                                              :finish-reason (-> data :delta :stop_reason)})
                                              nil)
                            nil))]
     (base-request!

@@ -37,7 +37,7 @@
      (fn [e]
        (on-error {:exception e})))))
 
-(defn completion! [{:keys [model user-prompt context temperature api-key past-messages tools]
+(defn completion! [{:keys [model user-prompt context temperature api-key past-messages tools web-search]
                     :or {temperature 1.0}}
                    {:keys [on-message-received on-error on-tool-called]}]
   (let [input (conj past-messages {:role "user" :content user-prompt})
@@ -46,11 +46,13 @@
               :user (str (System/getProperty "user.name") "@ECA")
               :instructions context
               :temperature temperature
-              :tools tools
+              :tools (cond-> tools
+                       web-search (conj {:type "web_search_preview"}))
               :stream true}
         on-response-fn (fn handle-response [event data]
                          (case event
-                           "response.output_text.delta" (on-message-received {:message (:delta data)})
+                           "response.output_text.delta" (on-message-received {:type :text
+                                                                              :text (:delta data)})
                            "response.output_item.done" (when (= "function_call" (:type (:item data)))
                                                          (let [function-name (-> data :item :name)
                                                                function-args (-> data :item :arguments)
@@ -72,8 +74,15 @@
                                                              :api-key api-key
                                                              :on-error on-error
                                                              :on-response handle-response})))
+                           "response.output_text.annotation.added" (case (-> data :annotation :type)
+                                                                     "url_citation" (on-message-received
+                                                                                     {:type :url
+                                                                                      :title (-> data :annotation :title)
+                                                                                      :url (-> data :annotation :url)})
+                                                                     nil)
                            "response.completed" (when-not (= "function_call" (-> data :response :output last :type))
-                                                  (on-message-received {:finish-reason (-> data :response :status)}))
+                                                  (on-message-received {:type :finish
+                                                                        :finish-reason (-> data :response :status)}))
                            nil))]
     (base-request!
      {:body body

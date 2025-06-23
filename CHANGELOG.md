@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Add env support for mcps
+- Add env support for MCPs
 - Add web_search capability
 - Add `o3` model support.
 

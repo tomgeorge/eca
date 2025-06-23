@@ -102,7 +102,7 @@
         chosen-model (or model (default-model db))
         past-messages (get-in db [:chats chat-id :messages] [])
         user-prompt message
-        mcp-tools (when (get-in db [:models chosen-model :use-tools])
+        mcp-tools (when (get-in db [:models chosen-model :mcp-tools])
                     (all-mcp-tools! chat-id request-id messenger db*))
         received-msgs* (atom "")]
     (swap! db* update-in [:chats chat-id :messages] (fnil conj []) {:role "user" :content user-prompt})

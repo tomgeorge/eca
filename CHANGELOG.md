@@ -7,6 +7,7 @@
 - Add `o3` model support.
 - Support custom API urls for OpenAI and Anthropic
 - Add `--log-level <level>` option for better debugging.
+- Add support for global config file.
 
 ## 0.0.3
 

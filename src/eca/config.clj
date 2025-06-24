@@ -26,7 +26,10 @@
    :chat {:welcomeMessage "Welcome to ECA! What you have in mind?\n\n"}
    :index {:ignoreFiles [{:type :gitignore}]}})
 
-(def ttl-cache-config-ms 5000)
+(defn get-env [env] (System/getenv env))
+(defn get-property [property] (System/getenv property))
+
+(def ^:private ttl-cache-config-ms 5000)
 
 (defn ^:private safe-read-json-string [raw-string]
   (try
@@ -40,7 +43,16 @@
 
 (def ^:private config-from-envvar (memoize config-from-envvar*))
 
-(defn ^:private config-from-file* [roots]
+(defn ^:private config-from-global-file* []
+  (let [xdg-config-home (or (get-env "XDG_CONFIG_HOME")
+                            (io/file (get-property "user.home") ".config"))
+        config-file (io/file xdg-config-home "eca" "config.json")]
+    (when (.exists config-file)
+      (safe-read-json-string (slurp config-file)))))
+
+(def ^:private config-from-global-file (memoize/ttl config-from-global-file* :ttl/threshold ttl-cache-config-ms))
+
+(defn ^:private config-from-local-file* [roots]
   (reduce
    (fn [final-config {:keys [uri]}]
      (merge
@@ -51,7 +63,7 @@
    {}
    roots))
 
-(def ^:private config-from-local-file (memoize/ttl config-from-file* :ttl/threshold ttl-cache-config-ms))
+(def ^:private config-from-local-file (memoize/ttl config-from-local-file* :ttl/threshold ttl-cache-config-ms))
 
 (defn ^:private deep-merge [& maps]
   (apply merge-with (fn [& args]
@@ -70,4 +82,5 @@
 (defn all [db]
   (deep-merge initial-config
               (config-from-envvar)
+              (config-from-global-file)
               (config-from-local-file (:workspace-folders db))))

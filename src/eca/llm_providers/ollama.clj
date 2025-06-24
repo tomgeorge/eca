@@ -2,6 +2,7 @@
   (:require
    [cheshire.core :as json]
    [clojure.java.io :as io]
+   [eca.llm-util :as llm-util]
    [eca.logger :as logger]
    [hato.client :as http]))
 
@@ -23,7 +24,9 @@
                                  {:throw-exceptions? false
                                   :as :json})]
       (if (= 200 status)
-        (:models body)
+        (do
+          (llm-util/log-response logger-tag "api_ps" body)
+          (:models body))
         (do
           (logger/warn logger-tag "Unknown status code:" status)
           [])))
@@ -72,6 +75,7 @@
               :stream true}
         url (format chat-url (base-url host port))
         on-response-fn (fn handle-response [data]
+                         (llm-util/log-response logger-tag "chat" data)
                          (let [{:keys [message done_reason]} data]
                            (on-message-received
                             (cond-> {}

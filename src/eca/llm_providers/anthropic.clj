@@ -72,6 +72,7 @@
         content-block* (atom nil)
         on-response-fn
         (fn handle-response [event data]
+          (llm-util/log-response logger-tag event data)
           (case event
             "content_block_delta" (case (-> data :delta :type)
                                     "text_delta" (on-message-received {:type :text

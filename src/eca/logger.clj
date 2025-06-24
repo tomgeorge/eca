@@ -2,16 +2,27 @@
 
 (set! *warn-on-reflection* true)
 
-(defn ^:private stderr-print [& args]
-  (binding [*out* *err*]
-    (apply println args)))
+(def ^:dynamic *level* :info)
 
-;; TODO create better logger capability.
+(def ^:private level->value
+  {:error 1
+   :warn 2
+   :info 3
+   :debug 4})
+
+(defn ^:private stderr-print [level & args]
+  (when (<= (level->value level) (level->value *level*))
+    (binding [*out* *err*]
+      (apply println args))))
+
 (defn info [& args]
-  (apply stderr-print args))
+  (apply stderr-print :info args))
 
 (defn warn [& args]
-  (apply stderr-print args))
+  (apply stderr-print :warn args))
+
+(defn debug [& args]
+  (apply stderr-print :debug args))
 
 (defn format-time-delta-ms [start-time end-time]
   (format "%.0fms" (float (/ (- end-time start-time) 1000000))))

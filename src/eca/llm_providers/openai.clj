@@ -57,6 +57,7 @@
                        web-search (conj {:type "web_search_preview"}))
               :stream true}
         on-response-fn (fn handle-response [event data]
+                         (llm-util/log-response logger-tag event data)
                          (case event
                            "response.output_text.delta" (on-message-received {:type :text
                                                                               :text (:delta data)})

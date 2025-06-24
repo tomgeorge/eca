@@ -1,7 +1,8 @@
 (ns eca.llm-util
   (:require
    [cheshire.core :as json]
-   [clojure.string :as string])
+   [clojure.string :as string]
+   [eca.logger :as logger])
   (:import
    [java.io BufferedReader]))
 
@@ -14,3 +15,6 @@
           (cons [(subs event 7)
                  (json/parse-string (subs data 6) true)]
                 (lazy-seq (event-data-seq rdr))))))))
+
+(defn log-response [tag event data]
+  (logger/debug tag event data))

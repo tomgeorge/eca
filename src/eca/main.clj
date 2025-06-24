@@ -6,6 +6,7 @@
    [borkdude.dynaload]
    [clojure.string :as string]
    [eca.config :as config]
+   [eca.logger :as logger]
    [eca.server :as server]))
 
 (set! *warn-on-reflection* true)
@@ -37,11 +38,19 @@
   (str "The following errors occurred while parsing your command:\n\n"
        (string/join \newline errors)))
 
+(def log-levels #{"error" "warn" "info" "debug"})
+
 (def cli-spec
   {:order [:help :version :verbose]
    :spec {:help {:alias :h
                  :desc "Print the available commands and its options"}
           :version {:desc "Print eca version"}
+          :log-level {:ref "<LEVEL>"
+                      :desc "The log level of eca logs, accepts. Defaults to 'info'."
+                      :default "info"
+                      :validate {:pred log-levels
+                                 :ex-msg (fn [{:keys [_option _value]}]
+                                           (format "Must be in %s" log-levels))}}
           :verbose {:desc "Use stdout for eca logs instead of default log settings"}}})
 
 (defn ^:private parse-opts
@@ -81,6 +90,7 @@
 (defn ^:private handle-action!
   [action options]
   (when (= "server" action)
+    (alter-var-root #'logger/*level* (constantly (keyword (:log-level options))))
     (let [finished @(server/run-io-server! (:verbose options))]
       {:result-code (if (= :done finished) 0 1)})))
 

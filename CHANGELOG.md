@@ -6,6 +6,7 @@
 - Add web_search capability
 - Add `o3` model support.
 - Support custom API urls for OpenAI and Anthropic
+- Add `--log-level <level>` option for better debugging.
 
 ## 0.0.3
 

@@ -15,10 +15,18 @@ Client editors can pass custom settings when sending the `initialize` request vi
 }
 ```
 
-### Config file (convenient for users)
+### Local Config file (convenient for users)
 
 `.eca/config.json`
+```javascript
+{
+  "chatBehavior": "chat"
+}
+```
 
+### Global config file (convenient for users and multiple projects)
+
+`~/.config/eca/config.json`
 ```javascript
 {
   "chatBehavior": "chat"

@@ -27,7 +27,7 @@
    :index {:ignoreFiles [{:type :gitignore}]}})
 
 (defn get-env [env] (System/getenv env))
-(defn get-property [property] (System/getenv property))
+(defn get-property [property] (System/getProperty property))
 
 (def ^:private ttl-cache-config-ms 5000)
 
@@ -48,7 +48,7 @@
                             (io/file (get-property "user.home") ".config"))
         config-file (io/file xdg-config-home "eca" "config.json")]
     (when (.exists config-file)
-      (safe-read-json-string (slurp config-file)))))
+        (safe-read-json-string (slurp config-file)))))
 
 (def ^:private config-from-global-file (memoize/ttl config-from-global-file* :ttl/threshold ttl-cache-config-ms))
 

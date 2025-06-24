@@ -54,9 +54,9 @@
 
 (defn cache-tools! [db*]
   (let [obj-mapper (ObjectMapper.)]
-    (doseq [[name {:keys [client]}] (:mcp-clients @db*)]
+    (doseq [[name {:keys [^McpSyncClient client]}] (:mcp-clients @db*)]
       (when (.isInitialized client)
-        (doseq [^McpSchema$Tool tool-client (.tools (.listTools ^McpSyncClient client))]
+        (doseq [^McpSchema$Tool tool-client (.tools (.listTools client))]
           (let [tool {:name (.name tool-client)
                       :mcp-name name
                       :mcp-client client

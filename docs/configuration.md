@@ -2,7 +2,7 @@
 
 ## Ways to configure
 
-Check all available configs [here](./src/eca/config.clj#L15).
+Check all available configs [here](../src/eca/config.clj#L17).
 There are 3 ways to configure ECA following this order of priority:
 
 ### InitializationOptions (convenient for editors)

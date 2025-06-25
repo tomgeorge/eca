@@ -39,7 +39,8 @@
 (defn initialize! [{:keys [on-error]} db* config]
   (doseq [[name server-config] (:mcpServers config)]
     (try
-      (when-not (get-in @db* [:mcp-clients name])
+      (when-not (and (get-in @db* [:mcp-clients name])
+                     (get server-config :disabled false))
         (let [transport (->transport server-config)
               client (->client transport config)]
           (swap! db* assoc-in [:mcp-clients name :client] client)

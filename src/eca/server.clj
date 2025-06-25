@@ -73,7 +73,10 @@
 
   (chat-content-received [_this content]
     (lsp.server/discarding-stdout
-     (lsp.server/send-notification server "chat/contentReceived" content))))
+     (lsp.server/send-notification server "chat/contentReceived" content)))
+  (showMessage [_this msg]
+    (lsp.server/discarding-stdout
+     (lsp.server/send-notification server "$/showMessage" msg))))
 
 (defn start-server! [server]
   (let [db* (atom db/initial-db)

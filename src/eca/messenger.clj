@@ -5,4 +5,5 @@
 (set! *warn-on-reflection* true)
 
 (defprotocol IMessenger
-  (chat-content-received [this data]))
+  (chat-content-received [this data])
+  (showMessage [this msg]))

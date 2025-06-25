@@ -36,7 +36,7 @@
                          (.build)))
       (.build)))
 
-(defn initialize! [db* config]
+(defn initialize! [{:keys [on-error]} db* config]
   (doseq [[name server-config] (:mcpServers config)]
     (try
       (when-not (get-in @db* [:mcp-clients name])
@@ -47,7 +47,8 @@
             (.addRoot client (McpSchema$Root. uri name)))
           (.initialize client)))
       (catch Exception e
-        (logger/warn logger-tag (format "Could not initialize MCP server %s. Error: %s" name (.getMessage e)))))))
+        (logger/warn logger-tag (format "Could not initialize MCP server %s. Error: %s" name (.getMessage e)))
+        (on-error name e)))))
 
 (defn tools-cached? [db]
   (boolean (:mcp-tools db)))

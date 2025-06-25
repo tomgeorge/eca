@@ -5,7 +5,8 @@
    [eca.features.chat :as f.chat]
    [eca.features.mcp :as f.mcp]
    [eca.llm-api :as llm-api]
-   [eca.logger :as logger]))
+   [eca.logger :as logger]
+   [eca.messenger :as messenger]))
 
 (set! *warn-on-reflection* true)
 
@@ -21,7 +22,7 @@
               {}
               ollama-models)))))
 
-(defn initialize [{:keys [db*]} params]
+(defn initialize [{:keys [db* messenger]} params]
   (logger/logging-task
    :eca/initialize
    (swap! db* assoc
@@ -32,7 +33,14 @@
    (let [config (config/all @db*)]
      (initialize-extra-models! db*)
      ;; TODO initialize async with progress support
-     (f.mcp/initialize! db* config)
+     (f.mcp/initialize!
+      {:on-error (fn [mcp-server-name error]
+                   (messenger/showMessage
+                    messenger
+                    {:type :error
+                     :message (format "MCP server %s not initialized. Error %s" mcp-server-name (.getMessage error))}))}
+      db*
+      config)
      {:models (keys (:models @db*))
       :chat-default-model (f.chat/default-model @db*)
       :chat-behaviors (:chat-behaviors @db*)

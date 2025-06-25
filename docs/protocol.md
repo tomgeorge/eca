@@ -211,7 +211,7 @@ A notification sent from the client to the server to terminate the connection. T
 _Notification:_
 
 * method: `exit`
-* params: none
+* params: none 
 
 ## Code Assistant Features
 
@@ -594,3 +594,30 @@ Soon
 ### Add MCP (↩️)
 
 Soon
+
+## General features
+
+### showMessage (⬅️)
+
+A notification from server telling client to present a message to user.
+
+_Request:_ 
+
+* method: `$/showMessage`
+* params: `ShowMessageParams` defined as follows:
+
+```typescript
+interface ShowMessageParams {
+    /**
+     * The message type. See {@link MessageType}.
+    */
+    type: MessageType;
+
+    /**
+     * The actual message.
+     */
+    message: string;
+}
+
+export type MessageType = 'error' | 'warning' | 'info';
+```

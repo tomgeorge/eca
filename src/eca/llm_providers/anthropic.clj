@@ -61,6 +61,7 @@
          temperature 1.0}}
    {:keys [on-message-received on-error on-tool-called]}]
   (let [messages (conj past-messages {:role "user" :content user-prompt})
+        _ (logger/debug logger-tag (format "Sending messages: '%s' system: '%s'" messages context))
         body {:model model
               :messages messages
               :max_tokens max-tokens

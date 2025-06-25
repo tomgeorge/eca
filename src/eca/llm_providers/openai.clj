@@ -48,6 +48,7 @@
                     :or {temperature 1.0}}
                    {:keys [on-message-received on-error on-tool-called]}]
   (let [input (conj past-messages {:role "user" :content user-prompt})
+        _ (logger/debug logger-tag (format "Sending input: '%s' instructions: '%s'" input context))
         body {:model model
               :input input
               :user (str (System/getProperty "user.name") "@ECA")

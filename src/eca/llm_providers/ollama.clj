@@ -66,11 +66,12 @@
 
 (defn completion! [{:keys [model user-prompt context host port past-messages tools]}
                    {:keys [on-message-received on-error _on-tool-called]}]
-  (let [messagess (if (empty? past-messages)
-                    [{:role "user" :content (->message-with-context context user-prompt)}]
-                    (conj past-messages {:role "user" :content user-prompt}))
+  (let [messages (if (empty? past-messages)
+                   [{:role "user" :content (->message-with-context context user-prompt)}]
+                   (conj past-messages {:role "user" :content user-prompt}))
+        _ (logger/debug logger-tag "Sending messages:" messages)
         body {:model model
-              :messages messagess
+              :messages messages
               :tools (->tools tools)
               :stream true}
         url (format chat-url (base-url host port))

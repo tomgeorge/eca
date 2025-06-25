@@ -34,11 +34,11 @@
      (initialize-extra-models! db*)
      ;; TODO initialize async with progress support
      (f.mcp/initialize!
-      {:on-error (fn [mcp-server-name error]
+      {:on-error (fn [mcp-server-name _exception]
                    (messenger/showMessage
                     messenger
                     {:type :error
-                     :message (format "MCP server %s not initialized. Error %s" mcp-server-name (.getMessage error))}))}
+                     :message (format "MCP server %s not initialized, check stderr logs for more details" mcp-server-name)}))}
       db*
       config)
      {:models (keys (:models @db*))

@@ -22,6 +22,10 @@
 (defn ^:private base-completion-request! [{:keys [body api-key on-error on-response]}]
   (let [api-key (or api-key
                     (System/getenv "OPENAI_API_KEY"))]
+    (logger/debug logger-tag (format "Sending input: '%s' instructions: '%s' tools: '%s'"
+                                     (:input body)
+                                     (:instructions body)
+                                     (:tools body)))
     (http/post
      (url responses-path)
      {:headers {"Authorization" (str "Bearer " api-key)
@@ -48,14 +52,14 @@
                     :or {temperature 1.0}}
                    {:keys [on-message-received on-error on-tool-called]}]
   (let [input (conj past-messages {:role "user" :content user-prompt})
-        _ (logger/debug logger-tag (format "Sending input: '%s' instructions: '%s'" input context))
+        tools (cond-> tools
+                web-search (conj {:type "web_search_preview"}))
         body {:model model
               :input input
               :user (str (System/getProperty "user.name") "@ECA")
               :instructions context
               :temperature temperature
-              :tools (cond-> tools
-                       web-search (conj {:type "web_search_preview"}))
+              :tools tools
               :stream true}
         on-response-fn (fn handle-response [event data]
                          (llm-util/log-response logger-tag event data)

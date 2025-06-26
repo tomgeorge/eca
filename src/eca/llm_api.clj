@@ -31,7 +31,7 @@
                                         (apply on-first-message-received args))
                                       (apply on-message-received args))
         tools (when (:mcp-tools model-config)
-                (map mcp-tool->llm-tool mcp-tools))
+                (mapv mcp-tool->llm-tool mcp-tools))
         web-search (:web-search model-config)]
     (cond
       (contains? #{"o4-mini"

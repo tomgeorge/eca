@@ -18,7 +18,7 @@
   {:openaiApiKey nil
    :anthropicApiKey nil
    :rules []
-   :mcpTimeoutSeconds 10
+   :mcpTimeoutSeconds 30
    :mcpServers []
    :ollama {:host "http://localhost"
             :port 11434

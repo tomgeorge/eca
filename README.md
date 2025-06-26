@@ -65,6 +65,10 @@ The protocol can be found [here](./docs/protocol.md), it follows the same standa
 
 Check the planned work [here](https://github.com/orgs/editor-code-assistant/projects/1/views/1).
 
+## Troubleshooting
+
+You can start eca with `--log-level debug` which should log helpful information in stderr buffer like what is being sent to LLMs.
+
 ## Contributing
 
 Contributions are very welcome, please open an issue for discussion or a pull request.

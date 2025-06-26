@@ -67,7 +67,19 @@
         "allDeclaredMethods":true
     },
     {
+        "name":"io.modelcontextprotocol.spec.McpSchema$Root",
+        "allDeclaredConstructors":true,
+        "allDeclaredFields":true,
+        "allDeclaredMethods":true
+    },
+    {
         "name":"io.modelcontextprotocol.spec.McpSchema$ListResourcesResult",
+        "allDeclaredConstructors":true,
+        "allDeclaredFields":true,
+        "allDeclaredMethods":true
+    },
+    {
+        "name":"io.modelcontextprotocol.spec.McpSchema$ListRootResult",
         "allDeclaredConstructors":true,
         "allDeclaredFields":true,
         "allDeclaredMethods":true
@@ -154,6 +166,42 @@
     },
     {
         "name":"io.modelcontextprotocol.spec.McpSchema$Tool",
+        "allDeclaredFields":true,
+        "allDeclaredConstructors":true,
+        "allDeclaredMethods":true
+    },
+    {
+        "name":"io.modelcontextprotocol.spec.McpSchema$CallToolRequest",
+        "allDeclaredFields":true,
+        "allDeclaredConstructors":true,
+        "allDeclaredMethods":true
+    },
+    {
+        "name":"io.modelcontextprotocol.spec.McpSchema$CallToolResult",
+        "allDeclaredFields":true,
+        "allDeclaredConstructors":true,
+        "allDeclaredMethods":true
+    },
+    {
+        "name":"io.modelcontextprotocol.spec.McpSchema$TextContent",
+        "allDeclaredFields":true,
+        "allDeclaredConstructors":true,
+        "allDeclaredMethods":true
+    },
+    {
+        "name":"io.modelcontextprotocol.spec.McpSchema$ImageContent",
+        "allDeclaredFields":true,
+        "allDeclaredConstructors":true,
+        "allDeclaredMethods":true
+    },
+    {
+        "name":"io.modelcontextprotocol.spec.McpSchema$AudioContent",
+        "allDeclaredFields":true,
+        "allDeclaredConstructors":true,
+        "allDeclaredMethods":true
+    },
+    {
+        "name":"io.modelcontextprotocol.spec.McpSchema$EmbeddedResource",
         "allDeclaredFields":true,
         "allDeclaredConstructors":true,
         "allDeclaredMethods":true

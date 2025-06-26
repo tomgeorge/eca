@@ -43,6 +43,12 @@
   (let [pattern (str (make-literal prefix) "([\\s\\S]*?)" (make-literal suffix))]
     (second (re-find (re-pattern pattern) from-string))))
 
+(defn debug-graal [& [args]]
+  (shell (format "%s/bin/java -agentlib:native-image-agent=config-output-dir=%s -jar target/eca.jar %s"
+                 (System/getenv "GRAALVM_HOME")
+                 (System/getenv "PWD")
+                 args)))
+
 (defn debug-cli
   "Build the `eca[.bat]` debug executable (suppots `cider-nrepl`)."
   []

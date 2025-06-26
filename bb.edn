@@ -3,6 +3,7 @@
                                       :git/sha "4a9a74f0e50e897c45df8cc70684360eb30fce80"}}
  :min-bb-version "0.8.156"
  :tasks {debug-cli make/debug-cli
+         debug-graal make/debug-graal
          prod-jar make/prod-jar
          native-cli make/native-cli
 

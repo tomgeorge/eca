@@ -74,14 +74,14 @@
 (defn call-tool! [^String name ^Map arguments db]
   (let [result (.callTool ^McpSyncClient (get-in db [:mcp-tools name :mcp-client])
                           (McpSchema$CallToolRequest. name arguments))]
-    (if (.isError result)
-      {:error (.content result)}
-      {:contents (map (fn [content]
-                        (case (.type ^McpSchema$Content content)
-                          "text" {:type :text
-                                  :content (.text ^McpSchema$TextContent content)}
-                          nil))
-                      (.content result))})))
+    (logger/debug logger-tag "ToolCall result: " result)
+    {:contents (map (fn [content]
+                      (case (.type ^McpSchema$Content content)
+                        "text" {:type :text
+                                :error (.isError result)
+                                :content (.text ^McpSchema$TextContent content)}
+                        nil))
+                    (.content result))}))
 
 (defn shutdown! [db*]
   (doseq [[_name {:keys [_client]}] (:mcp-clients @db*)]

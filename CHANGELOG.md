@@ -8,6 +8,8 @@
 - Support custom API urls for OpenAI and Anthropic
 - Add `--log-level <level>` option for better debugging.
 - Add support for global config file.
+- Improve MCP response handling.
+- Improve LLM streaming response handler.
 
 ## 0.0.3
 

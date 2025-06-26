@@ -7,14 +7,25 @@
    [java.io BufferedReader]))
 
 (defn event-data-seq [^BufferedReader rdr]
-  (when-let [event (.readLine rdr)]
-    (when (string/starts-with? event "event:")
-      (when-let [data (.readLine rdr)]
-        (.readLine rdr) ;; blank line
-        (when (string/starts-with? data "data:")
-          (cons [(subs event 7)
-                 (json/parse-string (subs data 6) true)]
-                (lazy-seq (event-data-seq rdr))))))))
+  (letfn [(next-group []
+            (loop [event-line nil]
+              (let [line (.readLine rdr)]
+                (cond
+                  (nil? line) nil ; EOF
+                  (string/blank? line) (recur event-line) ; skip blank lines
+                  (string/starts-with? line "event:") (recur line)
+                  (string/starts-with? line "data:")
+                  (let [data-str (subs line 6)]
+                    (if (= data-str "[DONE]")
+                      (recur event-line) ; skip [DONE]
+                      (let [event-type (if event-line
+                                         (subs event-line 7)
+                                         (-> (json/parse-string data-str true)
+                                             :type))]
+                        (cons [event-type (json/parse-string data-str true)]
+                              (lazy-seq (next-group))))))
+                  :else (recur event-line)))))]
+    (next-group)))
 
 (defn log-response [tag event data]
   (logger/debug tag event data))

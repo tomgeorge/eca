@@ -10,7 +10,7 @@
 
 (def ^:private logger-tag "[OPENAI]")
 
-(def ^:private openai-url "https://api.openai.com/")
+(def ^:private openai-url "https://api.openai.com")
 (def ^:private responses-path "/v1/responses")
 
 (defn ^:private url [path]
@@ -21,13 +21,15 @@
 
 (defn ^:private base-completion-request! [{:keys [body api-key on-error on-response]}]
   (let [api-key (or api-key
-                    (System/getenv "OPENAI_API_KEY"))]
-    (logger/debug logger-tag (format "Sending input: '%s' instructions: '%s' tools: '%s'"
+                    (System/getenv "OPENAI_API_KEY"))
+        url (url responses-path)]
+    (logger/debug logger-tag (format "Sending input: '%s' instructions: '%s' tools: '%s' url: '%s'"
                                      (:input body)
                                      (:instructions body)
-                                     (:tools body)))
+                                     (:tools body)
+                                     url))
     (http/post
-     (url responses-path)
+     url
      {:headers {"Authorization" (str "Bearer " api-key)
                 "Content-Type" "application/json"}
       :body (json/generate-string body)

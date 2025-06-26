@@ -7,6 +7,7 @@
   4. `initializatonOptions` sent in `initialize` request."
   (:require
    [cheshire.core :as json]
+   [cheshire.factory :as json.factory]
    [clojure.core.memoize :as memoize]
    [clojure.java.io :as io]
    [clojure.string :as string]
@@ -33,7 +34,9 @@
 
 (defn ^:private safe-read-json-string [raw-string]
   (try
-    (json/parse-string raw-string true)
+    (binding [json.factory/*json-factory* (json.factory/make-json-factory
+                                           {:allow-comments true})]
+      (json/parse-string raw-string true))
     (catch Exception _
       nil)))
 
@@ -48,7 +51,7 @@
                             (io/file (get-property "user.home") ".config"))
         config-file (io/file xdg-config-home "eca" "config.json")]
     (when (.exists config-file)
-        (safe-read-json-string (slurp config-file)))))
+      (safe-read-json-string (slurp config-file)))))
 
 (def ^:private config-from-global-file (memoize/ttl config-from-global-file* :ttl/threshold ttl-cache-config-ms))
 

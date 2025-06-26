@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Allow comments on `json` configs.
+
 ## 0.0.4
 
 - Add env support for MCPs

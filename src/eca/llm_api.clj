@@ -22,7 +22,7 @@
 
 (defn complete!
   [{:keys [model model-config context user-prompt config on-first-message-received
-           on-message-received on-error on-tool-called
+           on-message-received on-error on-tool-called on-reason
            past-messages mcp-tools]}]
   (let [first-message-received* (atom false)
         on-message-received-wrapper (fn [& args]
@@ -47,7 +47,8 @@
         :api-key (:openaiApiKey config)}
        {:on-message-received on-message-received-wrapper
         :on-error on-error
-        :on-tool-called on-tool-called})
+        :on-tool-called on-tool-called
+        :on-reason on-reason})
 
       (contains? #{"claude-sonnet-4-0"
                    "claude-opus-4-0"

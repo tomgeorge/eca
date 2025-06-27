@@ -1,4 +1,8 @@
-(ns eca.db)
+(ns eca.db
+  "Namespace for database state management in the Editor Code Assistant (ECA).
+
+  Defines `initial-db` as the default application state map and `db*` as the atom
+  that holds the mutable runtime state.")
 
 (set! *warn-on-reflection* true)
 
@@ -25,3 +29,6 @@
    })
 
 (defonce db* (atom initial-db))
+
+(comment
+  (:client (:clojure-mcp (:mcp-clients @db*))))

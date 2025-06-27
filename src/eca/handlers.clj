@@ -38,7 +38,7 @@
                    (messenger/showMessage
                     messenger
                     {:type :error
-                     :message (format "MCP server %s not initialized, check stderr logs for more details" mcp-server-name)}))}
+                     :message (format "MCP server %s not initialized, set \"--log-level debug\" and check stderr logs for more details" mcp-server-name)}))}
       db*
       config)
      {:models (keys (:models @db*))

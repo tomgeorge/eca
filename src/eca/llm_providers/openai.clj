@@ -52,7 +52,7 @@
 
 (defn completion! [{:keys [model user-prompt context temperature api-key past-messages tools web-search]
                     :or {temperature 1.0}}
-                   {:keys [on-message-received on-error on-tool-called]}]
+                   {:keys [on-message-received on-error on-tool-called on-reason]}]
   (let [input (conj past-messages {:role "user" :content user-prompt})
         tools (cond-> tools
                 web-search (conj {:type "web_search_preview"}))
@@ -66,35 +66,47 @@
         on-response-fn (fn handle-response [event data]
                          (llm-util/log-response logger-tag event data)
                          (case event
+                           ;; text
                            "response.output_text.delta" (on-message-received {:type :text
                                                                               :text (:delta data)})
-                           "response.output_item.done" (when (= "function_call" (:type (:item data)))
-                                                         (let [function-name (-> data :item :name)
-                                                               function-args (-> data :item :arguments)
-                                                               response (on-tool-called {:name function-name
-                                                                                         :arguments (json/parse-string function-args)})]
-                                                           (base-completion-request!
-                                                            {:body (assoc body :input (concat input
-                                                                                              [{:type "function_call"
-                                                                                                :call_id (-> data :item :call_id)
-                                                                                                :name function-name
-                                                                                                :arguments function-args}]
-                                                                                              (mapv
-                                                                                               (fn [{:keys [_type content]}]
-                                                                                                  ;; TODO handle different types
-                                                                                                 {:type "function_call_output"
-                                                                                                  :call_id (-> data :item :call_id)
-                                                                                                  :output content})
-                                                                                               (:contents response))))
-                                                             :api-key api-key
-                                                             :on-error on-error
-                                                             :on-response handle-response})))
+                           ;; tools
+                           "response.output_item.done" (case (:type (:item data))
+                                                         "function_call" (let [function-name (-> data :item :name)
+                                                                               function-args (-> data :item :arguments)
+                                                                               response (on-tool-called {:id (-> data :item :call_id)
+                                                                                                         :name function-name
+                                                                                                         :arguments (json/parse-string function-args)})]
+                                                                           (base-completion-request!
+                                                                            {:body (assoc body :input (concat input
+                                                                                                              [{:type "function_call"
+                                                                                                                :call_id (-> data :item :call_id)
+                                                                                                                :name function-name
+                                                                                                                :arguments function-args}]
+                                                                                                              (mapv
+                                                                                                               (fn [{:keys [_type content]}]
+                                                                                                                  ;; TODO handle different types
+                                                                                                                 {:type "function_call_output"
+                                                                                                                  :call_id (-> data :item :call_id)
+                                                                                                                  :output content})
+                                                                                                               (:contents response))))
+                                                                             :api-key api-key
+                                                                             :on-error on-error
+                                                                             :on-response handle-response}))
+                                                         "reasoning" (on-reason {:status :finished})
+                                                         nil)
+                           ;; URL mentioned
                            "response.output_text.annotation.added" (case (-> data :annotation :type)
                                                                      "url_citation" (on-message-received
                                                                                      {:type :url
                                                                                       :title (-> data :annotation :title)
                                                                                       :url (-> data :annotation :url)})
                                                                      nil)
+                           ;; reasoning
+                           "response.output_item.added" (case (-> data :item :type)
+                                                          "reasoning" (on-reason {:status :started})
+                                                          nil)
+
+                           ;; done
                            "response.completed" (when-not (= "function_call" (-> data :response :output last :type))
                                                   (on-message-received {:type :finish
                                                                         :finish-reason (-> data :response :status)}))

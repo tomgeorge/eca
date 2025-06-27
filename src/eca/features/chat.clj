@@ -81,23 +81,23 @@
                       (swap! db* assoc-in [:chats new-id] {:id new-id})
                       new-id))
         _ (messenger/chat-content-received
-            messenger
-            {:chat-id chat-id
-             :request-id request-id
-             :is-complete false
-             :role :user
-             :content {:type :text
-                       :text (str message "\n")}})
+           messenger
+           {:chat-id chat-id
+            :request-id request-id
+            :is-complete false
+            :role :user
+            :content {:type :text
+                      :text (str message "\n")}})
         _ (when (seq contexts)
             (messenger/chat-content-received
-              messenger
-              {:chat-id chat-id
-               :request-id request-id
-               :is-complete false
-               :role :system
-               :content {:type :progress
-                         :state :running
-                         :text "Parsing given context"}}))
+             messenger
+             {:chat-id chat-id
+              :request-id request-id
+              :is-complete false
+              :role :system
+              :content {:type :progress
+                        :state :running
+                        :text "Parsing given context"}}))
         db @db*
         rules (f.rules/all config
                            (:workspace-folders db)
@@ -112,87 +112,112 @@
         received-msgs* (atom "")]
     (swap! db* update-in [:chats chat-id :messages] (fnil conj []) {:role "user" :content user-prompt})
     (messenger/chat-content-received
-      messenger
-      {:chat-id chat-id
-       :request-id request-id
-       :role :system
-       :content {:type :progress
-                 :state :running
-                 :text "Waiting model"}})
+     messenger
+     {:chat-id chat-id
+      :request-id request-id
+      :role :system
+      :content {:type :progress
+                :state :running
+                :text "Waiting model"}})
     (llm-api/complete!
-      {:model chosen-model
-       :model-config (get-in db [:models chosen-model])
-       :user-prompt user-prompt
-       :context context-str
-       :past-messages past-messages
-       :config config
-       :mcp-tools mcp-tools
-       :on-first-message-received (fn [_]
-                                    (messenger/chat-content-received
-                                      messenger
-                                      {:chat-id chat-id
-                                       :request-id request-id
-                                       :role :system
-                                       :content {:type :progress
-                                                 :state :running
-                                                 :text "Generating"}}))
-       :on-message-received (fn [{:keys [type] :as msg}]
-                              (case type
-                                :text (do
-                                        (swap! received-msgs* str (:text msg))
-                                        (messenger/chat-content-received
+     {:model chosen-model
+      :model-config (get-in db [:models chosen-model])
+      :user-prompt user-prompt
+      :context context-str
+      :past-messages past-messages
+      :config config
+      :mcp-tools mcp-tools
+      :on-first-message-received (fn [_]
+                                   (messenger/chat-content-received
+                                    messenger
+                                    {:chat-id chat-id
+                                     :request-id request-id
+                                     :role :system
+                                     :content {:type :progress
+                                               :state :running
+                                               :text "Generating"}}))
+      :on-message-received (fn [{:keys [type] :as msg}]
+                             (case type
+                               :text (do
+                                       (swap! received-msgs* str (:text msg))
+                                       (messenger/chat-content-received
+                                        messenger
+                                        {:chat-id chat-id
+                                         :request-id request-id
+                                         :role :assistant
+                                         :content {:type :text
+                                                   :text (:text msg)}}))
+                               :url (messenger/chat-content-received
+                                     messenger
+                                     {:chat-id chat-id
+                                      :request-id request-id
+                                      :role :assistant
+                                      :content {:type :url
+                                                :title (:title msg)
+                                                :url (:url msg)}})
+                               :finish (do
+                                         (swap! db* update-in [:chats chat-id :messages]
+                                                (fnil conj [])
+                                                {:role "assistant"
+                                                 :content @received-msgs*})
+                                         (messenger/chat-content-received
                                           messenger
                                           {:chat-id chat-id
                                            :request-id request-id
-                                           :role :assistant
-                                           :content {:type :text
-                                                     :text (:text msg)}}))
-                                :url (messenger/chat-content-received
-                                       messenger
-                                       {:chat-id chat-id
-                                        :request-id request-id
-                                        :role :assistant
-                                        :content {:type :url
-                                                  :title (:title msg)
-                                                  :url (:url msg)}})
-                                :finish (do
-                                          (swap! db* update-in [:chats chat-id :messages]
-                                                 (fnil conj [])
-                                                 {:role "assistant"
-                                                  :content @received-msgs*})
-                                          (messenger/chat-content-received
-                                            messenger
-                                            {:chat-id chat-id
-                                             :request-id request-id
-                                             :role :system
-                                             :content {:type :progress
-                                                       :state :finished}}))))
-       :on-tool-called (fn [{:keys [name arguments]}]
-                         (messenger/chat-content-received
+                                           :role :system
+                                           :content {:type :progress
+                                                     :state :finished}}))))
+      :on-tool-called (fn [{:keys [id name arguments]}]
+                        (messenger/chat-content-received
+                         messenger
+                         {:chat-id chat-id
+                          :request-id request-id
+                          :role :assistant
+                          :content {:type :mcpToolCall
+                                    :name name
+                                    :arguments arguments
+                                    :id id
+                                    :manual-approval false}})
+                        (let [result (f.mcp/call-tool! name arguments @db*)]
+                          (messenger/chat-content-received
                            messenger
                            {:chat-id chat-id
                             :request-id request-id
                             :role :assistant
-                            :content {:type :mcpToolCall
+                            :content {:type :mcpToolCalled
                                       :name name
                                       :arguments arguments
-                                      :manual-approval false}})
-                         (f.mcp/call-tool! name arguments @db*))
-       :on-error (fn [{:keys [message exception]}]
-                   (messenger/chat-content-received
-                     messenger
-                     {:chat-id chat-id
-                      :request-id request-id
-                      :role :system
-                      :content {:type :text
-                                :text (str (or message (ex-message exception)) "\n")}})
-                   (messenger/chat-content-received
-                     messenger
-                     {:chat-id chat-id
-                      :request-id request-id
-                      :role :system
-                      :content {:type :progress
-                                :state :finished}}))})
+                                      :id id
+                                      :output (:contents result)}})
+                          result))
+      :on-reason (fn [{:keys [status]}]
+                   (let [msg (case status
+                               :started "Reasoning"
+                               :finished "Waiting model"
+                               nil)]
+                     (messenger/chat-content-received
+                      messenger
+                      {:chat-id chat-id
+                       :request-id request-id
+                       :role :system
+                       :content {:type :progress
+                                 :state :running
+                                 :text msg}})))
+      :on-error (fn [{:keys [message exception]}]
+                  (messenger/chat-content-received
+                   messenger
+                   {:chat-id chat-id
+                    :request-id request-id
+                    :role :system
+                    :content {:type :text
+                              :text (str (or message (ex-message exception)) "\n")}})
+                  (messenger/chat-content-received
+                   messenger
+                   {:chat-id chat-id
+                    :request-id request-id
+                    :role :system
+                    :content {:type :progress
+                              :state :finished}}))})
     {:chat-id chat-id
      :model chosen-model
      :status :success}))

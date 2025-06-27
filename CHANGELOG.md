@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Allow comments on `json` configs.
+- Improve MCP tool call feedback.
 
 ## 0.0.4
 

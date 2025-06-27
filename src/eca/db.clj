@@ -1,8 +1,4 @@
-(ns eca.db
-  "Namespace for database state management in the Editor Code Assistant (ECA).
-
-  Defines `initial-db` as the default application state map and `db*` as the atom
-  that holds the mutable runtime state.")
+(ns eca.db)
 
 (set! *warn-on-reflection* true)
 

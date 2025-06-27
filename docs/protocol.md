@@ -396,7 +396,9 @@ type ChatContent =
     | URLContent 
     | ProgressContent 
     | FileChangeContent
-    | MCPToolCallContent;
+    | MCPToolCallPrepareContent
+    | MCPToolCallRunContent
+    | MCPToolCalledContent;
 
 /**
  * Simple text message from the LLM
@@ -407,19 +409,6 @@ interface TextContent {
      * The text content
      */
     text: string;
-    /**
-     * Optional code blocks found in the text
-     */
-    codeBlocks?: [{
-        /**
-         * The code content
-         */
-        code: string;
-        /**
-         * The programming language of the code
-         */
-        language?: string;
-    }];
 }
 
 /**
@@ -508,10 +497,37 @@ interface FileChangeContent {
 }
 
 /**
- * MCP tool calls that LLM may trigger.
+ * MCP tool call that LLM is preparing to execute.
  */
-interface MCPToolCallContent {
-    type: 'mcpToolCall';
+interface MCPToolCallPrepareContent {
+    type: 'mcpToolCallPrepare';
+    
+    /**
+     * id of the tool call
+     */
+    id: string;
+    
+    /**
+     * Name of the tool
+     */
+    name: string;
+    
+    /*
+     * Argument text of this tool call
+     */
+    argumentText: string;
+    
+    /**
+     * Whether this call requires manual approval from the user.
+     */
+    manualApproval: boolean;
+}
+
+/**
+ * MCP tool call final request that LLM may trigger.
+ */
+interface MCPToolCallRunContent {
+    type: 'mcpToolCallRun';
     
     /**
      * id of the tool call
@@ -532,6 +548,48 @@ interface MCPToolCallContent {
      * Whether this call requires manual approval from the user.
      */
     manualApproval: boolean;
+}
+
+/**
+ * MCP tool call result that LLM trigerred and was executed already.
+ */
+interface MCPToolCalledContent {
+    type: 'mcpToolCalled';
+    
+    /**
+     * id of the tool call
+     */
+    id: string;
+    
+    /**
+     * Name of the tool
+     */
+    name: string;
+    
+    /*
+     * Arguments of this tool call
+     */
+    arguments: string[];
+    
+    /**
+     * the result of the MCP tool call.
+     */
+    outputs: [{
+        /*
+         * The type of this output
+         */
+        type: 'text';
+       
+        /**
+         * The content of this output
+         */
+        content: string;
+        
+        /**
+         * Whether it was a error
+         */
+        error: boolean;
+    }];
 }
 ```
 

@@ -167,13 +167,24 @@
                                            :role :system
                                            :content {:type :progress
                                                      :state :finished}}))))
+      :on-prepare-tool-call (fn [{:keys [id name argument]}]
+                              (messenger/chat-content-received
+                               messenger
+                               {:chat-id chat-id
+                                :request-id request-id
+                                :role :assistant
+                                :content {:type :mcpToolCallPrepare
+                                          :name name
+                                          :argumentText argument
+                                          :id id
+                                          :manual-approval false}}))
       :on-tool-called (fn [{:keys [id name arguments]}]
                         (messenger/chat-content-received
                          messenger
                          {:chat-id chat-id
                           :request-id request-id
                           :role :assistant
-                          :content {:type :mcpToolCall
+                          :content {:type :mcpToolCallRun
                                     :name name
                                     :arguments arguments
                                     :id id
@@ -188,7 +199,7 @@
                                       :name name
                                       :arguments arguments
                                       :id id
-                                      :output (:contents result)}})
+                                      :outputs (:contents result)}})
                           result))
       :on-reason (fn [{:keys [status]}]
                    (let [msg (case status

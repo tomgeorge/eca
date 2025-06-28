@@ -30,9 +30,11 @@
 
 (defn ^:private base-request! [{:keys [body api-key on-error on-response]}]
   (let [api-key (or api-key
-                    (System/getenv "ANTHROPIC_API_KEY"))]
+                    (System/getenv "ANTHROPIC_API_KEY"))
+        url (url messages-path)]
+    (logger/debug logger-tag (format "Sending body: '%s', url: '%s'" body url))
     (http/post
-     (url messages-path)
+     url
      {:headers {"x-api-key" api-key
                 "anthropic-version" "2023-06-01"
                 "Content-Type" "application/json"}
@@ -59,9 +61,8 @@
            api-key past-messages tools web-search]
     :or {max-tokens 1024
          temperature 1.0}}
-   {:keys [on-message-received on-error on-tool-called]}]
-  (let [messages (conj past-messages {:role "user" :content user-prompt})
-        _ (logger/debug logger-tag (format "Sending messages: '%s' system: '%s'" messages context))
+   {:keys [on-message-received on-error on-prepare-tool-call on-tool-called]}]
+  (let [messages (vec (conj past-messages {:role "user" :content user-prompt}))
         body {:model model
               :messages messages
               :max_tokens max-tokens
@@ -75,10 +76,23 @@
         (fn handle-response [event data]
           (llm-util/log-response logger-tag event data)
           (case event
+            "content_block_start" (case (-> data :content_block :type)
+                                    "tool_use" (do
+                                                 (on-prepare-tool-call {:name (-> data :content_block :name)
+                                                                        :id (-> data :content_block :id)
+                                                                        :argumentsText ""})
+                                                 (swap! content-block* assoc (:index data) (:content_block data)))
+
+                                    nil)
             "content_block_delta" (case (-> data :delta :type)
                                     "text_delta" (on-message-received {:type :text
                                                                        :text (-> data :delta :text)})
-                                    "input_json_delta" (swap! content-block* update-in [(:index data) :input-json] str (-> data :delta :partial_json))
+                                    "input_json_delta" (let [text (-> data :delta :partial_json)
+                                                             _ (swap! content-block* update-in [(:index data) :input-json] str text)
+                                                             content-block (get @content-block* (:index data))]
+                                                         (on-prepare-tool-call {:name (:name content-block)
+                                                                                :id (:id content-block)
+                                                                                :argumentsText text}))
                                     "citations_delta" (case (-> data :delta :citation :type)
                                                         "web_search_result_location" (on-message-received
                                                                                       {:type :url
@@ -86,16 +100,13 @@
                                                                                        :url (-> data :delta :citation :url)})
                                                         nil)
                                     (logger/warn "Unkown response delta type" (-> data :delta :type)))
-            "content_block_start" (case (-> data :content_block :type)
-                                    "tool_use" (swap! content-block* assoc (:index data) (:content_block data))
-
-                                    nil)
             "message_delta" (case (-> data :delta :stop_reason)
                               "tool_use" (doseq [content-block (vals @content-block*)]
                                            (when (= "tool_use" (:type content-block))
                                              (let [function-name (:name content-block)
                                                    function-args (:input-json content-block)
-                                                   response (on-tool-called {:name function-name
+                                                   response (on-tool-called {:id (:id content-block)
+                                                                             :name function-name
                                                                              :arguments (json/parse-string function-args)})
                                                    messages (concat messages
                                                                     [{:role "assistant"

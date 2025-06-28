@@ -1,7 +1,10 @@
 (ns eca.features.mcp
   (:require
    [cheshire.core :as json]
-   [eca.logger :as logger])
+   [clojure.java.io :as io]
+   [clojure.string :as string]
+   [eca.logger :as logger]
+   [eca.shared :as shared])
   (:import
    [com.fasterxml.jackson.databind ObjectMapper]
    [io.modelcontextprotocol.client McpClient McpSyncClient]
@@ -21,12 +24,32 @@
 
 (def ^:private logger-tag "[MCP]")
 
-(defn ^:private ->transport ^McpTransport [{:keys [command args env]}]
-  (StdioClientTransport.
-   (-> (ServerParameters/builder ^String command)
-       (.args ^List args)
-       (.env (update-keys env name))
-       (.build))))
+(def ^:private env-var-regex
+  #"\$(\w+)|\$\{([^}]+)\}")
+
+(defn ^:private replace-env-vars [s]
+  (let [env (System/getenv)]
+    (string/replace s
+                    env-var-regex
+                    (fn [[_ var1 var2]]
+                      (or (get env (or var1 var2))
+                          (str "$" var1)
+                          (str "${" var2 "}"))))))
+
+(defn ^:private ->transport ^McpTransport [{:keys [command args env]} workspaces]
+  (let [command ^String (replace-env-vars command)
+        b (ServerParameters/builder command)
+        b (if args
+            (.args b ^List (mapv replace-env-vars (or args [])))
+            b)
+        b (if env
+            (.env b (update-keys env name))
+            b)
+        pb-init-args []]
+    (proxy [StdioClientTransport] [(.build b)]
+      (getProcessBuilder [] (-> (ProcessBuilder. ^List pb-init-args)
+                                ;; TODO we are hard coding the first workspace
+                                (.directory (io/file (shared/uri->filename (:uri (first workspaces))))))))))
 
 (defn ^:private ->client ^McpSyncClient [transport config]
   (-> (McpClient/sync transport)
@@ -37,19 +60,20 @@
       (.build)))
 
 (defn initialize! [{:keys [on-error]} db* config]
-  (doseq [[name server-config] (:mcpServers config)]
-    (try
-      (when-not (and (get-in @db* [:mcp-clients name])
-                     (get server-config :disabled false))
-        (let [transport (->transport server-config)
-              client (->client transport config)]
-          (swap! db* assoc-in [:mcp-clients name :client] client)
-          (doseq [{:keys [name uri]} (:workspace-folders @db*)]
-            (.addRoot client (McpSchema$Root. uri name)))
-          (.initialize client)))
-      (catch Exception e
-        (logger/warn logger-tag (format "Could not initialize MCP server %s. Error: %s" name (.getMessage e)))
-        (on-error name e)))))
+  (let [workspaces (:workspace-folders @db*)]
+    (doseq [[name server-config] (:mcpServers config)]
+      (try
+        (when-not (and (get-in @db* [:mcp-clients name])
+                       (get server-config :disabled false))
+          (let [transport (->transport server-config workspaces)
+                client (->client transport config)]
+            (swap! db* assoc-in [:mcp-clients name :client] client)
+            (doseq [{:keys [name uri]} workspaces]
+              (.addRoot client (McpSchema$Root. uri name)))
+            (.initialize client)))
+        (catch Exception e
+          (logger/warn logger-tag (format "Could not initialize MCP server %s. Error: %s" name (.getMessage e)))
+          (on-error name e))))))
 
 (defn tools-cached? [db]
   (boolean (:mcp-tools db)))

@@ -23,11 +23,7 @@
   (let [api-key (or api-key
                     (System/getenv "OPENAI_API_KEY"))
         url (url responses-path)]
-    (logger/debug logger-tag (format "Sending input: '%s' instructions: '%s' tools: '%s' url: '%s'"
-                                     (:input body)
-                                     (:instructions body)
-                                     (:tools body)
-                                     url))
+    (logger/debug logger-tag (format "Sending body: '%s', url: '%s'" body url))
     (http/post
      url
      {:headers {"Authorization" (str "Bearer " api-key)

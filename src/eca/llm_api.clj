@@ -64,6 +64,7 @@
         :api-key (:anthropicApiKey config)}
        {:on-message-received on-message-received-wrapper
         :on-error on-error
+        :on-prepare-tool-call on-prepare-tool-call
         :on-tool-called on-tool-called})
 
       (string/starts-with? model config/ollama-model-prefix)

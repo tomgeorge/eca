@@ -103,7 +103,7 @@
         (:mcp-clients db)))
 
 (defn call-tool! [^String name ^Map arguments db]
-  (let [mcp-client (->> (:mcp-clients db)
+  (let [mcp-client (->> (vals (:mcp-clients db))
                         (keep (fn [{:keys [client tools]}]
                                 (when (some #(= name (:name %)) tools)
                                   client)))

@@ -58,19 +58,6 @@
     ollama-model
     (:default-model db)))
 
-(defn ^:private all-mcp-tools! [chat-id request-id messenger db*]
-  (when-not (f.mcp/tools-cached? @db*)
-    (messenger/chat-content-received
-     messenger
-     {:chat-id chat-id
-      :request-id request-id
-      :role :system
-      :content {:type :progress
-                :state :running
-                :text "Finding MCPs"}})
-    (f.mcp/cache-tools! db*))
-  (f.mcp/all-tools @db*))
-
 (defn prompt
   [{:keys [message model behavior contexts chat-id request-id]}
    db*
@@ -108,7 +95,7 @@
         past-messages (get-in db [:chats chat-id :messages] [])
         user-prompt message
         mcp-tools (when (get-in db [:models chosen-model :mcp-tools])
-                    (all-mcp-tools! chat-id request-id messenger db*))
+                    (f.mcp/all-tools @db*))
         received-msgs* (atom "")]
     (swap! db* update-in [:chats chat-id :messages] (fnil conj []) {:role "user" :content user-prompt})
     (messenger/chat-content-received

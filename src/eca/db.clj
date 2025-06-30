@@ -22,9 +22,6 @@
             "claude-3-5-haiku-latest" {:mcp-tools true
                                        :web-search true}} ;; + ollama local models
    :default-model "o4-mini" ;; unless a ollama model is running.
-   })
+   :mcp-clients {}})
 
 (defonce db* (atom initial-db))
-
-(comment
-  (:client (:clojure-mcp (:mcp-clients @db*))))

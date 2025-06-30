@@ -59,62 +59,56 @@
                          (.build)))
       (.build)))
 
-(defn ^:private ->full-server [mcp-name server-config db]
-  (let [tools (->> (vals (:mcp-tools db))
-                   (filterv #(= mcp-name (:mcp-name %)))
-                   (map (fn [mcp-tool]
-                          {:name (:name mcp-tool)
-                           :description (:description mcp-tool)
-                           :parameters (:parameters mcp-tool)})))]
-    (cond-> {:name (name mcp-name)
-             :command (:command server-config)
-             :args (:args server-config)}
-      (seq tools) (assoc :tools tools))))
+(defn ^:private ->server [mcp-name server-config status db]
+  {:name (name mcp-name)
+   :command (:command server-config)
+   :args (:args server-config)
+   :tools (get-in db [:mcp-clients mcp-name :tools])
+   :status status})
 
 (defn initialize-servers-async! [{:keys [on-server-updated]} db* config]
   (let [workspaces (:workspace-folders @db*)
-        db @db*]
+        db @db*
+        obj-mapper (ObjectMapper.)]
     (doseq [[name server-config] (:mcpServers config)]
-      (let [full-server (->full-server name server-config db)]
-        (when-not (get-in db [:mcp-clients name])
-          (if (get server-config :disabled false)
-            (on-server-updated (assoc full-server :status :disabled))
-            (future
-              (try
-                (let [transport (->transport server-config workspaces)
-                      client (->client transport config)]
-                  (on-server-updated (assoc full-server :status :starting))
-                  (swap! db* assoc-in [:mcp-clients name] {:client client})
-                  (doseq [{:keys [name uri]} workspaces]
-                    (.addRoot client (McpSchema$Root. uri name)))
-                  (.initialize client)
-                  (on-server-updated (assoc full-server :status :running)))
-                (catch Exception e
-                  (logger/warn logger-tag (format "Could not initialize MCP server %s. Error: %s" name (.getMessage e)))
-                  (on-server-updated (assoc full-server :status :failed)))))))))))
-
-(defn tools-cached? [db]
-  (boolean (:mcp-tools db)))
-
-(defn cache-tools! [db*]
-  (let [obj-mapper (ObjectMapper.)]
-    (doseq [[name {:keys [^McpSyncClient client]}] (:mcp-clients @db*)]
-      (when (.isInitialized client)
-        (doseq [^McpSchema$Tool tool-client (.tools (.listTools client))]
-          (let [tool {:name (.name tool-client)
-                      :mcp-name name
-                      :mcp-client client
-                      :description (.description tool-client)
-                      ;; We convert to json to then read so we have the clojure map
-                      ;; TODO avoid this converting to clojure map directly
-                      :parameters (json/parse-string (.writeValueAsString obj-mapper (.inputSchema tool-client)) true)}]
-            (swap! db* assoc-in [:mcp-tools (:name tool)] tool)))))))
+      (when-not (get-in db [:mcp-clients name])
+        (if (get server-config :disabled false)
+          (on-server-updated (->server name server-config :disabled db))
+          (future
+            (try
+              (let [transport (->transport server-config workspaces)
+                    client (->client transport config)]
+                (on-server-updated (->server name server-config :starting db))
+                (swap! db* assoc-in [:mcp-clients name] {:client client})
+                (doseq [{:keys [name uri]} workspaces]
+                  (.addRoot client (McpSchema$Root. uri name)))
+                (.initialize client)
+                (let [tools (mapv (fn [^McpSchema$Tool tool-client]
+                                    {:name (.name tool-client)
+                                     :description (.description tool-client)
+                                     ;; We convert to json to then read so we have a clojure map
+                                     ;; TODO avoid this converting to clojure map directly
+                                     :parameters (json/parse-string (.writeValueAsString obj-mapper (.inputSchema tool-client)) true)})
+                                  (.tools (.listTools client)))]
+                  (swap! db* assoc-in [:mcp-clients name :tools] tools))
+                (on-server-updated (->server name server-config :running @db*)))
+              (catch Exception e
+                (logger/warn logger-tag (format "Could not initialize MCP server %s. Error: %s" name (.getMessage e)))
+                (on-server-updated (->server name server-config :failed db))))))))))
 
 (defn all-tools [db]
-  (vals (:mcp-tools db)))
+  (into []
+        (mapcat (fn [[_name {:keys [tools]}]]
+                  tools))
+        (:mcp-clients db)))
 
 (defn call-tool! [^String name ^Map arguments db]
-  (let [result (.callTool ^McpSyncClient (get-in db [:mcp-tools name :mcp-client])
+  (let [mcp-client (->> (:mcp-clients db)
+                        (keep (fn [{:keys [client tools]}]
+                                (when (some #(= name (:name %)) tools)
+                                  client)))
+                        first)
+        result (.callTool ^McpSyncClient mcp-client
                           (McpSchema$CallToolRequest. name arguments))]
     (logger/debug logger-tag "ToolCall result: " result)
     {:contents (map (fn [content]
@@ -129,6 +123,4 @@
   (doseq [[_name {:keys [_client]}] (:mcp-clients @db*)]
     ;; TODO NoClassDefFound being thrown for some reason
     #_(.closeGracefully ^McpSyncClient client))
-  (swap! db* assoc
-         :mcp-clients {}
-         :mcp-tools {}))
+  (swap! db* assoc :mcp-clients {}))

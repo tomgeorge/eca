@@ -645,9 +645,75 @@ Soon
 
 Soon
 
+## Configuration
+
 ### List MCPs (↩️)
 
-Soon
+A client request listing configured MCP servers configured by server and its status.
+
+_Request:_ 
+
+* method: `mcp/listServers`
+* params: `ListMCPServersParams` defined as follows:
+
+```typescript
+interface ListMCPServersParams {}
+```
+
+_Response:_
+
+```typescript
+interface ListMCPServersResponse {
+    /**
+     * The list of servers.
+     */
+    servers: MCPServer[];
+}
+
+interface MCPServer {
+    /**
+     * The server name.
+     */
+    name: string;
+    
+    /**
+     * The command to start this server.
+     */
+    command: string;
+
+    /**
+     * The arguments to start this server.
+     */
+    args: string[];
+    
+    /**
+     * The status of the server.
+     */
+    status: 'running' | 'starting' | 'stopped' | 'disabled';
+    
+    /**
+     * The tools supported by this mcp server if not disabled.
+     */
+    tools?: MCPServerTool[];
+}
+
+interface MCPServerTool {
+    /**
+     * The MCP server tool name.
+     */
+    name: string;
+    
+    /**
+     * The MCP server tool description.
+     */
+    description: string;
+    
+    /**
+     * The MCP server tool parameters.
+     */
+    parameters: any; 
+}
+```
 
 ### Add MCP (↩️)
 

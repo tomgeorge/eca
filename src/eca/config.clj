@@ -20,7 +20,7 @@
    :anthropicApiKey nil
    :rules []
    :mcpTimeoutSeconds 60
-   :mcpServers []
+   :mcpServers {}
    :ollama {:host "http://localhost"
             :port 11434
             :useTools false}

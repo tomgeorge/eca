@@ -69,7 +69,7 @@
                 :state :running
                 :text "Finding MCPs"}})
     (f.mcp/cache-tools! db*))
-  (f.mcp/list-tools @db*))
+  (f.mcp/all-tools @db*))
 
 (defn prompt
   [{:keys [message model behavior contexts chat-id request-id]}

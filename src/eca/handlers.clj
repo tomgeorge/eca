@@ -64,3 +64,8 @@
   (logger/logging-task
    :eca/chat-query-context
    (f.chat/query-context params db*)))
+
+(defn mcp-list-servers [{:keys [db*]} _params]
+  (logger/logging-task
+   :eca/mcp-list-servers
+    {:servers (f.mcp/all-servers @db* (config/all @db*))}))

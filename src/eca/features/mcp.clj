@@ -67,10 +67,12 @@
                        (get server-config :disabled false))
           (let [transport (->transport server-config workspaces)
                 client (->client transport config)]
-            (swap! db* assoc-in [:mcp-clients name :client] client)
+            (swap! db* assoc-in [:mcp-clients name] {:client client
+                                                     :status :starting})
             (doseq [{:keys [name uri]} workspaces]
               (.addRoot client (McpSchema$Root. uri name)))
-            (.initialize client)))
+            (.initialize client)
+            (swap! db* update-in [:mcp-clients name] dissoc :status)))
         (catch Exception e
           (logger/warn logger-tag (format "Could not initialize MCP server %s. Error: %s" name (.getMessage e)))
           (on-error name e))))))
@@ -87,12 +89,12 @@
                       :mcp-name name
                       :mcp-client client
                       :description (.description tool-client)
-                      ;; We convert to json to then read so we have the clojrue map
+                      ;; We convert to json to then read so we have the clojure map
                       ;; TODO avoid this converting to clojure map directly
                       :parameters (json/parse-string (.writeValueAsString obj-mapper (.inputSchema tool-client)) true)}]
             (swap! db* assoc-in [:mcp-tools (:name tool)] tool)))))))
 
-(defn list-tools [db]
+(defn all-tools [db]
   (vals (:mcp-tools db)))
 
 (defn call-tool! [^String name ^Map arguments db]
@@ -114,3 +116,26 @@
   (swap! db* assoc
          :mcp-clients {}
          :mcp-tools {}))
+
+(defn all-servers [db config]
+  (reduce
+   (fn [servers [name server]]
+     (let [{:keys [status client]} (get-in db [:mcp-clients name])
+           tools (->> (vals (:mcp-tools db))
+                      (filterv #(= name (:mcp-name %)))
+                      (map (fn [mcp-tool]
+                             {:name (:name mcp-tool)
+                              :description (:description mcp-tool)
+                              :parameters (:parameters mcp-tool)})))]
+       (conj servers (cond-> {:name (clojure.core/name name)
+                              :command (:command server)
+                              :args (:args server)
+                              :status (or status
+                                          (if client
+                                            (if (.isInitialized ^McpSyncClient client)
+                                              :running
+                                              :stopped)
+                                            :disabled))}
+                       (seq tools) (assoc :tools tools)))))
+   []
+   (:mcpServers config)))

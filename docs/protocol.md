@@ -647,30 +647,21 @@ Soon
 
 ## Configuration
 
-### List MCPs (↩️)
+### MCP server updated (⬅️)
 
-A client request listing configured MCP servers configured by server and its status.
+A server notification about a configured MCP server status update.
+This is useful for clients present to user the list of configured MCPs,
+their status and available tools.
 
 _Request:_ 
 
-* method: `mcp/listServers`
-* params: `ListMCPServersParams` defined as follows:
-
-```typescript
-interface ListMCPServersParams {}
-```
+* method: `mcp/serverUpdated`
+* params: `MCPServerUpdatedParams` defined as follows:
 
 _Response:_
 
 ```typescript
-interface ListMCPServersResponse {
-    /**
-     * The list of servers.
-     */
-    servers: MCPServer[];
-}
-
-interface MCPServer {
+interface MCPServerUpdatedParams {
     /**
      * The server name.
      */
@@ -689,7 +680,7 @@ interface MCPServer {
     /**
      * The status of the server.
      */
-    status: 'running' | 'starting' | 'stopped' | 'disabled';
+    status: 'running' | 'starting' | 'stopped' | 'failed' | 'disabled';
     
     /**
      * The tools supported by this mcp server if not disabled.

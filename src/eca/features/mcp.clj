@@ -59,23 +59,39 @@
                          (.build)))
       (.build)))
 
-(defn initialize! [{:keys [on-error]} db* config]
-  (let [workspaces (:workspace-folders @db*)]
+(defn ^:private ->full-server [mcp-name server-config db]
+  (let [tools (->> (vals (:mcp-tools db))
+                   (filterv #(= mcp-name (:mcp-name %)))
+                   (map (fn [mcp-tool]
+                          {:name (:name mcp-tool)
+                           :description (:description mcp-tool)
+                           :parameters (:parameters mcp-tool)})))]
+    (cond-> {:name (name mcp-name)
+             :command (:command server-config)
+             :args (:args server-config)}
+      (seq tools) (assoc :tools tools))))
+
+(defn initialize-servers-async! [{:keys [on-server-updated]} db* config]
+  (let [workspaces (:workspace-folders @db*)
+        db @db*]
     (doseq [[name server-config] (:mcpServers config)]
-      (try
-        (when-not (and (get-in @db* [:mcp-clients name])
-                       (get server-config :disabled false))
-          (let [transport (->transport server-config workspaces)
-                client (->client transport config)]
-            (swap! db* assoc-in [:mcp-clients name] {:client client
-                                                     :status :starting})
-            (doseq [{:keys [name uri]} workspaces]
-              (.addRoot client (McpSchema$Root. uri name)))
-            (.initialize client)
-            (swap! db* update-in [:mcp-clients name] dissoc :status)))
-        (catch Exception e
-          (logger/warn logger-tag (format "Could not initialize MCP server %s. Error: %s" name (.getMessage e)))
-          (on-error name e))))))
+      (let [full-server (->full-server name server-config db)]
+        (when-not (get-in db [:mcp-clients name])
+          (if (get server-config :disabled false)
+            (on-server-updated (assoc full-server :status :disabled))
+            (future
+              (try
+                (let [transport (->transport server-config workspaces)
+                      client (->client transport config)]
+                  (on-server-updated (assoc full-server :status :starting))
+                  (swap! db* assoc-in [:mcp-clients name] {:client client})
+                  (doseq [{:keys [name uri]} workspaces]
+                    (.addRoot client (McpSchema$Root. uri name)))
+                  (.initialize client)
+                  (on-server-updated (assoc full-server :status :running)))
+                (catch Exception e
+                  (logger/warn logger-tag (format "Could not initialize MCP server %s. Error: %s" name (.getMessage e)))
+                  (on-server-updated (assoc full-server :status :failed)))))))))))
 
 (defn tools-cached? [db]
   (boolean (:mcp-tools db)))
@@ -116,26 +132,3 @@
   (swap! db* assoc
          :mcp-clients {}
          :mcp-tools {}))
-
-(defn all-servers [db config]
-  (reduce
-   (fn [servers [name server]]
-     (let [{:keys [status client]} (get-in db [:mcp-clients name])
-           tools (->> (vals (:mcp-tools db))
-                      (filterv #(= name (:mcp-name %)))
-                      (map (fn [mcp-tool]
-                             {:name (:name mcp-tool)
-                              :description (:description mcp-tool)
-                              :parameters (:parameters mcp-tool)})))]
-       (conj servers (cond-> {:name (clojure.core/name name)
-                              :command (:command server)
-                              :args (:args server)
-                              :status (or status
-                                          (if client
-                                            (if (.isInitialized ^McpSyncClient client)
-                                              :running
-                                              :stopped)
-                                            :disabled))}
-                       (seq tools) (assoc :tools tools)))))
-   []
-   (:mcpServers config)))

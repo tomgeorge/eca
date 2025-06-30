@@ -32,15 +32,12 @@
           :chat-behavior (or (-> params :initialization-options :chat-behavior) (:chat-behavior @db*)))
    (let [config (config/all @db*)]
      (initialize-extra-models! db*)
-     ;; TODO initialize async with progress support
-     (f.mcp/initialize!
-      {:on-error (fn [mcp-server-name _exception]
-                   (messenger/showMessage
-                    messenger
-                    {:type :error
-                     :message (format "MCP server %s not initialized, set \"--log-level debug\" and check stderr logs for more details" mcp-server-name)}))}
-      db*
-      config)
+     (future
+       (f.mcp/initialize-servers-async!
+        {:on-server-updated (fn [server]
+                              (messenger/mcp-server-updated messenger server))}
+        db*
+        config))
      {:models (keys (:models @db*))
       :chat-default-model (f.chat/default-model @db*)
       :chat-behaviors (:chat-behaviors @db*)
@@ -64,8 +61,3 @@
   (logger/logging-task
    :eca/chat-query-context
    (f.chat/query-context params db*)))
-
-(defn mcp-list-servers [{:keys [db*]} _params]
-  (logger/logging-task
-   :eca/mcp-list-servers
-    {:servers (f.mcp/all-servers @db* (config/all @db*))}))

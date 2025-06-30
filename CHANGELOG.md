@@ -5,7 +5,7 @@
 - Allow comments on `json` configs.
 - Improve MCP tool call feedback.
 - Add support for env vars in mcp configs.
-- Add `mcp/listServers` request.
+- Add `mcp/serverUpdated` server notification.
 
 ## 0.0.4
 

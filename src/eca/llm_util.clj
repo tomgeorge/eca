@@ -11,9 +11,19 @@
             (loop [event-line nil]
               (let [line (.readLine rdr)]
                 (cond
-                  (nil? line) nil ; EOF
-                  (string/blank? line) (recur event-line) ; skip blank lines
-                  (string/starts-with? line "event:") (recur line)
+                  ;; EOF
+                  (nil? line)
+                  nil
+
+                  ;; skip blank lines
+                  (string/blank? line)
+                  (recur event-line)
+
+                  ;; event: <event>
+                  (string/starts-with? line "event:")
+                  (recur line)
+
+                  ;; data: <data>
                   (string/starts-with? line "data:")
                   (let [data-str (subs line 6)]
                     (if (= data-str "[DONE]")
@@ -24,7 +34,14 @@
                                              :type))]
                         (cons [event-type (json/parse-string data-str true)]
                               (lazy-seq (next-group))))))
-                  :else (recur event-line)))))]
+
+                  ;; data directly
+                  (string/starts-with? line "{")
+                  (cons [nil (json/parse-string line true)]
+                        (lazy-seq (next-group)))
+
+                  :else
+                  (recur event-line)))))]
     (next-group)))
 
 (defn log-response [tag event data]

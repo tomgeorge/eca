@@ -38,6 +38,7 @@
   (format "%s\nThe user is asking: '%s'" context user-prompt))
 
 (defn ^:private base-completion-request! [{:keys [url body on-error on-response]}]
+  (logger/debug logger-tag (format "Sending body: '%s', url: '%s'" body url))
   (http/post
    url
    {:body (json/generate-string body)
@@ -51,8 +52,8 @@
            (logger/warn logger-tag "Unexpected response status: %s body: %s" status body-str)
            (on-error {:message (format "Ollama response status: %s body: %s" status body-str)}))
          (with-open [rdr (io/reader body)]
-           (doseq [line (line-seq rdr)]
-             (on-response (json/parse-string line true)))))
+           (doseq [[event data] (llm-util/event-data-seq rdr)]
+             (on-response event data))))
        (catch Exception e
          (on-error {:exception e}))))
    (fn [e]
@@ -69,14 +70,13 @@
   (let [messages (if (empty? past-messages)
                    [{:role "user" :content (->message-with-context context user-prompt)}]
                    (conj past-messages {:role "user" :content user-prompt}))
-        _ (logger/debug logger-tag "Sending messages:" messages)
         body {:model model
               :messages messages
               :tools (->tools tools)
               :stream true}
         url (format chat-url (base-url host port))
-        on-response-fn (fn handle-response [data]
-                         (llm-util/log-response logger-tag "chat" data)
+        on-response-fn (fn handle-response [event data]
+                         (llm-util/log-response logger-tag event data)
                          (let [{:keys [message done_reason]} data]
                            (on-message-received
                             (cond-> {}

@@ -26,6 +26,13 @@
            [["foo.bar" {:type "foo.bar"}]
             ["foo.baz" {:type "foo.baz"}]]
            (llm-util/event-data-seq r)))))
+  (testing "when there is no event line, only a data line with the content directly in each line"
+    (with-open [r (io/reader (ByteArrayInputStream. (.getBytes (str "{\"bar\": \"baz\"}\n"
+                                                                    "{\"bar\": \"foo\"}"))))]
+      (is (match?
+           [[nil {:bar "baz"}]
+            [nil {:bar "foo"}]]
+           (llm-util/event-data-seq r)))))
   (testing "Ignore [DONE] when exists"
     (with-open [r (io/reader (ByteArrayInputStream. (.getBytes (str "data: {\"type\": \"foo.bar\"}\n"
                                                                     "\n"

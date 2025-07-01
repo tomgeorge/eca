@@ -3,7 +3,7 @@
    [eca.config :as config]
    [eca.db :as db]
    [eca.features.chat :as f.chat]
-   [eca.features.mcp :as f.mcp]
+   [eca.features.tools.mcp :as f.mcp]
    [eca.llm-api :as llm-api]
    [eca.logger :as logger]
    [eca.messenger :as messenger]))

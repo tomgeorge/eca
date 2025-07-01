@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add built-in tools: filesystem
+
 ## 0.1.0
 
 - Allow comments on `json` configs.

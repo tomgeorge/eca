@@ -1,4 +1,4 @@
-(ns eca.features.mcp
+(ns eca.features.tools.mcp
   (:require
    [cheshire.core :as json]
    [clojure.java.io :as io]

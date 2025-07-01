@@ -117,6 +117,7 @@ interface Config {
   "openaiApiKey" : null,
   "anthropicApiKey" : null,
   "rules" : [ ],
+  "built-in-tools": {"filesystem": {"enabled": true}},
   "mcpTimeoutSeconds" : 10,
   "mcpServers" : [ ],
   "ollama" : {

@@ -1,14 +1,20 @@
-# Supported LLM models
+# Features
 
-## ECA Features supported
+## Built-in tools
+
+ECA support built-in tools to avoid user extra installation and configuration, these tools are always included on models requests that support tools and can be disabled/configured via config `built-in-tools`.
+
+### Filesystem
+
+Provides access to filesystem under workspace root
+
+## Supported LLM models and capaibilities
 
 | model     | MCP | thinking/reasioning |
 |-----------|-----|---------------------|
 | OpenAI    | √   | X                   |
 | Anthropic | √   | X                   |
 | Ollama    | X   | X                   |
-
-## Models
 
 ### OpenAI
 

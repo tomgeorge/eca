@@ -5,8 +5,8 @@
    [clojure.string :as string]
    [eca.config :as config]
    [eca.features.index :as f.index]
-   [eca.features.mcp :as f.mcp]
    [eca.features.rules :as f.rules]
+   [eca.features.tools :as f.tools]
    [eca.llm-api :as llm-api]
    [eca.messenger :as messenger]
    [eca.shared :as shared]))
@@ -95,7 +95,7 @@
         past-messages (get-in db [:chats chat-id :messages] [])
         user-prompt message
         mcp-tools (when (get-in db [:models chosen-model :mcp-tools])
-                    (f.mcp/all-tools @db*))
+                    (f.tools/all-tools @db* config))
         received-msgs* (atom "")]
     (swap! db* update-in [:chats chat-id :messages] (fnil conj []) {:role "user" :content user-prompt})
     (messenger/chat-content-received
@@ -176,7 +176,7 @@
                                     :arguments arguments
                                     :id id
                                     :manual-approval false}})
-                        (let [result (f.mcp/call-tool! name arguments @db*)]
+                        (let [result (f.tools/call-tool! name arguments @db* config)]
                           (messenger/chat-content-received
                            messenger
                            {:chat-id chat-id

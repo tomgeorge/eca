@@ -13,7 +13,7 @@ _Demo using [eca-emacs](https://github.com/editor-code-assistant/eca-emacs)_
 <p align="center">
   <a href="#installation"><strong>instalation</strong></a> •
   <a href="./docs/configuration.md"><strong>configuration</strong></a> •
-  <a href="./docs/models.md"><strong>models</strong></a> •
+  <a href="./docs/capabilities.md"><strong>capabilities</strong></a> •
   <a href="./docs/protocol.md"><strong>protocol</strong></a>
 </p>
 <hr>

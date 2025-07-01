@@ -1,4 +1,4 @@
-# Features
+# Capabilities
 
 ## Built-in tools
 
@@ -6,15 +6,15 @@ ECA support built-in tools to avoid user extra installation and configuration, t
 
 ### Filesystem
 
-Provides access to filesystem under workspace root
+Provides access to filesystem under workspace root, listing and reading files and directories.
 
 ## Supported LLM models and capaibilities
 
-| model     | MCP | thinking/reasioning |
-|-----------|-----|---------------------|
-| OpenAI    | √   | X                   |
-| Anthropic | √   | X                   |
-| Ollama    | X   | X                   |
+| model     | MCP / tools | thinking/reasioning |
+|-----------|-------------|---------------------|
+| OpenAI    | √           | X                   |
+| Anthropic | √           | X                   |
+| Ollama    | X           | X                   |
 
 ### OpenAI
 

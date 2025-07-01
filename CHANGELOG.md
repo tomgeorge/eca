@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.1.0
+
 - Allow comments on `json` configs.
 - Improve MCP tool call feedback.
 - Add support for env vars in mcp configs.

@@ -30,8 +30,8 @@
     (with-open [r (io/reader (ByteArrayInputStream. (.getBytes (str "{\"bar\": \"baz\"}\n"
                                                                     "{\"bar\": \"foo\"}"))))]
       (is (match?
-           [[nil {:bar "baz"}]
-            [nil {:bar "foo"}]]
+           [["data" {:bar "baz"}]
+            ["data" {:bar "foo"}]]
            (llm-util/event-data-seq r)))))
   (testing "Ignore [DONE] when exists"
     (with-open [r (io/reader (ByteArrayInputStream. (.getBytes (str "data: {\"type\": \"foo.bar\"}\n"

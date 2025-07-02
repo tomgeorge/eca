@@ -14,7 +14,7 @@
 (defn ^:private not-allowed-path [path db]
   (when (not-any? #(fs/starts-with? path (shared/uri->filename (:uri %)))
                   (:workspace-folders db))
-    (single-text-content "Access denied - path outside workspace root, call list_allowed_dirs first" :error)))
+    (single-text-content "Access denied - path outside workspace root, call list_allowed_dirs first")))
 
 (defn ^:private list-allowed-directories [_arguments db]
   (single-text-content

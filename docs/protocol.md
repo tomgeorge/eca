@@ -250,9 +250,9 @@ interface ChatPromptParams {
     model?: ChatModel;
 
     /**
-     * The mode used by server to handle chat communication and actions.
+     * The chat behavior used by server to handle chat communication and actions.
      */
-    mode?: 'agent' | 'ask';
+    behavior?: 'agent' | 'ask';
 
     /**
      * Optional contexts about the current workspace.

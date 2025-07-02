@@ -71,7 +71,6 @@
            messenger
            {:chat-id chat-id
             :request-id request-id
-            :is-complete false
             :role :user
             :content {:type :text
                       :text (str message "\n")}})
@@ -80,7 +79,6 @@
              messenger
              {:chat-id chat-id
               :request-id request-id
-              :is-complete false
               :role :system
               :content {:type :progress
                         :state :running
@@ -95,8 +93,9 @@
         past-messages (get-in db [:chats chat-id :messages] [])
         user-prompt message
         all-tools (f.tools/all-tools @db* config)
-        received-msgs* (atom "")]
-    (swap! db* update-in [:chats chat-id :messages] (fnil conj []) {:role "user" :content user-prompt})
+        received-msgs* (atom "")
+        add-msg! (fn [msg]
+                   (swap! db* update-in [:chats chat-id :messages] (fnil conj []) msg))]
     (messenger/chat-content-received
      messenger
      {:chat-id chat-id
@@ -114,6 +113,7 @@
       :config config
       :tools all-tools
       :on-first-message-received (fn [_]
+                                   (add-msg! {:role "user" :content user-prompt})
                                    (messenger/chat-content-received
                                     messenger
                                     {:chat-id chat-id
@@ -142,10 +142,7 @@
                                                 :title (:title msg)
                                                 :url (:url msg)}})
                                :finish (do
-                                         (swap! db* update-in [:chats chat-id :messages]
-                                                (fnil conj [])
-                                                {:role "assistant"
-                                                 :content @received-msgs*})
+                                         (add-msg! {:role "assistant" :content @received-msgs*})
                                          (messenger/chat-content-received
                                           messenger
                                           {:chat-id chat-id

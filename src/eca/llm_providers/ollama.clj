@@ -52,7 +52,7 @@
          (with-open [rdr (io/reader body)]
            (doseq [[event data] (llm-util/event-data-seq rdr)]
              (llm-util/log-response logger-tag rid event data)
-             (on-response event data))))
+             (on-response rid event data))))
        (catch Exception e
          (on-error {:exception e}))))
    (fn [e]
@@ -76,34 +76,37 @@
               :tools (->tools tools)
               :stream true}
         url (format chat-url (base-url host port))
-        on-response-fn (fn handle-response [_event data]
+        tool-calls* (atom {})
+        on-response-fn (fn handle-response [rid _event data]
                          (let [{:keys [message done_reason]} data]
                            (cond
                              (seq (:tool_calls message))
                              (let [function (:function (first (seq (:tool_calls message))))
                                    call-id (str (random-uuid))
-                                   _ (on-prepare-tool-call {:id call-id
-                                                            :name (:name function)
-                                                            :argumentsText ""})
-                                   response (on-tool-called {:id call-id
-                                                             :name (:name function)
-                                                             :arguments (:arguments function)})]
-                               (base-completion-request!
-                                {:rid (llm-util/gen-rid)
-                                 :url url
-                                 :body (assoc body :messages (concat messages
-                                                                     [message]
-                                                                     (mapv
-                                                                      (fn [{:keys [_type content]}]
-                                                                        {:role "tool"
-                                                                         :content content})
-                                                                      (:contents response))))
-                                 :on-error on-error
-                                 :on-response handle-response}))
+                                   tool-call {:id call-id
+                                              :name (:name function)
+                                              :arguments (:arguments function)}]
+                               (on-prepare-tool-call (assoc tool-call :argumentsText ""))
+                               (swap! tool-calls* assoc rid tool-call))
 
                              done_reason
-                             (on-message-received {:type :finish
-                                                   :finish-reason done_reason})
+                             (if-let [tool-call (get @tool-calls* rid)]
+                               (let [response (on-tool-called tool-call)]
+                                 (swap! tool-calls* dissoc rid)
+                                 (base-completion-request!
+                                  {:rid (llm-util/gen-rid)
+                                   :url url
+                                   :body (assoc body :messages (concat messages
+                                                                       [message]
+                                                                       (mapv
+                                                                        (fn [{:keys [_type content]}]
+                                                                          {:role "tool"
+                                                                           :content content})
+                                                                        (:contents response))))
+                                   :on-error on-error
+                                   :on-response handle-response}))
+                               (on-message-received {:type :finish
+                                                     :finish-reason done_reason}))
 
                              message
                              (on-message-received {:type :text

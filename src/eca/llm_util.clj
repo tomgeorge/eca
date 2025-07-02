@@ -45,7 +45,7 @@
     (next-group)))
 
 (defn gen-rid
-  "Generates a request-id for debugging purposes"
+  "Generates a request-id for tracking requests"
   []
   (str (rand-int 9999)))
 

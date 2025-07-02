@@ -94,8 +94,7 @@
         chosen-model (or model (default-model db))
         past-messages (get-in db [:chats chat-id :messages] [])
         user-prompt message
-        mcp-tools (when (get-in db [:models chosen-model :mcp-tools])
-                    (f.tools/all-tools @db* config))
+        all-tools (f.tools/all-tools @db* config)
         received-msgs* (atom "")]
     (swap! db* update-in [:chats chat-id :messages] (fnil conj []) {:role "user" :content user-prompt})
     (messenger/chat-content-received
@@ -113,7 +112,7 @@
       :context context-str
       :past-messages past-messages
       :config config
-      :mcp-tools mcp-tools
+      :tools all-tools
       :on-first-message-received (fn [_]
                                    (messenger/chat-content-received
                                     messenger
@@ -160,7 +159,7 @@
                                {:chat-id chat-id
                                 :request-id request-id
                                 :role :assistant
-                                :content {:type :mcpToolCallPrepare
+                                :content {:type :toolCallPrepare
                                           :name name
                                           :argumentText argument
                                           :id id
@@ -171,7 +170,7 @@
                          {:chat-id chat-id
                           :request-id request-id
                           :role :assistant
-                          :content {:type :mcpToolCallRun
+                          :content {:type :toolCallRun
                                     :name name
                                     :arguments arguments
                                     :id id
@@ -182,7 +181,7 @@
                            {:chat-id chat-id
                             :request-id request-id
                             :role :assistant
-                            :content {:type :mcpToolCalled
+                            :content {:type :toolCalled
                                       :name name
                                       :arguments arguments
                                       :id id

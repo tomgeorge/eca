@@ -19,14 +19,14 @@
                                                      :parameters {"type" "object"
                                                                   :properties {"code" {:type "string"}}}}]}}}
                             {}))))
-  (testing "Include enabled built-in tools"
+  (testing "Include enabled native tools"
     (is (match?
          (m/embeds [{:name "list_directory"
                      :description string?
                      :parameters some?
-                     :source :built-in}])
-         (f.tools/all-tools {} {:builtInTools {:filesystem {:enabled true}}}))))
-  (testing "Do not include disabled built-in tools"
+                     :source :native}])
+         (f.tools/all-tools {} {:nativeTools {:filesystem {:enabled true}}}))))
+  (testing "Do not include disabled native tools"
     (is (match?
          (m/embeds [(m/mismatch {:name "list_directory"})])
-         (f.tools/all-tools {} {:builtInTools {:filesystem {:enabled false}}})))))
+         (f.tools/all-tools {} {:nativeTools {:filesystem {:enabled false}}})))))

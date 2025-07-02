@@ -396,9 +396,9 @@ type ChatContent =
     | URLContent 
     | ProgressContent 
     | FileChangeContent
-    | MCPToolCallPrepareContent
-    | MCPToolCallRunContent
-    | MCPToolCalledContent;
+    | ToolCallPrepareContent
+    | ToolCallRunContent
+    | ToolCalledContent;
 
 /**
  * Simple text message from the LLM
@@ -497,10 +497,12 @@ interface FileChangeContent {
 }
 
 /**
- * MCP tool call that LLM is preparing to execute.
+ * Tool call that LLM is preparing to execute.
  */
-interface MCPToolCallPrepareContent {
-    type: 'mcpToolCallPrepare';
+interface ToolCallPrepareContent {
+    type: 'toolCallPrepare';
+
+    origin: ToolCallOrigin;
     
     /**
      * id of the tool call
@@ -524,10 +526,12 @@ interface MCPToolCallPrepareContent {
 }
 
 /**
- * MCP tool call final request that LLM may trigger.
+ * Tool call final request that LLM may trigger.
  */
-interface MCPToolCallRunContent {
-    type: 'mcpToolCallRun';
+interface ToolCallRunContent {
+    type: 'toolCallRun';
+    
+    origin: ToolCallOrigin;
     
     /**
      * id of the tool call
@@ -551,10 +555,12 @@ interface MCPToolCallRunContent {
 }
 
 /**
- * MCP tool call result that LLM trigerred and was executed already.
+ * Tool call result that LLM trigerred and was executed already.
  */
-interface MCPToolCalledContent {
-    type: 'mcpToolCalled';
+interface ToolCalledContent {
+    type: 'toolCalled';
+    
+    origin: ToolCallOrigin;
     
     /**
      * id of the tool call
@@ -572,7 +578,7 @@ interface MCPToolCalledContent {
     arguments: string[];
     
     /**
-     * the result of the MCP tool call.
+     * the result of the tool call.
      */
     outputs: [{
         /*
@@ -591,6 +597,8 @@ interface MCPToolCalledContent {
         error: boolean;
     }];
 }
+
+type ToolCallOrigin = 'mcp' | 'native';
 ```
 
 ### Chat Query Context (↩️)

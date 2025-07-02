@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Add built-in tools: filesystem
+- Add native tools: filesystem
 - Add MCP/tool support for ollama models.
 
 ## 0.1.0

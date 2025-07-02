@@ -17,14 +17,14 @@
   ;; TODO ask LLM for the most relevant parts of the path
   (slurp path))
 
-(defn ^:private mcp-tool->llm-tool [mcp-tool]
-  (assoc (select-keys mcp-tool [:name :description :parameters])
+(defn ^:private tool->llm-tool [tool]
+  (assoc (select-keys tool [:name :description :parameters])
          :type "function"))
 
 (defn complete!
   [{:keys [model model-config context user-prompt config on-first-message-received
            on-message-received on-error on-prepare-tool-call on-tool-called on-reason
-           past-messages mcp-tools]}]
+           past-messages tools]}]
   (let [first-message-received* (atom false)
         on-message-received-wrapper (fn [& args]
                                       (when-not @first-message-received*
@@ -34,8 +34,8 @@
         on-error-wrapper (fn [& args]
                            (apply logger/error args)
                            (apply on-error args))
-        tools (when (:mcp-tools model-config)
-                (mapv mcp-tool->llm-tool mcp-tools))
+        tools (when (:tools model-config)
+                (mapv tool->llm-tool tools))
         web-search (:web-search model-config)]
     (cond
       (contains? #{"o4-mini"

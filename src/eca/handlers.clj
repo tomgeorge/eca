@@ -15,9 +15,9 @@
     (swap! db* update :models merge
            (reduce
             (fn [models {:keys [model]}]
-              (assoc models
-                     (str config/ollama-model-prefix model)
-                     {:mcp-tools (get-in config [:ollama :useTools] false)}))
+              (assoc-in models
+                        (str config/ollama-model-prefix model)
+                        {:tools (get-in config [:ollama :useTools] false)}))
             {}
             ollama-models))))
 

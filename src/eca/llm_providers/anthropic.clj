@@ -28,11 +28,11 @@
                       :name "web_search"
                       :max_uses 10})))
 
-(defn ^:private base-request! [{:keys [body api-key on-error on-response]}]
+(defn ^:private base-request! [{:keys [rid body api-key on-error on-response]}]
   (let [api-key (or api-key
                     (System/getenv "ANTHROPIC_API_KEY"))
         url (url messages-path)]
-    (logger/debug logger-tag (format "Sending body: '%s', url: '%s'" body url))
+    (llm-util/log-request logger-tag rid url body)
     (http/post
      url
      {:headers {"x-api-key" api-key
@@ -50,6 +50,7 @@
              (on-error {:message (format "Anthropic response status: %s body: %s" status body-str)}))
            (with-open [rdr (io/reader body)]
              (doseq [[event data] (llm-util/event-data-seq rdr)]
+               (llm-util/log-response logger-tag rid event data)
                (on-response event data))))
          (catch Exception e
            (on-error {:exception e}))))
@@ -74,7 +75,6 @@
         content-block* (atom nil)
         on-response-fn
         (fn handle-response [event data]
-          (llm-util/log-response logger-tag event data)
           (case event
             "content_block_start" (case (-> data :content_block :type)
                                     "tool_use" (do
@@ -119,7 +119,8 @@
                                                                                    :content content}]})
                                                                      (:contents response)))]
                                                (base-request!
-                                                {:body (assoc body :messages messages)
+                                                {:rid (llm-util/gen-rid)
+                                                 :body (assoc body :messages messages)
                                                  :api-key api-key
                                                  :on-error on-error
                                                  :on-response handle-response}))))
@@ -128,7 +129,8 @@
                               nil)
             nil))]
     (base-request!
-     {:body body
+     {:rid (llm-util/gen-rid)
+      :body body
       :api-key api-key
       :on-error on-error
       :on-response on-response-fn})))

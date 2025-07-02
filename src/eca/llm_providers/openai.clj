@@ -19,11 +19,11 @@
               openai-url)
           path))
 
-(defn ^:private base-completion-request! [{:keys [body api-key on-error on-response]}]
+(defn ^:private base-completion-request! [{:keys [rid body api-key on-error on-response]}]
   (let [api-key (or api-key
                     (System/getenv "OPENAI_API_KEY"))
         url (url responses-path)]
-    (logger/debug logger-tag (format "Sending body: '%s', url: '%s'" body url))
+    (llm-util/log-request logger-tag rid url body)
     (http/post
      url
      {:headers {"Authorization" (str "Bearer " api-key)
@@ -40,6 +40,7 @@
              (on-error {:message (format "OpenAI response status: %s body: %s" status body-str)}))
            (with-open [rdr (io/reader body)]
              (doseq [[event data] (llm-util/event-data-seq rdr)]
+               (llm-util/log-response logger-tag rid event data)
                (on-response event data))))
          (catch Exception e
            (on-error {:exception e}))))
@@ -62,7 +63,6 @@
         mcp-call-by-item-id* (atom {})
         on-response-fn
         (fn handle-response [event data]
-          (llm-util/log-response logger-tag event data)
           (case event
             ;; text
             "response.output_text.delta"
@@ -82,14 +82,15 @@
                                                               :name function-name
                                                               :arguments (json/parse-string function-args)})]
                                 (base-completion-request!
-                                 {:body (assoc body :input (concat input
+                                 {:rid (llm-util/gen-rid)
+                                  :body (assoc body :input (concat input
                                                                    [{:type "function_call"
                                                                      :call_id (-> data :item :call_id)
                                                                      :name function-name
                                                                      :arguments function-args}]
                                                                    (mapv
                                                                     (fn [{:keys [_type content]}]
-                                                                        ;; TODO handle different types
+                                                                       ;; TODO handle different types
                                                                       {:type "function_call_output"
                                                                        :call_id (-> data :item :call_id)
                                                                        :output content})
@@ -130,7 +131,8 @@
                                     :finish-reason (-> data :response :status)}))
             nil))]
     (base-completion-request!
-     {:body body
+     {:rid (llm-util/gen-rid)
+      :body body
       :api-key api-key
       :on-error on-error
       :on-response on-response-fn})))

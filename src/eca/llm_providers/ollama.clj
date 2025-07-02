@@ -19,13 +19,14 @@
 
 (defn list-models [{:keys [host port]}]
   (try
-    (let [{:keys [status body]} (http/get
+    (let [rid (llm-util/gen-rid)
+          {:keys [status body]} (http/get
                                  (format list-models-url (base-url host port))
                                  {:throw-exceptions? false
                                   :as :json})]
       (if (= 200 status)
         (do
-          (llm-util/log-response logger-tag "api/tags" body)
+          (llm-util/log-response logger-tag rid "api/tags" body)
           (:models body))
         (do
           (logger/warn logger-tag "Unknown status code:" status)
@@ -34,8 +35,8 @@
       (logger/warn logger-tag "Error listing running models:" (ex-message e))
       [])))
 
-(defn ^:private base-completion-request! [{:keys [url body on-error on-response]}]
-  (logger/debug logger-tag (format "Sending body: '%s', url: '%s'" body url))
+(defn ^:private base-completion-request! [{:keys [rid url body on-error on-response]}]
+  (llm-util/log-request logger-tag rid url body)
   (http/post
    url
    {:body (json/generate-string body)
@@ -50,6 +51,7 @@
            (on-error {:message (format "Ollama response status: %s body: %s" status body-str)}))
          (with-open [rdr (io/reader body)]
            (doseq [[event data] (llm-util/event-data-seq rdr)]
+             (llm-util/log-response logger-tag rid event data)
              (on-response event data))))
        (catch Exception e
          (on-error {:exception e}))))
@@ -74,21 +76,21 @@
               :tools (->tools tools)
               :stream true}
         url (format chat-url (base-url host port))
-        on-response-fn (fn handle-response [event data]
-                         (llm-util/log-response logger-tag event data)
+        on-response-fn (fn handle-response [_event data]
                          (let [{:keys [message done_reason]} data]
                            (cond
                              (seq (:tool_calls message))
                              (let [function (:function (first (seq (:tool_calls message))))
-                                   id (str (random-uuid))
-                                   _ (on-prepare-tool-call {:id id
+                                   call-id (str (random-uuid))
+                                   _ (on-prepare-tool-call {:id call-id
                                                             :name (:name function)
                                                             :argumentsText ""})
-                                   response (on-tool-called {:id id
+                                   response (on-tool-called {:id call-id
                                                              :name (:name function)
                                                              :arguments (:arguments function)})]
                                (base-completion-request!
-                                {:url url
+                                {:rid (llm-util/gen-rid)
+                                 :url url
                                  :body (assoc body :messages (concat messages
                                                                      [message]
                                                                      (mapv
@@ -107,7 +109,8 @@
                              (on-message-received {:type :text
                                                    :text (:content message)}))))]
     (base-completion-request!
-     {:url url
+     {:rid (llm-util/gen-rid)
+      :url url
       :body body
       :on-error on-error
       :on-response on-response-fn})))

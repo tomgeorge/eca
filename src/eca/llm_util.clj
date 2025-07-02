@@ -37,12 +37,20 @@
 
                   ;; data directly
                   (string/starts-with? line "{")
-                  (cons [nil (json/parse-string line true)]
+                  (cons ["data" (json/parse-string line true)]
                         (lazy-seq (next-group)))
 
                   :else
                   (recur event-line)))))]
     (next-group)))
 
-(defn log-response [tag event data]
-  (logger/debug tag event data))
+(defn gen-rid
+  "Generates a request-id for debugging purposes"
+  []
+  (str (rand-int 9999)))
+
+(defn log-request [tag rid url body]
+  (logger/debug tag (format "[%s] Sending body: '%s', url: '%s'" rid body url)))
+
+(defn log-response [tag rid event data]
+  (logger/debug tag (format "[%s] %s %s" rid event data)))

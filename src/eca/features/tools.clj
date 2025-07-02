@@ -3,11 +3,14 @@
    eca native tools and MCP servers."
   (:require
    [eca.features.tools.filesystem :as f.tools.filesystem]
-   [eca.features.tools.mcp :as f.mcp])
+   [eca.features.tools.mcp :as f.mcp]
+   [eca.logger :as logger])
   (:import
    [java.util Map]))
 
 (set! *warn-on-reflection* true)
+
+(def ^:private logger-tag "[TOOLS]")
 
 (defn native-definitions [config]
   (merge {}
@@ -25,6 +28,7 @@
      (mapv #(assoc % :source :mcp) mcp-tools))))
 
 (defn call-tool! [^String name ^Map arguments db config]
+  (logger/debug logger-tag (format "Calling tool '%s' with args '%s'" name arguments))
   (if-let [native-tool-handler (get-in (native-definitions config) [name :handler])]
     (native-tool-handler arguments db)
     (f.mcp/call-tool! name arguments db)))

@@ -25,8 +25,8 @@
                      :description string?
                      :parameters some?
                      :source :built-in}])
-         (f.tools/all-tools {} {:built-in-tools {:filesystem {:enabled true}}}))))
+         (f.tools/all-tools {} {:builtInTools {:filesystem {:enabled true}}}))))
   (testing "Do not include disabled built-in tools"
     (is (match?
          (m/embeds [(m/mismatch {:name "list_directory"})])
-         (f.tools/all-tools {} {:built-in-tools {:filesystem {:enabled false}}})))))
+         (f.tools/all-tools {} {:builtInTools {:filesystem {:enabled false}}})))))

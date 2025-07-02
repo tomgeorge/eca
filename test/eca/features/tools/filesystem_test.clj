@@ -23,9 +23,10 @@
          {:contents [{:type :text
                       :error true
                       :content "Access denied - path outside workspace root, call list_allowed_dirs first"}]}
-         ((get-in f.tools.filesystem/definitions ["list_directory" :handler])
-          {"path" (h/file-path "/foo/qux")}
-          {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "baz"}]}))))
+         (with-redefs [fs/canonicalize (constantly (h/file-path "/foo/qux"))]
+           ((get-in f.tools.filesystem/definitions ["list_directory" :handler])
+            {"path" (h/file-path "/foo/qux")}
+            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "baz"}]})))))
   (testing "allowed dir"
     (is (match?
          {:contents [{:type :text
@@ -37,7 +38,8 @@
          (with-redefs [fs/starts-with? (constantly true)
                        fs/list-dir (constantly [(fs/path (h/file-path "/foo/bar/baz/some.clj"))
                                                 (fs/path (h/file-path "/foo/bar/baz/qux"))])
-                       fs/directory? (fn [path] (not (string/ends-with? (str path) ".clj")))]
+                       fs/directory? (fn [path] (not (string/ends-with? (str path) ".clj")))
+                       fs/canonicalize (constantly (h/file-path "/foo/bar/baz"))]
            ((get-in f.tools.filesystem/definitions ["list_directory" :handler])
             {"path" (h/file-path "/foo/bar/baz")}
             {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "baz"}]}))))))

@@ -49,7 +49,7 @@
 (defn completion! [{:keys [model user-prompt context temperature api-key past-messages tools web-search]
                     :or {temperature 1.0}}
                    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called on-reason]}]
-  (let [input (conj past-messages {:role "user" :content user-prompt})
+  (let [input (conj (vec past-messages) {:role "user" :content user-prompt})
         tools (cond-> tools
                 web-search (conj {:type "web_search_preview"}))
         body {:model model

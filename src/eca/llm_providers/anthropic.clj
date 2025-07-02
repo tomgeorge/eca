@@ -62,7 +62,7 @@
     :or {max-tokens 1024
          temperature 1.0}}
    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called]}]
-  (let [messages (vec (conj past-messages {:role "user" :content user-prompt}))
+  (let [messages (conj (vec past-messages) {:role "user" :content user-prompt})
         body {:model model
               :messages messages
               :max_tokens max-tokens

@@ -10,8 +10,8 @@
 (set! *warn-on-reflection* true)
 
 (defn extra-models [config]
-  (llm-providers.ollama/list-running-models {:host (:host (:ollama config))
-                                             :port (:port (:ollama config))}))
+  (llm-providers.ollama/list-models {:host (:host (:ollama config))
+                                     :port (:port (:ollama config))}))
 
 (defn refine-file-context [path]
   ;; TODO ask LLM for the most relevant parts of the path

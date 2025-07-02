@@ -11,21 +11,21 @@
 (def ^:private logger-tag "[OLLAMA]")
 
 (def ^:private chat-url "%s/api/chat")
-(def ^:private list-running-models-url "%s/api/ps")
+(def ^:private list-models-url "%s/api/tags")
 
 (defn ^:private base-url [host port]
   (or (System/getenv "OLLAMA_API_BASE")
       (str host ":" port)))
 
-(defn list-running-models [{:keys [host port]}]
+(defn list-models [{:keys [host port]}]
   (try
     (let [{:keys [status body]} (http/get
-                                 (format list-running-models-url (base-url host port))
+                                 (format list-models-url (base-url host port))
                                  {:throw-exceptions? false
                                   :as :json})]
       (if (= 200 status)
         (do
-          (llm-util/log-response logger-tag "api_ps" body)
+          (llm-util/log-response logger-tag "api/tags" body)
           (:models body))
         (do
           (logger/warn logger-tag "Unknown status code:" status)
@@ -33,9 +33,6 @@
     (catch Exception e
       (logger/warn logger-tag "Error listing running models:" (ex-message e))
       [])))
-
-(defn ^:private ->message-with-context [context user-prompt]
-  (format "%s\nThe user is asking: '%s'" context user-prompt))
 
 (defn ^:private base-completion-request! [{:keys [url body on-error on-response]}]
   (logger/debug logger-tag (format "Sending body: '%s', url: '%s'" body url))
@@ -67,9 +64,10 @@
 
 (defn completion! [{:keys [model user-prompt context host port past-messages tools]}
                    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called]}]
-  (let [messages (if (empty? past-messages)
-                   [{:role "user" :content (->message-with-context context user-prompt)}]
-                   (conj past-messages {:role "user" :content user-prompt}))
+  (let [messages (concat
+                  [{:role "system" :content context}]
+                  past-messages
+                  [{:role "user" :content user-prompt}])
         body {:model model
               :messages messages
               :think false

@@ -10,17 +10,16 @@
 
 (set! *warn-on-reflection* true)
 
-(defn ^:private initialize-extra-models! [db*]
-  (let [config (config/all @db*)]
-    (when-let [ollama-models (seq (llm-api/extra-models config))]
-      (swap! db* update :models merge
-             (reduce
-              (fn [models {:keys [model]}]
-                (assoc models
-                       (str config/ollama-model-prefix model)
-                       {:mcp-tools (get-in config [:ollama :useTools] false)}))
-              {}
-              ollama-models)))))
+(defn ^:private initialize-extra-models! [db* config]
+  (when-let [ollama-models (seq (llm-api/extra-models config))]
+    (swap! db* update :models merge
+           (reduce
+            (fn [models {:keys [model]}]
+              (assoc models
+                     (str config/ollama-model-prefix model)
+                     {:mcp-tools (get-in config [:ollama :useTools] false)}))
+            {}
+            ollama-models))))
 
 (defn initialize [{:keys [db* messenger]} params]
   (logger/logging-task
@@ -31,7 +30,7 @@
           :client-capabilities (:capabilities params)
           :chat-behavior (or (-> params :initialization-options :chat-behavior) (:chat-behavior @db*)))
    (let [config (config/all @db*)]
-     (initialize-extra-models! db*)
+     (initialize-extra-models! db* config)
      (future
        (f.mcp/initialize-servers-async!
         {:on-server-updated (fn [server]

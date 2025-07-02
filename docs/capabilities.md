@@ -14,7 +14,7 @@ Provides access to filesystem under workspace root, listing and reading files an
 |-----------|-------------|---------------------|
 | OpenAI    | √           | X                   |
 | Anthropic | √           | X                   |
-| Ollama    | X           | X                   |
+| Ollama    | √           | X                   |
 
 ### OpenAI
 

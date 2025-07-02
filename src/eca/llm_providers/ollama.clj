@@ -66,22 +66,48 @@
         tools))
 
 (defn completion! [{:keys [model user-prompt context host port past-messages tools]}
-                   {:keys [on-message-received on-error _on-tool-called]}]
+                   {:keys [on-message-received on-error on-prepare-tool-call on-tool-called]}]
   (let [messages (if (empty? past-messages)
                    [{:role "user" :content (->message-with-context context user-prompt)}]
                    (conj past-messages {:role "user" :content user-prompt}))
         body {:model model
               :messages messages
+              :think false
               :tools (->tools tools)
               :stream true}
         url (format chat-url (base-url host port))
         on-response-fn (fn handle-response [event data]
                          (llm-util/log-response logger-tag event data)
                          (let [{:keys [message done_reason]} data]
-                           (on-message-received
-                            (cond-> {}
-                              message (assoc :type :text :text (:content message))
-                              done_reason (assoc :type :finish :finish-reason done_reason)))))]
+                           (cond
+                             (seq (:tool_calls message))
+                             (let [function (:function (first (seq (:tool_calls message))))
+                                   id (str (random-uuid))
+                                   _ (on-prepare-tool-call {:id id
+                                                            :name (:name function)
+                                                            :argumentsText ""})
+                                   response (on-tool-called {:id id
+                                                             :name (:name function)
+                                                             :arguments (:arguments function)})]
+                               (base-completion-request!
+                                {:url url
+                                 :body (assoc body :messages (concat messages
+                                                                     [message]
+                                                                     (mapv
+                                                                      (fn [{:keys [_type content]}]
+                                                                        {:role "tool"
+                                                                         :content content})
+                                                                      (:contents response))))
+                                 :on-error on-error
+                                 :on-response handle-response}))
+
+                             done_reason
+                             (on-message-received {:type :finish
+                                                   :finish-reason done_reason})
+
+                             message
+                             (on-message-received {:type :text
+                                                   :text (:content message)}))))]
     (base-completion-request!
      {:url url
       :body body

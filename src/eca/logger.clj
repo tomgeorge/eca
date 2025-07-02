@@ -15,11 +15,14 @@
     (binding [*out* *err*]
       (apply println args))))
 
-(defn info [& args]
-  (apply stderr-print :info args))
+(defn error [& args]
+  (apply stderr-print :error args))
 
 (defn warn [& args]
   (apply stderr-print :warn args))
+
+(defn info [& args]
+  (apply stderr-print :info args))
 
 (defn debug [& args]
   (apply stderr-print :debug args))

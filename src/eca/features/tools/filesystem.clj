@@ -12,9 +12,9 @@
                :error (boolean error)}]})
 
 (defn ^:private not-allowed-path [path db]
-  (when-not (some #(fs/starts-with? path (shared/uri->filename (:uri %)))
+  (when (not-any? #(fs/starts-with? path (shared/uri->filename (:uri %)))
                   (:workspace-folders db))
-    (single-text-content "Access denied - path outside workspace root" :error)))
+    (single-text-content "Access denied - path outside workspace root, call list_allowed_dirs first" :error)))
 
 (defn ^:private list-allowed-directories [_arguments db]
   (single-text-content
@@ -23,7 +23,7 @@
                      (map (comp shared/uri->filename :uri) (:workspace-folders db))))))
 
 (defn ^:private list-directory [arguments db]
-  (let [path (get arguments "path")]
+  (let [path (fs/canonicalize (:path arguments))]
     (or (not-allowed-path path db)
         (single-text-content
          (reduce

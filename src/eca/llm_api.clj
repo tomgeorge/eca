@@ -4,7 +4,8 @@
    [eca.config :as config]
    [eca.llm-providers.anthropic :as llm-providers.anthropic]
    [eca.llm-providers.ollama :as llm-providers.ollama]
-   [eca.llm-providers.openai :as llm-providers.openai]))
+   [eca.llm-providers.openai :as llm-providers.openai]
+   [eca.logger :as logger]))
 
 (set! *warn-on-reflection* true)
 
@@ -30,6 +31,9 @@
                                         (reset! first-message-received* true)
                                         (apply on-first-message-received args))
                                       (apply on-message-received args))
+        on-error-wrapper (fn [& args]
+                           (apply logger/error args)
+                           (apply on-error args))
         tools (when (:mcp-tools model-config)
                 (mapv mcp-tool->llm-tool mcp-tools))
         web-search (:web-search model-config)]
@@ -46,7 +50,7 @@
         :web-search web-search
         :api-key (:openaiApiKey config)}
        {:on-message-received on-message-received-wrapper
-        :on-error on-error
+        :on-error on-error-wrapper
         :on-prepare-tool-call on-prepare-tool-call
         :on-tool-called on-tool-called
         :on-reason on-reason})
@@ -63,7 +67,7 @@
         :web-search web-search
         :api-key (:anthropicApiKey config)}
        {:on-message-received on-message-received-wrapper
-        :on-error on-error
+        :on-error on-error-wrapper
         :on-prepare-tool-call on-prepare-tool-call
         :on-tool-called on-tool-called})
 
@@ -77,7 +81,8 @@
         :tools tools
         :user-prompt user-prompt}
        {:on-message-received on-message-received-wrapper
-        :on-error on-error
+        :on-error on-error-wrapper
+        :on-prepare-tool-call on-prepare-tool-call
         :on-tool-called on-tool-called})
 
       :else

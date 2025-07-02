@@ -19,12 +19,12 @@
   {:openaiApiKey nil
    :anthropicApiKey nil
    :rules []
-   :built-in-tools {:filesystem {:enabled true}}
+   :builtInTools {:filesystem {:enabled true}}
    :mcpTimeoutSeconds 60
    :mcpServers {}
    :ollama {:host "http://localhost"
             :port 11434
-            :useTools false}
+            :useTools true}
    :chat {:welcomeMessage "Welcome to ECA! What you have in mind?\n\n"}
    :index {:ignoreFiles [{:type :gitignore}]}})
 

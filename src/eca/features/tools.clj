@@ -11,7 +11,7 @@
 
 (defn built-in-definitions [config]
   (merge {}
-         (when (get-in config [:built-in-tools :filesystem :enabled])
+         (when (get-in config [:builtInTools :filesystem :enabled])
            f.tools.filesystem/definitions)))
 
 (defn all-tools [db config]

@@ -86,4 +86,4 @@
         :on-tool-called on-tool-called})
 
       :else
-      (on-error {:msg (str "ECA Unsupported model: " model)}))))
+      (on-error-wrapper {:msg (str "ECA Unsupported model: " model)}))))

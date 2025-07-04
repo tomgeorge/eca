@@ -4,14 +4,14 @@
 
 # ECA (Editor Code Assistant)
 
-:warning: The project is still alpha and experimental, with bugs and missing features, but being consistently improved.
+:warning: The project is still alpha, expect bugs and WIP features, but being consistently improved, feedback is more than welcome.
 
 _Demo using [eca-emacs](https://github.com/editor-code-assistant/eca-emacs)_
 ![demo](./images/demo.gif)
 
 <hr>
 <p align="center">
-  <a href="#installation"><strong>instalation</strong></a> •
+  <a href="#installation"><strong>installation</strong></a> •
   <a href="./docs/configuration.md"><strong>configuration</strong></a> •
   <a href="./docs/capabilities.md"><strong>capabilities</strong></a> •
   <a href="./docs/protocol.md"><strong>protocol</strong></a>
@@ -27,8 +27,9 @@ A Free and OpenSource editor-agnostic tool that aims to easily link LLMs <-> Edi
 - **Editor-agnostic** protocol for any editor to integrate.
 - **Single configuration**: Configure eca making it work the same in any editor.
 - **Chat** interface: ask questions, review diffs, work together with an agent in your codebase.
+- **Agentic** let LLM work as an agent with its built-in tools and MCPs you can configure.
 - **Context** support: giving more details about your code to the LLM.
-- **Pluggable models**: Ollama local models, OpenAI, Anthropic, more on the way.
+- **Multi models**: Ollama local models, OpenAI, Anthropic, more on the way.
 
 ## Installation
 

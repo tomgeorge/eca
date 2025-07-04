@@ -7,16 +7,6 @@
    [eca.test-helper :as h]
    [matcher-combinators.test :refer [match?]]))
 
-(deftest list-allowed-directories-test
-  (is (match?
-       {:contents [{:type :text
-                    :error false
-                    :content (format "Allowed directories:\n%s"
-                                     (h/file-path "/foo/bar/baz"))}]}
-       ((get-in f.tools.filesystem/definitions ["list_allowed_directories" :handler])
-        {}
-        {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}))))
-
 (deftest list-directory-test
   (testing "Invalid path"
     (is (match?
@@ -32,7 +22,9 @@
     (is (match?
          {:contents [{:type :text
                       :error true
-                      :content (format "Access denied - path %s outside allowed directories" (h/file-path "/foo/qux"))}]}
+                      :content (format "Access denied - path %s outside allowed directories: %s"
+                                       (h/file-path "/foo/qux")
+                                       (h/file-path "/foo/bar/baz"))}]}
          (with-redefs [fs/canonicalize (constantly (h/file-path "/foo/qux"))
                        fs/exists? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["list_directory" :handler])
@@ -152,7 +144,7 @@
                                     (h/file-path "/project/foo/qux.txt"))}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/glob (fn [_roo pattern]
-                                 (when (= "**/.txt/**" pattern)
+                                 (when (= "**/*.txt*" pattern)
                                    [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
                                     (fs/path (h/file-path "/project/foo/qux.txt"))]))]
            ((get-in f.tools.filesystem/definitions ["search_files" :handler])

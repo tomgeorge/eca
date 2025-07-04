@@ -4,11 +4,15 @@
 
 ECA support built-in tools to avoid user extra installation and configuration, these tools are always included on models requests that support tools and can be [disabled/configured via config](./configuration.md) `nativeTools`.
 
+Some native tools like `filesystem` have MCP alternatives, but ECA having them built-in avoid the need to external dependencies like npx.
+
 ### Filesystem
 
-Provides access to filesystem under workspace root, listing and reading files and directories.
+Provides access to filesystem under workspace root, listing and reading files and directories a subset of [official MCP filesystem](https://mcpserverhub.com/servers/filesystem), important for agentic operations, without the need to support NPM or other tools.
 
-- ''
+- `read_file`: read a file content.
+- `list_directory`: list a directory.
+- `search_files`: search in a path for files matching a pattern.
 
 ## Supported LLM models and capaibilities
 

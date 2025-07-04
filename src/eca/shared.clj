@@ -12,3 +12,8 @@
     (-> uri Paths/get .toString
         ;; WINDOWS drive letters
         (string/replace #"^[a-z]:\\" string/upper-case))))
+
+(defn update-last [coll f]
+  (if (seq coll)
+    (update coll (dec (count coll)) f)
+    coll))

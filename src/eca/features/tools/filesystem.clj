@@ -2,6 +2,7 @@
   (:require
    [babashka.fs :as fs]
    [clojure.string :as string]
+   [eca.features.tools.util :as tools.util]
    [eca.shared :as shared]))
 
 (set! *warn-on-reflection* true)
@@ -24,13 +25,7 @@
 
 (defn ^:private path-validations [db]
   [["path" fs/exists? "$path is not a valid path"]
-   ["path" (partial allowed-path? db) "Access denied - path $path outside allowed directories"]])
-
-(defn ^:private list-allowed-directories [_arguments db]
-  (single-text-content
-   (str "Allowed directories:\n"
-        (string/join "\n"
-                     (map (comp shared/uri->filename :uri) (:workspace-folders db))))))
+   ["path" (partial allowed-path? db) (str "Access denied - path $path outside allowed directories: " (tools.util/workspace-roots-strs db))]])
 
 (defn ^:private list-directory [arguments db]
   (let [path (delay (fs/canonicalize (get arguments "path")))]
@@ -65,7 +60,7 @@
       (let [pattern (get arguments "pattern")
             pattern (if (string/includes? pattern "*")
                       pattern
-                      (format "**/%s/**" pattern))
+                      (format "**/*%s*" pattern))
             paths (reduce
                    (fn [paths {:keys [uri]}]
                      (concat paths (fs/glob (shared/uri->filename uri)
@@ -77,18 +72,12 @@
                                "No matches found")))))
 
 (def definitions
-  {"list_allowed_directories"
-   {:description (str "Returns the list of directories that this server is allowed to access. "
-                      "Use this to understand which directories are available before trying to access files.")
-    :parameters {:type "object"
-                 :properties {}
-                 :required []}
-    :handler #'list-allowed-directories}
-   "list_directory"
+  {"list_directory"
    {:description (str "Get a detailed listing of all files and directories in a specified path. "
                       "Results clearly distinguish between files and directories with [FILE] and [DIR] "
                       "prefixes. This tool is essential for understanding directory structure and "
-                      "finding specific files within a directory. Only works within workspace root.")
+                      "finding specific files within a directory."
+                      "**Only works within the directories: $workspaceRoots.**")
     :parameters {:type "object"
                  :properties {"path" {:type "string"
                                       :description "The absolute path to the directory to list."}}
@@ -100,7 +89,8 @@
                       "if the file cannot be read. Use this tool when you need to examine "
                       "the contents of a single file. Use the 'head' parameter to read only "
                       "the first N lines of a file, or the 'tail' parameter to read only "
-                      "the last N lines of a file. Only works within allowed directories.")
+                      "the last N lines of a file."
+                      "**Only works within the directories: $workspaceRoots.**")
     :parameters {:type "object"
                  :properties {"path" {:type "string"
                                       :description "The absolute path to the file to read."}
@@ -113,13 +103,14 @@
    "search_files"
    {:description (str "Recursively search for files and directories matching a pattern. "
                       "Searches through all subdirectories from the starting path. The search "
-                      "is case-insensitive and matches partial names. Returns full paths to all "
+                      "is case-insensitive and matches partial names following java's FileSystem#getPathMatcher. Returns full paths to all "
                       "matching items. Great for finding files when you don't know their exact location. "
-                      "Only searches within allowed directories.")
+                      "**Only works within the directories: $workspaceRoots.**")
     :parameters {:type "object"
                  :properties {"path" {:type "string"
                                       :description "The absolute path to start searching files from there."}
                               "pattern" {:type "string"
-                                         :description "Glob pattern matching files or directory names like *.txt or dir/* to include in the result"}}
+                                         :description (str "Glob pattern following java FileSystem#getPathMatcher matching files or directory names."
+                                                           "Use '**/*' to match search in multiple levels like '**/*.txt'")}}
                  :required ["path" "pattern"]}
     :handler #'search-files}})

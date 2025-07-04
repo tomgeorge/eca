@@ -94,8 +94,12 @@
         user-prompt message
         all-tools (f.tools/all-tools @db* config)
         received-msgs* (atom "")
-        add-msg! (fn [msg]
-                   (swap! db* update-in [:chats chat-id :messages] (fnil conj []) msg))]
+        add-to-history! (fn [msg & [append-to-last?]]
+                          (if append-to-last?
+                            (swap! db* update-in [:chats chat-id :messages] (fn [messages msg]
+                                                                              (conj (pop messages)
+                                                                                    (update (last messages) :content str msg))) msg)
+                            (swap! db* update-in [:chats chat-id :messages] (fnil conj []) msg)))]
     (messenger/chat-content-received
      messenger
      {:chat-id chat-id
@@ -113,7 +117,7 @@
       :config config
       :tools all-tools
       :on-first-message-received (fn [_]
-                                   (add-msg! {:role "user" :content user-prompt})
+                                   (add-to-history! {:role "user" :content user-prompt})
                                    (messenger/chat-content-received
                                     messenger
                                     {:chat-id chat-id
@@ -142,7 +146,7 @@
                                                 :title (:title msg)
                                                 :url (:url msg)}})
                                :finish (do
-                                         (add-msg! {:role "assistant" :content @received-msgs*})
+                                         (add-to-history! {:role "assistant" :content @received-msgs*})
                                          (messenger/chat-content-received
                                           messenger
                                           {:chat-id chat-id
@@ -161,7 +165,7 @@
                                           :argumentText argument
                                           :id id
                                           :manual-approval false}}))
-      :on-tool-called (fn [{:keys [id name arguments]}]
+      :on-tool-called (fn [{:keys [id name arguments] :as tool-call}]
                         (messenger/chat-content-received
                          messenger
                          {:chat-id chat-id
@@ -173,6 +177,11 @@
                                     :id id
                                     :manual-approval false}})
                         (let [result (f.tools/call-tool! name arguments @db* config)]
+                          (when-not (string/blank? @received-msgs*)
+                            (add-to-history! {:role "assistant" :content @received-msgs*})
+                            (reset! received-msgs* ""))
+                          (add-to-history! {:role "tool_call" :content tool-call})
+                          (add-to-history! {:role "tool_call_output" :content (assoc tool-call :output result)})
                           (messenger/chat-content-received
                            messenger
                            {:chat-id chat-id
@@ -218,9 +227,9 @@
 
 (defn query-context
   [{:keys [query contexts chat-id]}
-   db*]
-  (let [config (config/all @db*)
-        all-subfiles-and-dirs (into []
+   db*
+   config]
+  (let [all-subfiles-and-dirs (into []
                                     (comp
                                      (map :uri)
                                      (map shared/uri->filename)

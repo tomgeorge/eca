@@ -21,7 +21,7 @@
             {}
             ollama-models))))
 
-(defn initialize [{:keys [db* messenger]} params]
+(defn initialize [{:keys [db* messenger config]} params]
   (logger/logging-task
    :eca/initialize
    (swap! db* assoc
@@ -29,19 +29,18 @@
           :workspace-folders (:workspace-folders params)
           :client-capabilities (:capabilities params)
           :chat-behavior (or (-> params :initialization-options :chat-behavior) (:chat-behavior @db*)))
-   (let [config (config/all @db*)]
-     (initialize-extra-models! db* config)
-     (future
-       (f.mcp/initialize-servers-async!
-        {:on-server-updated (fn [server]
-                              (messenger/mcp-server-updated messenger server))}
-        db*
-        config))
-     {:models (keys (:models @db*))
-      :chat-default-model (f.chat/default-model @db*)
-      :chat-behaviors (:chat-behaviors @db*)
-      :chat-default-behavior (:chat-default-behavior @db*)
-      :chat-welcome-message (:welcomeMessage (:chat config))})))
+   (initialize-extra-models! db* config)
+   (future
+     (f.mcp/initialize-servers-async!
+      {:on-server-updated (fn [server]
+                            (messenger/mcp-server-updated messenger server))}
+      db*
+      config))
+   {:models (keys (:models @db*))
+    :chat-default-model (f.chat/default-model @db*)
+    :chat-behaviors (:chat-behaviors @db*)
+    :chat-default-behavior (:chat-default-behavior @db*)
+    :chat-welcome-message (:welcomeMessage (:chat config))}))
 
 (defn shutdown [{:keys [db*]}]
   (logger/logging-task
@@ -50,13 +49,12 @@
    (reset! db* db/initial-db)
    nil))
 
-(defn chat-prompt [{:keys [messenger db*]} params]
+(defn chat-prompt [{:keys [messenger db* config]} params]
   (logger/logging-task
    :eca/chat-prompt
-   (let [config (config/all @db*)]
-     (f.chat/prompt params db* messenger config))))
+   (f.chat/prompt params db* messenger config)))
 
-(defn chat-query-context [{:keys [db*]} params]
+(defn chat-query-context [{:keys [db* config]} params]
   (logger/logging-task
    :eca/chat-query-context
-   (f.chat/query-context params db*)))
+   (f.chat/query-context params db* config)))

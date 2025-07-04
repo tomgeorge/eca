@@ -49,6 +49,12 @@
   []
   (str (rand-int 9999)))
 
+(defn stringfy-tool-result [result]
+  (reduce
+   #(str %1 (:content %2) "\n")
+   ""
+   (-> result :output :contents)))
+
 (defn log-request [tag rid url body]
   (logger/debug tag (format "[%s] Sending body: '%s', url: '%s'" rid body url)))
 

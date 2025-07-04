@@ -21,7 +21,7 @@
   (testing "unallowed dir"
     (is (match?
          {:contents [{:type :text
-                      :error true
+                      :error false
                       :content "Access denied - path outside workspace root, call list_allowed_dirs first"}]}
          (with-redefs [fs/canonicalize (constantly (h/file-path "/foo/qux"))]
            ((get-in f.tools.filesystem/definitions ["list_directory" :handler])

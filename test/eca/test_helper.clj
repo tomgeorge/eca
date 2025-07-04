@@ -2,6 +2,7 @@
   (:require
    [clojure.string :as string]
    [clojure.test :refer [use-fixtures]]
+   [eca.config :as config]
    [eca.db :as db]
    [eca.messenger :as messenger]))
 
@@ -27,7 +28,8 @@
 
 (defn ^:private make-components []
   {:db* (atom db/initial-db)
-   :messenger (->TestMessenger (atom {}))})
+   :messenger (->TestMessenger (atom {}))
+   :config config/initial-config})
 
 (def components* (atom (make-components)))
 (defn components [] @components*)
@@ -38,6 +40,12 @@
 (defn messages [] @(:messages* (:messenger (components))))
 (defn messenger [] (:messenger (components)))
 
+(defn config [] (:config (components)))
+
+(defn config! [config]
+  (swap! components* merge :config config))
+
 (defn reset-components! [] (reset! components* (make-components)))
 (defn reset-components-before-test []
   (use-fixtures :each (fn [f] (reset-components!) (f))))
+(defn reset-messenger! [] (swap! components* assoc :messenger (:messenger (make-components))))

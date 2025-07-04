@@ -64,12 +64,21 @@
            :function (select-keys tool [:name :description :parameters])})
         tools))
 
+(defn ^:private ->messages-with-history [context past-messages user-prompt]
+  (concat
+   [{:role "system" :content context}]
+   (mapv (fn [{:keys [role content] :as msg}]
+           (case role
+             "tool_call" {:role "assistant" :tool-calls [{:type "function"
+                                                          :function content}]}
+             "tool_call_output" {:role "tool" :content (llm-util/stringfy-tool-result content)}
+             msg))
+         past-messages)
+   [{:role "user" :content user-prompt}]))
+
 (defn completion! [{:keys [model user-prompt context host port past-messages tools]}
                    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called]}]
-  (let [messages (concat
-                  [{:role "system" :content context}]
-                  past-messages
-                  [{:role "user" :content user-prompt}])
+  (let [messages (->messages-with-history context past-messages user-prompt)
         body {:model model
               :messages messages
               :think false

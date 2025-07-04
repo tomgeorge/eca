@@ -15,7 +15,7 @@
 
 (set! *warn-on-reflection* true)
 
-(def ^:private initial-config
+(def initial-config
   {:openaiApiKey nil
    :anthropicApiKey nil
    :rules []

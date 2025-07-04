@@ -1,6 +1,7 @@
 (ns eca.server
   (:require
    [clojure.core.async :as async]
+   [eca.config :as config]
    [eca.db :as db]
    [eca.handlers :as handlers]
    [eca.logger :as logger]
@@ -25,25 +26,28 @@
    (shutdown-agents)
    (System/exit 0)))
 
+(defn ^:private with-config [components]
+  (assoc components :config (config/all @(:db* components))))
+
 (defmethod lsp.server/receive-request "initialize" [_ {:keys [server] :as components} params]
   (when-let [parent-process-id (:process-id params)]
     (liveness-probe/start! parent-process-id log-wrapper-fn #(exit server)))
-  (handlers/initialize components params))
+  (handlers/initialize (with-config components) params))
 
 (defmethod lsp.server/receive-notification "initialized" [_ _components _params]
   (logger/info logger-tag "Initialized!"))
 
 (defmethod lsp.server/receive-request "shutdown" [_ components _params]
-  (handlers/shutdown components))
+  (handlers/shutdown (with-config components)))
 
 (defmethod lsp.server/receive-notification "exit" [_ {:keys [server]} _params]
   (exit server))
 
 (defmethod lsp.server/receive-request "chat/prompt" [_ components params]
-  (handlers/chat-prompt components params))
+  (handlers/chat-prompt (with-config components) params))
 
 (defmethod lsp.server/receive-request "chat/queryContext" [_ components params]
-  (handlers/chat-query-context components params))
+  (handlers/chat-query-context (with-config components) params))
 
 (defn ^:private monitor-server-logs [log-ch]
   ;; NOTE: if this were moved to `initialize`, after timbre has been configured,

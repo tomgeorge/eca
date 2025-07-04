@@ -57,13 +57,31 @@
      (fn [e]
        (on-error {:exception e})))))
 
+(defn ^:private ->messages-with-history [past-messages user-prompt]
+  (conj (mapv (fn [{:keys [role content] :as msg}]
+                (case role
+                  "tool_call" {:role "assistant"
+                               :content [{:type "tool_use"
+                                          :id (:id content)
+                                          :name (:name content)
+                                          :input (:arguments content)}]}
+
+                  "tool_call_output"
+                  {:role "user"
+                   :content [{:type "tool_result"
+                              :tool-use-id (:id content)
+                              :content (llm-util/stringfy-tool-result content)}]}
+                  msg))
+              past-messages)
+        {:role "user" :content user-prompt}))
+
 (defn completion!
   [{:keys [model user-prompt temperature context max-tokens
            api-key past-messages tools web-search]
     :or {max-tokens 1024
          temperature 1.0}}
    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called]}]
-  (let [messages (conj (vec past-messages) {:role "user" :content user-prompt})
+  (let [messages (->messages-with-history past-messages user-prompt)
         body {:model model
               :messages messages
               :max_tokens max-tokens

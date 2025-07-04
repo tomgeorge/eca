@@ -1,6 +1,8 @@
 (ns eca.features.tools.filesystem
   (:require
    [babashka.fs :as fs]
+   [clojure.java.io :as io]
+   [clojure.java.shell :as shell]
    [clojure.string :as string]
    [eca.features.tools.util :as tools.util]
    [eca.shared :as shared]))
@@ -56,7 +58,7 @@
 
 (defn ^:private search-files [arguments db]
   (or (invalid-arguments arguments (concat (path-validations db)
-                                           [["pattern" #(and % (not (string/blank? %))) "Invalid glob pattern '$pattern'"]]))
+                                           [["pattern" #(not (string/blank? %)) "Invalid glob pattern '$pattern'"]]))
       (let [pattern (get arguments "pattern")
             pattern (if (string/includes? pattern "*")
                       pattern
@@ -70,6 +72,86 @@
         (single-text-content (if (seq paths)
                                (string/join "\n" paths)
                                "No matches found")))))
+
+(defn ^:private run-ripgrep [path pattern include]
+  (let [cmd (cond-> ["rg" "--files-with-matches" "--no-heading"]
+              include (concat ["--glob" include])
+              :always (concat ["-e" pattern path]))]
+    (->> (apply shell/sh cmd)
+         :out
+         (string/split-lines)
+         (filterv #(not (string/blank? %))))))
+
+(defn ^:private run-grep [path pattern ^String include]
+  (let [include-patterns (if (and include (.contains include "{"))
+                           (let [pattern-match (re-find #"\*\.\{(.+)\}" include)]
+                             (when pattern-match
+                               (map #(str "*." %) (clojure.string/split (second pattern-match) #","))))
+                           [include])
+        cmd (cond-> ["grep" "-E" "-l" "-r" "--exclude-dir=.*"]
+              (and include (> (count include-patterns) 1)) (concat (mapv #(str "--include=" %) include-patterns))
+              include (concat [(str "--include=" include)])
+              :always (concat [pattern path]))]
+    (->> (apply shell/sh cmd)
+         :out
+         (string/split-lines)
+         (filterv #(not (string/blank? %))))))
+
+(defn ^:private run-java-grep [path pattern include]
+  (let [include-pattern (when include
+                          (re-pattern (str ".*\\.("
+                                           (-> include
+                                               (string/replace #"^\*\." "")
+                                               (string/replace #"\*\.\{(.+)\}" "$1")
+                                               (string/replace #"," "|"))
+                                           ")$")))
+        pattern-regex (re-pattern pattern)]
+    (letfn [(search [dir]
+              (keep
+               (fn [file]
+                 (cond
+                   (and (fs/directory? file) (not (fs/hidden? file)))
+                   (search file)
+
+                   (and (not (fs/directory? file))
+                        (or (nil? include-pattern)
+                            (re-matches include-pattern (fs/file-name file))))
+                   (try
+                     (with-open [rdr (io/reader (fs/file file))]
+                       (loop [lines (line-seq rdr)]
+                         (when (seq lines)
+                           (if (re-find pattern-regex (first lines))
+                             (str (fs/canonicalize file))
+                             (recur (rest lines))))))
+                     (catch Exception _ nil))))
+               (fs/list-dir dir)))]
+      (when (fs/exists? path)
+        (flatten (search path))))))
+
+(defn ^:private grep [arguments db]
+  (or (invalid-arguments arguments (concat (path-validations db)
+                                           [["path" fs/readable? "File $path is not readable"]
+                                            ["pattern" #(and % (not (string/blank? %))) "Invalid content regex pattern '$pattern'"]
+                                            ["include" #(or (nil? %) (not (string/blank? %))) "Invalid file pattern '$include'"]
+                                            ["max_results" #(or (nil? %) number?) "Invalid number '$max_results'"]]))
+      (let [path (get arguments "path")
+            pattern (get arguments "pattern")
+            include (get arguments "include")
+            max-results (or (get arguments "max_results") 1000)
+            paths
+            (->> (cond
+                   (tools.util/command-available? "rg" "--version")
+                   (run-ripgrep path pattern include)
+
+                   (tools.util/command-available? "grep" "--version")
+                   (run-grep path pattern include)
+
+                   :else
+                   (run-java-grep path pattern include))
+                 (take max-results))]
+        (single-text-content (if (seq paths)
+                               (string/join "\n" paths)
+                               "No files found for given pattern")))))
 
 (def definitions
   {"list_directory"
@@ -94,9 +176,9 @@
     :parameters {:type "object"
                  :properties {"path" {:type "string"
                                       :description "The absolute path to the file to read."}
-                              "head" {:type "number"
+                              "head" {:type "integer"
                                       :description "If provided, returns only the first N lines of the file"}
-                              "tail" {:type "number"
+                              "tail" {:type "integer"
                                       :description "If provided, returns only the last N lines of the file"}}
                  :required ["path"]}
     :handler #'read-file}
@@ -113,4 +195,22 @@
                                          :description (str "Glob pattern following java FileSystem#getPathMatcher matching files or directory names."
                                                            "Use '**/*' to match search in multiple levels like '**/*.txt'")}}
                  :required ["path" "pattern"]}
-    :handler #'search-files}})
+    :handler #'search-files}
+   "grep"
+   {:description (str "Fast content search tool that works with any codebase size. "
+                      "Finds the paths to files that have matching contents using regular expressions. "
+                      "Supports full regex syntax (eg. \"log.*Error\", \"function\\s+\\w+\", etc.). "
+                      "Filter files by pattern with the include parameter (eg. \"*.js\", \"*.{ts,tsx}\"). "
+                      "Returns matching file paths sorted by modification time. "
+                      "Use this tool when you need to find files containing specific patterns.")
+    :parameters  {:type "object"
+                  :properties {"path" {:type "string"
+                                       :description "The absolute path to search in."}
+                               "pattern" {:type "string"
+                                          :description "The regular expression pattern to search for in file contents"}
+                               "include" {:type "string"
+                                          :description "File pattern to include in the search (e.g. \"*.clj\", \"*.{clj,cljs}\")"}
+                               "max_results" {:type "integer"
+                                              :description "Maximum number of results to return (default: 1000)"}}
+                  :required ["path" "pattern"]}
+    :handler #'grep}})

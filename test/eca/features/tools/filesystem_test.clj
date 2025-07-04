@@ -1,11 +1,15 @@
 (ns eca.features.tools.filesystem-test
   (:require
    [babashka.fs :as fs]
+   [clojure.java.shell :as shell]
    [clojure.string :as string]
    [clojure.test :refer [deftest is testing]]
    [eca.features.tools.filesystem :as f.tools.filesystem]
+   [eca.features.tools.util :as tools.util]
    [eca.test-helper :as h]
-   [matcher-combinators.test :refer [match?]]))
+   [matcher-combinators.test :refer [match?]])
+  (:import
+   [java.io ByteArrayInputStream]))
 
 (deftest list-directory-test
   (testing "Invalid path"
@@ -150,4 +154,86 @@
            ((get-in f.tools.filesystem/definitions ["search_files" :handler])
             {"path" (h/file-path "/project/foo")
              "pattern" ".txt"}
+            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}))))))
+
+(deftest grep-test
+  (testing "invalid pattern"
+    (is (match?
+         {:contents [{:type :text
+                      :error true
+                      :content "Invalid content regex pattern ' '"}]}
+         (with-redefs [fs/exists? (constantly true)
+                       fs/readable? (constantly true)]
+           ((get-in f.tools.filesystem/definitions ["grep" :handler])
+            {"path" (h/file-path "/project/foo")
+             "pattern" " "}
+            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+  (testing "invalid include"
+    (is (match?
+         {:contents [{:type :text
+                      :error true
+                      :content "Invalid file pattern ' '"}]}
+         (with-redefs [fs/exists? (constantly true)
+                       fs/readable? (constantly true)]
+           ((get-in f.tools.filesystem/definitions ["grep" :handler])
+            {"path" (h/file-path "/project/foo")
+             "pattern" ".*"
+             "include" " "}
+            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+  (testing "no files found"
+    (is (match?
+         {:contents [{:type :text
+                      :error false
+                      :content "No files found for given pattern"}]}
+         (with-redefs [fs/exists? (constantly true)
+                       fs/readable? (constantly true)
+                       tools.util/command-available? (fn [command & _args] (= "rg" command))
+                       shell/sh (constantly {:out ""})]
+           ((get-in f.tools.filesystem/definitions ["grep" :handler])
+            {"path" (h/file-path "/project/foo")
+             "pattern" ".*"}
+            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+  (testing "ripgrep search"
+    (is (match?
+         {:contents [{:type :text
+                      :error false
+                      :content "/project/foo/bla.txt\n/project/foo/qux.txt"}]}
+         (with-redefs [fs/exists? (constantly true)
+                       fs/readable? (constantly true)
+                       tools.util/command-available? (fn [command & _args] (= "rg" command))
+                       shell/sh (constantly {:out "/project/foo/bla.txt\n/project/foo/qux.txt"})]
+           ((get-in f.tools.filesystem/definitions ["grep" :handler])
+            {"path" (h/file-path "/project/foo")
+             "pattern" "some-cool-content"}
+            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+  (testing "grep search"
+    (is (match?
+         {:contents [{:type :text
+                      :error false
+                      :content "/project/foo/bla.txt\n/project/foo/qux.txt"}]}
+         (with-redefs [fs/exists? (constantly true)
+                       fs/readable? (constantly true)
+                       tools.util/command-available? (fn [command & _args] (= "grep" command))
+                       shell/sh (constantly {:out "/project/foo/bla.txt\n/project/foo/qux.txt"})]
+           ((get-in f.tools.filesystem/definitions ["grep" :handler])
+            {"path" (h/file-path "/project/foo")
+             "pattern" "some-cool-content"}
+            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+  (testing "java grep search"
+    (is (match?
+         {:contents [{:type :text
+                      :error false
+                      :content "/project/foo/bla.txt"}]}
+         (with-redefs [fs/exists? (constantly true)
+                       fs/readable? (constantly true)
+                       tools.util/command-available? (constantly false)
+                       shell/sh (constantly {:out "/project/foo/bla.txt\n/project/foo/qux.txt"})
+                       fs/list-dir (constantly [(fs/path (h/file-path "/project/foo/bla.txt"))])
+                       fs/canonicalize identity
+                       fs/directory? (constantly false)
+                       fs/hidden? (constantly false)
+                       fs/file (constantly (ByteArrayInputStream. (.getBytes "some-cool-content")))]
+           ((get-in f.tools.filesystem/definitions ["grep" :handler])
+            {"path" (h/file-path "/project/foo")
+             "pattern" "some-cool-content"}
             {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}))))))

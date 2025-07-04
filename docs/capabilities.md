@@ -13,6 +13,7 @@ Provides access to filesystem under workspace root, listing and reading files an
 - `read_file`: read a file content.
 - `list_directory`: list a directory.
 - `search_files`: search in a path for files matching a pattern.
+- `grep`: ripgrep/grep for paths with specified content.
 
 ## Supported LLM models and capaibilities
 

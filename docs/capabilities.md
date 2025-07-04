@@ -2,7 +2,7 @@
 
 ## Native tools
 
-ECA support built-in tools to avoid user extra installation and configuration, these tools are always included on models requests that support tools and can be [disabled/configured via config `nativeTools`](./configuration.md).
+ECA support built-in tools to avoid user extra installation and configuration, these tools are always included on models requests that support tools and can be [disabled/configured via config](./configuration.md) `nativeTools`.
 
 ### Filesystem
 

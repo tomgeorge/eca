@@ -27,7 +27,7 @@
                                         :name "list_allowed_directories"
                                         :input {}}]}
           {:role "user" :content [{:type "tool_result"
-                                   :tool-use-id "call-1"
+                                   :tool_use_id "call-1"
                                    :content "Allowed directories: /foo/bar\n"}]}
           {:role "assistant" :content "I see /foo/bar"}
           {:role "user" :content [{:type :text :text "Thanks" :cache_control {:type "ephemeral"}}]}]

@@ -48,7 +48,16 @@
 (defn ^:private read-file [arguments db]
   (or (invalid-arguments arguments (concat (path-validations db)
                                            [["path" fs/readable? "File $path is not readable"]]))
-      (single-text-content (slurp (fs/file (fs/canonicalize (get arguments "path")))))))
+      (let [head (get arguments "head")
+            tail (get arguments "tail")
+            content (cond-> (slurp (fs/file (fs/canonicalize (get arguments "path"))))
+                      head (->> (string/split-lines)
+                                (take head)
+                                (string/join "\n"))
+                      tail (->> (string/split-lines)
+                                (take-last tail)
+                                (string/join "\n")))]
+        (single-text-content content))))
 
 (def definitions
   {"list_allowed_directories"

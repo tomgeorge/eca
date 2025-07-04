@@ -70,7 +70,7 @@
                   "tool_call_output"
                   {:role "user"
                    :content [{:type "tool_result"
-                              :tool-use-id (:id content)
+                              :tool_use_id (:id content)
                               :content (llm-util/stringfy-tool-result content)}]}
                   msg))
               past-messages)

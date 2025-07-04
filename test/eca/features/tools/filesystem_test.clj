@@ -79,4 +79,30 @@
                        f.tools.filesystem/allowed-path? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["read_file" :handler])
             {"path" (h/file-path "/foo/qux")}
+            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "baz"}]})))))
+  (testing "heading a file"
+    (is (match?
+         {:contents [{:type :text
+                      :error false
+                      :content "fooo\nbar"}]}
+         (with-redefs [slurp (constantly "fooo\nbar\nbaz")
+                       fs/exists? (constantly true)
+                       fs/readable? (constantly true)
+                       f.tools.filesystem/allowed-path? (constantly true)]
+           ((get-in f.tools.filesystem/definitions ["read_file" :handler])
+            {"path" (h/file-path "/foo/qux")
+             "head" 2}
+            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "baz"}]})))))
+  (testing "tailling a file"
+    (is (match?
+         {:contents [{:type :text
+                      :error false
+                      :content "bar\nbaz"}]}
+         (with-redefs [slurp (constantly "fooo\nbar\nbaz")
+                       fs/exists? (constantly true)
+                       fs/readable? (constantly true)
+                       f.tools.filesystem/allowed-path? (constantly true)]
+           ((get-in f.tools.filesystem/definitions ["read_file" :handler])
+            {"path" (h/file-path "/foo/qux")
+             "tail" 2}
             {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "baz"}]}))))))

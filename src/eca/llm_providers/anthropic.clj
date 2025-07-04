@@ -28,7 +28,7 @@
                       :name "web_search"
                       :max_uses 10})))
 
-(defn ^:private base-request! [{:keys [rid body api-key on-error on-response]}]
+(defn ^:private base-request! [{:keys [rid body api-key content-block* on-error on-response]}]
   (let [api-key (or api-key
                     (System/getenv "ANTHROPIC_API_KEY"))
         url (url messages-path)]
@@ -51,7 +51,7 @@
            (with-open [rdr (io/reader body)]
              (doseq [[event data] (llm-util/event-data-seq rdr)]
                (llm-util/log-response logger-tag rid event data)
-               (on-response event data))))
+               (on-response event data content-block*))))
          (catch Exception e
            (on-error {:exception e}))))
      (fn [e]
@@ -90,9 +90,8 @@
               :stream true
               :tools (->tools tools web-search)
               :system context}
-        content-block* (atom nil)
         on-response-fn
-        (fn handle-response [event data]
+        (fn handle-response [event data content-block*]
           (case event
             "content_block_start" (case (-> data :content_block :type)
                                     "tool_use" (do
@@ -140,6 +139,7 @@
                                                 {:rid (llm-util/gen-rid)
                                                  :body (assoc body :messages messages)
                                                  :api-key api-key
+                                                 :content-block* (atom nil)
                                                  :on-error on-error
                                                  :on-response handle-response}))))
                               "end_turn" (on-message-received {:type :finish
@@ -150,5 +150,6 @@
      {:rid (llm-util/gen-rid)
       :body body
       :api-key api-key
+      :content-block* (atom nil)
       :on-error on-error
       :on-response on-response-fn})))

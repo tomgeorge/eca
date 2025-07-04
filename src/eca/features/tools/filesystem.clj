@@ -23,7 +23,7 @@
                      (map (comp shared/uri->filename :uri) (:workspace-folders db))))))
 
 (defn ^:private list-directory [arguments db]
-  (let [path (fs/canonicalize (:path arguments))]
+  (let [path (fs/canonicalize (get arguments "path"))]
     (or (not-allowed-path path db)
         (single-text-content
          (reduce

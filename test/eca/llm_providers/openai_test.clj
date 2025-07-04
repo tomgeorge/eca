@@ -23,11 +23,11 @@
          [{:role "user" :content "List the files you are allowed"}
           {:role "assistant" :content "Ok!"}
           {:type "function_call"
-           :call-id "call-1"
+           :call_id "call-1"
            :name "list_allowed_directories"
            :arguments {}}
           {:type "function_call_output"
-           :call-id "call-1"
+           :call_id "call-1"
            :output "Allowed directories: /foo/bar\n"}
           {:role "assistant" :content "I see /foo/bar"}
           {:role "user" :content "Thanks"}]

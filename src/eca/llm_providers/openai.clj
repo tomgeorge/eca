@@ -52,12 +52,12 @@
                 (case role
                   "tool_call" {:type "function_call"
                                :name (:name content)
-                               :call-id (:id content)
+                               :call_id (:id content)
                                :arguments (:arguments content)}
                   "tool_call_output"
                   {:type "function_call_output"
                    :name (:name content)
-                   :call-id (:id content)
+                   :call_id (:id content)
                    :output (llm-util/stringfy-tool-result content)}
                   msg))
               past-messages)

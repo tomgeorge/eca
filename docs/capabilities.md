@@ -8,13 +8,15 @@ ECA support built-in tools to avoid user extra installation and configuration, t
 
 Provides access to filesystem under workspace root, listing and reading files and directories.
 
+- ''
+
 ## Supported LLM models and capaibilities
 
-| model     | MCP / tools | thinking/reasioning |
-|-----------|-------------|---------------------|
-| OpenAI    | √           | X                   |
-| Anthropic | √           | X                   |
-| Ollama    | √           | X                   |
+| model     | MCP / tools | thinking/reasioning | prompt caching |
+|-----------|-------------|---------------------|----------------|
+| OpenAI    | √           | X                   | X              |
+| Anthropic | √           | X                   | √              |
+| Ollama    | √           | X                   | X              |
 
 ### OpenAI
 

@@ -6,6 +6,7 @@
 - Add MCP/tool support for ollama models.
 - Improve ollama integration only requiring `ollama serve` to be running.
 - Improve chat history and context passed to all LLM providers.
+- Add support for prompt caching for Anthropic models.
 
 ## 0.1.0
 

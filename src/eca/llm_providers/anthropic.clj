@@ -26,7 +26,8 @@
                   :input_schema (:parameters tool))) tools)
     web-search (conj {:type "web_search_20250305"
                       :name "web_search"
-                      :max_uses 10})))
+                      :max_uses 10
+                      :cache_control {:type "ephemeral"}})))
 
 (defn ^:private base-request! [{:keys [rid body api-key content-block* on-error on-response]}]
   (let [api-key (or api-key
@@ -73,7 +74,8 @@
                               :content (llm-util/stringfy-tool-result content)}]}
                   msg))
               past-messages)
-        {:role "user" :content user-prompt}))
+        ;; TODO add cache_control to last non thinking message
+        {:role "user" :content user-prompt :cache_control {:type "ephemeral"}}))
 
 (defn completion!
   [{:keys [model user-prompt temperature context max-tokens
@@ -89,7 +91,7 @@
               ;; TODO support :thinking
               :stream true
               :tools (->tools tools web-search)
-              :system context}
+              :system [{:type "text" :text context :cache_control {:type "ephemeral"}}]}
         on-response-fn
         (fn handle-response [event data content-block*]
           (case event

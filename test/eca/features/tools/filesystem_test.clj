@@ -1,7 +1,6 @@
 (ns eca.features.tools.filesystem-test
   (:require
    [babashka.fs :as fs]
-   [clojure.string :as string]
    [clojure.test :refer [deftest is testing]]
    [eca.features.tools.filesystem :as f.tools.filesystem]
    [eca.test-helper :as h]
@@ -18,12 +17,23 @@
         {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "baz"}]}))))
 
 (deftest list-directory-test
-  (testing "unallowed dir"
+  (testing "Invalid path"
     (is (match?
          {:contents [{:type :text
                       :error false
-                      :content "Access denied - path outside workspace root, call list_allowed_dirs first"}]}
-         (with-redefs [fs/canonicalize (constantly (h/file-path "/foo/qux"))]
+                      :content "/foo/qux is not a valid path"}]}
+         (with-redefs [fs/canonicalize (constantly (h/file-path "/foo/qux"))
+                       fs/regular-file? (constantly false)]
+           ((get-in f.tools.filesystem/definitions ["list_directory" :handler])
+            {"path" (h/file-path "/foo/qux")}
+            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "baz"}]})))))
+  (testing "Unallowed dir"
+    (is (match?
+         {:contents [{:type :text
+                      :error false
+                      :content "Access denied - path /foo/qux outside allowed directories"}]}
+         (with-redefs [fs/canonicalize (constantly (h/file-path "/foo/qux"))
+                       fs/regular-file? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["list_directory" :handler])
             {"path" (h/file-path "/foo/qux")}
             {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "baz"}]})))))
@@ -35,7 +45,8 @@
                                             "[DIR] %s\n")
                                        (h/file-path "/foo/bar/baz/some.clj")
                                        (h/file-path "/foo/bar/baz/qux"))}]}
-         (with-redefs [fs/starts-with? (constantly true)
+         (with-redefs [fs/regular-file? (constantly true)
+                       fs/starts-with? (constantly true)
                        fs/list-dir (constantly [(fs/path (h/file-path "/foo/bar/baz/some.clj"))
                                                 (fs/path (h/file-path "/foo/bar/baz/qux"))])
                        fs/directory? (fn [path] (not (string/ends-with? (str path) ".clj")))

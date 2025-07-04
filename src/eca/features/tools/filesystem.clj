@@ -11,10 +11,9 @@
                :content text
                :error (boolean error)}]})
 
-(defn ^:private not-allowed-path [path db]
-  (when (not-any? #(fs/starts-with? path (shared/uri->filename (:uri %)))
-                  (:workspace-folders db))
-    (single-text-content "Access denied - path outside workspace root, call list_allowed_dirs first")))
+(defn ^:private allowed-path? [db path]
+  (some #(fs/starts-with? path (shared/uri->filename (:uri %)))
+        (:workspace-folders db)))
 
 (defn ^:private list-allowed-directories [_arguments db]
   (single-text-content
@@ -22,9 +21,17 @@
         (string/join "\n"
                      (map (comp shared/uri->filename :uri) (:workspace-folders db))))))
 
+(defn ^:private invalid-arguments [arguments validator]
+  (first (keep (fn [[key pred error-msg]]
+                 (let [value (get arguments key)]
+                   (when-not (pred value)
+                     (single-text-content (string/replace error-msg (str "$" key) value)))))
+               validator)))
+
 (defn ^:private list-directory [arguments db]
-  (let [path (fs/canonicalize (get arguments "path"))]
-    (or (not-allowed-path path db)
+  (let [path (delay (fs/canonicalize (get arguments "path")))]
+    (or (invalid-arguments arguments [["path" fs/regular-file? "$path is not a valid path"]
+                                      ["path" (partial allowed-path? db) "Access denied - path $path outside allowed directories"]])
         (single-text-content
          (reduce
           (fn [out path]
@@ -33,7 +40,7 @@
                          (if (fs/directory? path) "DIR" "FILE")
                          path)))
           ""
-          (fs/list-dir path))))))
+          (fs/list-dir @path))))))
 
 (def definitions
   {"list_allowed_directories"

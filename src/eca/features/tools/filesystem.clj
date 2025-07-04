@@ -19,7 +19,7 @@
   (first (keep (fn [[key pred error-msg]]
                  (let [value (get arguments key)]
                    (when-not (pred value)
-                     (single-text-content (string/replace error-msg (str "$" key) value) :error))))
+                     (single-text-content (string/replace error-msg (str "$" key) (str value)) :error))))
                validator)))
 
 (defn ^:private path-validations [db]
@@ -59,6 +59,23 @@
                                 (string/join "\n")))]
         (single-text-content content))))
 
+(defn ^:private search-files [arguments db]
+  (or (invalid-arguments arguments (concat (path-validations db)
+                                           [["pattern" #(and % (not (string/blank? %))) "Invalid glob pattern '$pattern'"]]))
+      (let [pattern (get arguments "pattern")
+            pattern (if (string/includes? pattern "*")
+                      pattern
+                      (format "**/%s/**" pattern))
+            paths (reduce
+                   (fn [paths {:keys [uri]}]
+                     (concat paths (fs/glob (shared/uri->filename uri)
+                                            pattern)))
+                   []
+                   (:workspace-folders db))]
+        (single-text-content (if (seq paths)
+                               (string/join "\n" paths)
+                               "No matches found")))))
+
 (def definitions
   {"list_allowed_directories"
    {:description (str "Returns the list of directories that this server is allowed to access. "
@@ -92,4 +109,17 @@
                               "tail" {:type "number"
                                       :description "If provided, returns only the last N lines of the file"}}
                  :required ["path"]}
-    :handler #'read-file}})
+    :handler #'read-file}
+   "search_files"
+   {:description (str "Recursively search for files and directories matching a pattern. "
+                      "Searches through all subdirectories from the starting path. The search "
+                      "is case-insensitive and matches partial names. Returns full paths to all "
+                      "matching items. Great for finding files when you don't know their exact location. "
+                      "Only searches within allowed directories.")
+    :parameters {:type "object"
+                 :properties {"path" {:type "string"
+                                      :description "The absolute path to start searching files from there."}
+                              "pattern" {:type "string"
+                                         :description "Glob pattern matching files or directory names like *.txt or dir/* to include in the result"}}
+                 :required ["path" "pattern"]}
+    :handler #'search-files}})

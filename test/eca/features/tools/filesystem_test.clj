@@ -223,7 +223,7 @@
     (is (match?
          {:contents [{:type :text
                       :error false
-                      :content "/project/foo/bla.txt"}]}
+                      :content (h/file-path "/project/foo/bla.txt")}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)
                        tools.util/command-available? (constantly false)

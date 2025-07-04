@@ -22,7 +22,7 @@
     (is (match?
          {:contents [{:type :text
                       :error true
-                      :content "/foo/qux is not a valid path"}]}
+                      :content (str (h/file-path "/foo/qux") " is not a valid path")}]}
          (with-redefs [fs/canonicalize (constantly (h/file-path "/foo/qux"))
                        fs/exists? (constantly false)]
            ((get-in f.tools.filesystem/definitions ["list_directory" :handler])
@@ -32,7 +32,7 @@
     (is (match?
          {:contents [{:type :text
                       :error true
-                      :content "Access denied - path /foo/qux outside allowed directories"}]}
+                      :content (format "Access denied - path %s outside allowed directories" (h/file-path "/foo/qux"))}]}
          (with-redefs [fs/canonicalize (constantly (h/file-path "/foo/qux"))
                        fs/exists? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["list_directory" :handler])
@@ -61,7 +61,7 @@
     (is (match?
          {:contents [{:type :text
                       :error true
-                      :content "File /foo/qux is not readable"}]}
+                      :content (format "File %s is not readable" (h/file-path "/foo/qux"))}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly false)
                        f.tools.filesystem/allowed-path? (constantly true)]

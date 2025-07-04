@@ -5,7 +5,7 @@
 - Add native tools: filesystem
 - Add MCP/tool support for ollama models.
 - Improve ollama integration only requiring `ollama serve` to be running.
-- Improve chat history and context passed to ollama.
+- Improve chat history and context passed to all LLM providers.
 
 ## 0.1.0
 

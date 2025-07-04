@@ -23,18 +23,18 @@
                    [name (-> tool
                              (assoc :name name)
                              (update :description #(-> %
-                                                       (string/replace #"\$workspaceRoots" (tools.util/workspace-roots-strs db)))))]))
+                                                       (string/replace #"\$workspaceRoots" (constantly (tools.util/workspace-roots-strs db))))))]))
             f.tools.filesystem/definitions))))
 
 (defn all-tools [db config]
   (let [native-tools (concat
-                      []
-                      (mapv #(select-keys % [:name :description :parameters])
-                            (vals (native-definitions db config))))
+                       []
+                       (mapv #(select-keys % [:name :description :parameters])
+                             (vals (native-definitions db config))))
         mcp-tools (f.mcp/all-tools db)]
     (concat
-     (mapv #(assoc % :source :native) native-tools)
-     (mapv #(assoc % :source :mcp) mcp-tools))))
+      (mapv #(assoc % :source :native) native-tools)
+      (mapv #(assoc % :source :mcp) mcp-tools))))
 
 (defn call-tool! [^String name ^Map arguments db config]
   (logger/debug logger-tag (format "Calling tool '%s' with args '%s'" name arguments))

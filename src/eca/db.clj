@@ -21,7 +21,7 @@
                                :web-search true}
             "claude-3-5-haiku-latest" {:tools true
                                        :web-search true}} ;; + ollama local models
-   :default-model "o4-mini" ;; unless a ollama model is running.
+   :default-model "claude-sonnet-4-0" ;; unless a ollama model is running.
    :mcp-clients {}})
 
 (defonce db* (atom initial-db))

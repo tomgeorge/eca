@@ -65,7 +65,7 @@
                                :content [{:type "tool_use"
                                           :id (:id content)
                                           :name (:name content)
-                                          :input (:arguments content)}]}
+                                          :input (or (:arguments content) {})}]}
 
                   "tool_call_output"
                   {:role "user"
@@ -75,7 +75,9 @@
                   msg))
               past-messages)
         ;; TODO add cache_control to last non thinking message
-        {:role "user" :content user-prompt :cache_control {:type "ephemeral"}}))
+        {:role "user" :content [{:type :text
+                                 :text user-prompt
+                                 :cache_control {:type "ephemeral"}}]}))
 
 (defn completion!
   [{:keys [model user-prompt temperature context max-tokens

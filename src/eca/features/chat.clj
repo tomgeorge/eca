@@ -94,12 +94,8 @@
         user-prompt message
         all-tools (f.tools/all-tools @db* config)
         received-msgs* (atom "")
-        add-to-history! (fn [msg & [append-to-last?]]
-                          (if append-to-last?
-                            (swap! db* update-in [:chats chat-id :messages] (fn [messages msg]
-                                                                              (conj (pop messages)
-                                                                                    (update (last messages) :content str msg))) msg)
-                            (swap! db* update-in [:chats chat-id :messages] (fnil conj []) msg)))]
+        add-to-history! (fn [msg]
+                          (swap! db* update-in [:chats chat-id :messages] (fnil conj []) msg))]
     (messenger/chat-content-received
      messenger
      {:chat-id chat-id

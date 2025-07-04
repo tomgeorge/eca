@@ -15,7 +15,11 @@
 (defn native-definitions [config]
   (merge {}
          (when (get-in config [:nativeTools :filesystem :enabled])
-           f.tools.filesystem/definitions)))
+           (into
+            {}
+            (map (fn [[name tool]]
+                   [name (assoc tool :name name)]))
+            f.tools.filesystem/definitions))))
 
 (defn all-tools [db config]
   (let [native-tools (concat

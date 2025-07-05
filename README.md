@@ -27,7 +27,7 @@ A Free and OpenSource editor-agnostic tool that aims to easily link LLMs <-> Edi
 - **Editor-agnostic** protocol for any editor to integrate.
 - **Single configuration**: Configure eca making it work the same in any editor.
 - **Chat** interface: ask questions, review diffs, work together with an agent in your codebase.
-- **Agentic** let LLM work as an agent with its built-in tools and MCPs you can configure.
+- **Agentic** let LLM work as an agent with its native tools and MCPs you can configure.
 - **Context** support: giving more details about your code to the LLM.
 - **Multi models**: Ollama local models, OpenAI, Anthropic, more on the way.
 

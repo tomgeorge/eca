@@ -130,7 +130,7 @@
 
 (defn ^:private grep
   "Searches for files containing patterns using regular expressions.
-   
+
    This function provides a fast content search across files using three different
    backends depending on what's available:
    1. ripgrep (rg) - fastest, preferred when available
@@ -181,6 +181,17 @@
              (spit path content)
              (format "Successfully replaced content in %s." path))
            (format "Original content not found in %s" path))))))
+
+(defn ^:private move-file [arguments db]
+  (let [workspace-dirs (tools.util/workspace-roots-strs db)]
+    (or (invalid-arguments arguments [["source" fs/exists? "$source is not a valid path"]
+                                      ["source" (partial allowed-path? db) (str "Access denied - path $source outside allowed directories: " workspace-dirs)]
+                                      ["destination" (partial allowed-path? db) (str "Access denied - path $destination outside allowed directories: " workspace-dirs)]
+                                      ["destination" (complement fs/exists?) "Path $destination already exists"]])
+        (let [source (get arguments "source")
+              destination (get arguments "destination")]
+          (fs/move source destination {:replace-existing false})
+          (single-text-content (format "Successfully moved %s to %s" source destination))))))
 
 (def definitions
   {"list_directory"
@@ -260,7 +271,19 @@
                                                   :description "Whether to replace all occurences of the file or just the first one (default)"}}
                   :required ["path" "original_content" "new_content"]}
     :handler #'replace-in-file}
-   ;; TODO move-file
+   "move_file"
+   {:description (str "Move or rename files and directories. Can move files between directories "
+                      "and rename them in a single operation. If the destination exists, the "
+                      "operation will fail. Works across different directories and can be used "
+                      "for simple renaming within the same directory. "
+                      "Both source and destination must be within the directories: $workspaceRoots.")
+    :parameters  {:type "object"
+                  :properties {"source" {:type "string"
+                                         :description "The absolute origin file path to move."}
+                               "destination" {:type "string"
+                                              :description "The new absolute file path to move to."}}
+                  :required ["source" "destination"]}
+    :handler #'move-file}
    ;; TODO write-file
    ;; TODO delete-files
    })

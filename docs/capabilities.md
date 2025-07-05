@@ -15,6 +15,7 @@ Provides access to filesystem under workspace root, listing and reading files an
 - `search_files`: search in a path for files matching a pattern.
 - `grep`: ripgrep/grep for paths with specified content.
 - `replace_in_file`: replace a text with another one in file.
+- `move_file`: move/rename a file.
 
 ### TODO - Shell
 

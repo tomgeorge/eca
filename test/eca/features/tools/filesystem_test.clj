@@ -303,3 +303,40 @@
       (is (match?
            {(h/file-path "/project/foo/my-file.txt") "Hey, here is another-boring-text in this file! here as well: another-boring-text"}
            @file-content*)))))
+
+(deftest move-file-test
+  (testing "Not readable source path"
+    (is (match?
+         {:contents [{:type :text
+                      :error true
+                      :content (format "%s is not a valid path" (h/file-path "/foo/qux"))}]}
+         (with-redefs [fs/exists? (constantly false)
+                       f.tools.filesystem/allowed-path? (constantly true)]
+           ((get-in f.tools.filesystem/definitions ["move_file" :handler])
+            {"source" (h/file-path "/foo/qux")}
+            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]})))))
+  (testing "Destination already exists"
+    (is (match?
+         {:contents [{:type :text
+                      :error true
+                      :content (format "Path %s already exists" (h/file-path "/foo/bar/other_file.clj"))}]}
+         (with-redefs [fs/exists? (constantly true)
+                       f.tools.filesystem/allowed-path? (constantly true)]
+           ((get-in f.tools.filesystem/definitions ["move_file" :handler])
+            {"source" (h/file-path "/foo/bar/some_file.clj")
+             "destination" (h/file-path "/foo/bar/other_file.clj")}
+            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar") :name "foo"}]})))))
+  (testing "Move successfully"
+    (is (match?
+         {:contents [{:type :text
+                      :error false
+                      :content (format "Successfully moved %s to %s"
+                                       (h/file-path "/foo/bar/some_file.clj")
+                                       (h/file-path "/foo/bar/other_file.clj"))}]}
+         (with-redefs [fs/exists? (fn [path] (not (string/includes? path "other_file.clj")))
+                       f.tools.filesystem/allowed-path? (constantly true)
+                       fs/move (constantly true)]
+           ((get-in f.tools.filesystem/definitions ["move_file" :handler])
+            {"source" (h/file-path "/foo/bar/some_file.clj")
+             "destination" (h/file-path "/foo/bar/other_file.clj")}
+            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar") :name "foo"}]}))))))

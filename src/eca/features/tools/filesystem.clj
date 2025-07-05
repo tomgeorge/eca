@@ -60,24 +60,13 @@
   (or (invalid-arguments arguments (concat (path-validations db)
                                            [["pattern" #(not (string/blank? %)) "Invalid glob pattern '$pattern'"]]))
       (let [pattern (get arguments "pattern")
-            ;; Normalize pattern - if it doesn't contain wildcards, wrap with wildcards
-            normalized-pattern (if (string/includes? pattern "*")
-                                 pattern
-                                 (format "*%s*" pattern))
-            ;; Convert glob pattern to regex for case-insensitive matching
-            pattern-regex (-> normalized-pattern
-                              (string/replace "*" ".*")
-                              (string/replace "?" ".")
-                              (str "(?i)")  ; Case-insensitive flag
-                              re-pattern)
+            pattern (if (string/includes? pattern "*")
+                      pattern
+                      (format "**/*%s*/**" pattern))
             paths (reduce
                    (fn [paths {:keys [uri]}]
-                     (let [root-path (shared/uri->filename uri)]
-                       (concat paths
-                               (filter (fn [path]
-                                         (let [filename (fs/file-name path)]
-                                           (re-matches pattern-regex filename)))
-                                       (fs/glob root-path "**/*")))))
+                     (concat paths (fs/glob (shared/uri->filename uri)
+                                            pattern)))
                    []
                    (:workspace-folders db))]
         (single-text-content (if (seq paths)

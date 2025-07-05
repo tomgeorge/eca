@@ -25,7 +25,7 @@
           {:type "function_call"
            :call_id "call-1"
            :name "list_allowed_directories"
-           :arguments {}}
+           :arguments "{}"}
           {:type "function_call_output"
            :call_id "call-1"
            :output "Allowed directories: /foo/bar\n"}

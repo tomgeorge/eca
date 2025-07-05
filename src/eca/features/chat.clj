@@ -50,8 +50,8 @@
 
 (defn ^:private behavior->behavior-str [behavior]
   (case behavior
-    "chat" "Help with code changes when applicable, answer questions, and provide explanations."
-    "agent" "Help with code changes when applicable but suggest you do the changes itself, answer questions, and provide explanations."))
+    "chat" "Help with code changes only if user requested/agreed, ask first before do changes, answer questions, and provide explanations."
+    "agent" "Help with code changes when applicable, suggesting you do the changes itself, answer questions, and provide explanations."))
 
 (defn default-model [db]
   (if-let [ollama-model (first (filter #(string/starts-with? % config/ollama-model-prefix) (vals (:models db))))]

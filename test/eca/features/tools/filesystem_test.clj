@@ -148,8 +148,7 @@
                                     (h/file-path "/project/foo/qux.txt"))}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/glob (constantly [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
-                                            (fs/path (h/file-path "/project/foo/qux.txt"))
-                                            (fs/path (h/file-path "/project/foo/bar/baz.clj"))])]
+                                            (fs/path (h/file-path "/project/foo/qux.txt"))])]
            ((get-in f.tools.filesystem/definitions ["search_files" :handler])
             {"path" (h/file-path "/project/foo")
              "pattern" ".txt"}

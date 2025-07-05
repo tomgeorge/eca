@@ -14,6 +14,11 @@ Provides access to filesystem under workspace root, listing and reading files an
 - `list_directory`: list a directory.
 - `search_files`: search in a path for files matching a pattern.
 - `grep`: ripgrep/grep for paths with specified content.
+- `replace_in_file`: replace a text with another one in file.
+
+### TODO - Shell
+
+### TODO - Web
 
 ## Supported LLM models and capaibilities
 

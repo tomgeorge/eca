@@ -130,12 +130,12 @@
          {:contents [{:type :text
                       :error false
                       :content (str (h/file-path "/project/foo/bar/baz.txt") "\n"
-                                    (h/file-path "/project/foo/qux.txt"))}]}
+                                    (h/file-path "/project/foo/qux.txt") "\n"
+                                    (h/file-path "/project/foo/qux.clj"))}]}
          (with-redefs [fs/exists? (constantly true)
-                       fs/glob (fn [_roo pattern]
-                                 (when (= "**" pattern)
-                                   [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
-                                    (fs/path (h/file-path "/project/foo/qux.txt"))]))]
+                       fs/glob (constantly [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
+                                            (fs/path (h/file-path "/project/foo/qux.txt"))
+                                            (fs/path (h/file-path "/project/foo/qux.clj"))])]
            ((get-in f.tools.filesystem/definitions ["search_files" :handler])
             {"path" (h/file-path "/project/foo")
              "pattern" "**"}
@@ -147,10 +147,9 @@
                       :content (str (h/file-path "/project/foo/bar/baz.txt") "\n"
                                     (h/file-path "/project/foo/qux.txt"))}]}
          (with-redefs [fs/exists? (constantly true)
-                       fs/glob (fn [_roo pattern]
-                                 (when (= "**/*.txt*" pattern)
-                                   [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
-                                    (fs/path (h/file-path "/project/foo/qux.txt"))]))]
+                       fs/glob (constantly [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
+                                            (fs/path (h/file-path "/project/foo/qux.txt"))
+                                            (fs/path (h/file-path "/project/foo/bar/baz.clj"))])]
            ((get-in f.tools.filesystem/definitions ["search_files" :handler])
             {"path" (h/file-path "/project/foo")
              "pattern" ".txt"}
@@ -237,3 +236,71 @@
             {"path" (h/file-path "/project/foo")
              "pattern" "some-cool-content"}
             {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}))))))
+
+(deftest replace-in-file-test
+  (testing "Not readable path"
+    (is (match?
+         {:contents [{:type :text
+                      :error true
+                      :content (format "File %s is not readable" (h/file-path "/foo/qux"))}]}
+         (with-redefs [fs/exists? (constantly true)
+                       fs/readable? (constantly false)
+                       f.tools.filesystem/allowed-path? (constantly true)]
+           ((get-in f.tools.filesystem/definitions ["replace_in_file" :handler])
+            {"path" (h/file-path "/foo/qux")
+             "original_content" "some-cool-text"
+             "new_content" "another-boring-text"}
+            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]})))))
+  (testing "original content not found"
+    (is (match?
+         {:contents [{:type :text
+                      :error false
+                      :content (format "Original content not found in %s" (h/file-path "/project/foo/my-file.txt"))}]}
+         (with-redefs [fs/exists? (constantly true)
+                       fs/readable? (constantly true)
+                       f.tools.filesystem/allowed-path? (constantly true)
+                       slurp (constantly "Hey, here is some-cool-text in this file!")]
+           ((get-in f.tools.filesystem/definitions ["replace_in_file" :handler])
+            {"path" (h/file-path "/project/foo/my-file.txt")
+             "original_content" "other-cool-text"
+             "new_content" "another-boring-text"}
+            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+  (testing "original content found and replaced first"
+    (let [file-content* (atom {})]
+      (is (match?
+           {:contents [{:type :text
+                        :error false
+                        :content (format "Successfully replaced content in %s." (h/file-path "/project/foo/my-file.txt"))}]}
+           (with-redefs [fs/exists? (constantly true)
+                         fs/readable? (constantly true)
+                         f.tools.filesystem/allowed-path? (constantly true)
+                         slurp (constantly "Hey, here is some-cool-text in this file! here as well: some-cool-text")
+                         spit (fn [f content] (swap! file-content* assoc f content))]
+             ((get-in f.tools.filesystem/definitions ["replace_in_file" :handler])
+              {"path" (h/file-path "/project/foo/my-file.txt")
+               "original_content" "some-cool-text"
+               "new_content" "another-boring-text"}
+              {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}))))
+      (is (match?
+           {(h/file-path "/project/foo/my-file.txt") "Hey, here is another-boring-text in this file! here as well: some-cool-text"}
+           @file-content*))))
+  (testing "original content found and replaced all"
+    (let [file-content* (atom {})]
+      (is (match?
+           {:contents [{:type :text
+                        :error false
+                        :content (format "Successfully replaced content in %s." (h/file-path "/project/foo/my-file.txt"))}]}
+           (with-redefs [fs/exists? (constantly true)
+                         fs/readable? (constantly true)
+                         f.tools.filesystem/allowed-path? (constantly true)
+                         slurp (constantly "Hey, here is some-cool-text in this file! here as well: some-cool-text")
+                         spit (fn [f content] (swap! file-content* assoc f content))]
+             ((get-in f.tools.filesystem/definitions ["replace_in_file" :handler])
+              {"path" (h/file-path "/project/foo/my-file.txt")
+               "original_content" "some-cool-text"
+               "new_content" "another-boring-text"
+               "all_occurrences" true}
+              {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}))))
+      (is (match?
+           {(h/file-path "/project/foo/my-file.txt") "Hey, here is another-boring-text in this file! here as well: another-boring-text"}
+           @file-content*)))))

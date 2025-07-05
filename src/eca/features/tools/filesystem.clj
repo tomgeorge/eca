@@ -60,13 +60,24 @@
   (or (invalid-arguments arguments (concat (path-validations db)
                                            [["pattern" #(not (string/blank? %)) "Invalid glob pattern '$pattern'"]]))
       (let [pattern (get arguments "pattern")
-            pattern (if (string/includes? pattern "*")
-                      pattern
-                      (format "**/*%s*" pattern))
+            ;; Normalize pattern - if it doesn't contain wildcards, wrap with wildcards
+            normalized-pattern (if (string/includes? pattern "*")
+                                 pattern
+                                 (format "*%s*" pattern))
+            ;; Convert glob pattern to regex for case-insensitive matching
+            pattern-regex (-> normalized-pattern
+                              (string/replace "*" ".*")
+                              (string/replace "?" ".")
+                              (str "(?i)")  ; Case-insensitive flag
+                              re-pattern)
             paths (reduce
                    (fn [paths {:keys [uri]}]
-                     (concat paths (fs/glob (shared/uri->filename uri)
-                                            pattern)))
+                     (let [root-path (shared/uri->filename uri)]
+                       (concat paths
+                               (filter (fn [path]
+                                         (let [filename (fs/file-name path)]
+                                           (re-matches pattern-regex filename)))
+                                       (fs/glob root-path "**/*")))))
                    []
                    (:workspace-folders db))]
         (single-text-content (if (seq paths)
@@ -153,6 +164,23 @@
                                (string/join "\n" paths)
                                "No files found for given pattern")))))
 
+(defn ^:private replace-in-file [arguments db]
+  (or (invalid-arguments arguments (concat (path-validations db)
+                                           [["path" fs/readable? "File $path is not readable"]]))
+      (let [path (get arguments "path")
+            original-content (get arguments "original_content")
+            new-content (get arguments "new_content")
+            all? (boolean (get arguments "all_occurrences"))
+            content (slurp path)]
+        (single-text-content
+         (if (string/includes? content original-content)
+           (let [content (if all?
+                           (string/replace content original-content new-content)
+                           (string/replace-first content original-content new-content))]
+             (spit path content)
+             (format "Successfully replaced content in %s." path))
+           (format "Original content not found in %s" path))))))
+
 (def definitions
   {"list_directory"
    {:description (str "Get a detailed listing of all files and directories in a specified path. "
@@ -213,4 +241,25 @@
                                "max_results" {:type "integer"
                                               :description "Maximum number of results to return (default: 1000)"}}
                   :required ["path" "pattern"]}
-    :handler #'grep}})
+    :handler #'grep}
+   "replace_in_file"
+   {:description (str "Replace a specific string or content block in a file with new content. "
+                      "Finds the exact original content and replaces it with new content. "
+                      "Be extra careful to format the original-content exactly correctly, "
+                      "taking extra care with whitespace and newlines. In addition to replacing strings, "
+                      "this can also be used to prepend, append, or delete contents from a file.")
+    :parameters  {:type "object"
+                  :properties {"path" {:type "string"
+                                       :description "The absolute file path to do the replace."}
+                               "original_content" {:type "string"
+                                                   :description "The exact content to find and replace"}
+                               "new_content" {:type "string"
+                                              :description "The new content to replace the original content with"}
+                               "all_occurrences" {:type "boolean"
+                                                  :description "Whether to replace all occurences of the file or just the first one (default)"}}
+                  :required ["path" "original_content" "new_content"]}
+    :handler #'replace-in-file}
+   ;; TODO move-file
+   ;; TODO write-file
+   ;; TODO delete-files
+   })

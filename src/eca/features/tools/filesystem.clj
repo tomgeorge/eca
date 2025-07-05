@@ -128,7 +128,18 @@
       (when (fs/exists? path)
         (flatten (search path))))))
 
-(defn ^:private grep [arguments db]
+(defn ^:private grep
+  "Searches for files containing patterns using regular expressions.
+   
+   This function provides a fast content search across files using three different
+   backends depending on what's available:
+   1. ripgrep (rg) - fastest, preferred when available
+   2. grep - standard Unix tool fallback
+   3. Pure Java implementation - slow, but cross-platform fallback
+
+   Returns matching file paths, prioritizing by modification time when possible.
+   Validates that the search path is within allowed workspace directories."
+  [arguments db]
   (or (invalid-arguments arguments (concat (path-validations db)
                                            [["path" fs/readable? "File $path is not readable"]
                                             ["pattern" #(and % (not (string/blank? %))) "Invalid content regex pattern '$pattern'"]
@@ -149,6 +160,7 @@
                    :else
                    (run-java-grep path pattern include))
                  (take max-results))]
+        ;; TODO sort by modification time.
         (single-text-content (if (seq paths)
                                (string/join "\n" paths)
                                "No files found for given pattern")))))

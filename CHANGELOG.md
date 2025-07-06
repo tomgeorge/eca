@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0
+
 - Add native tools: filesystem
 - Add MCP/tool support for ollama models.
 - Improve ollama integration only requiring `ollama serve` to be running.

@@ -56,6 +56,14 @@
                                 (string/join "\n")))]
         (single-text-content content))))
 
+(defn ^:private write-file [arguments db]
+  (or (invalid-arguments arguments [["path" (partial allowed-path? db) (str "Access denied - path $path outside allowed directories: " (tools.util/workspace-roots-strs db))]])
+      (let [path (get arguments "path")
+            content (get arguments "content")]
+        (fs/create-dirs path)
+        (spit path content)
+        (single-text-content (format "Successfully wrote to %s" path)))))
+
 (defn ^:private search-files [arguments db]
   (or (invalid-arguments arguments (concat (path-validations db)
                                            [["pattern" #(not (string/blank? %)) "Invalid glob pattern '$pattern'"]]))
@@ -222,6 +230,31 @@
                                       :description "If provided, returns only the last N lines of the file"}}
                  :required ["path"]}
     :handler #'read-file}
+   "write_file"
+   {:description (str "Create a new file or completely overwrite an existing file with new content. " +
+                      "Use with caution as it will overwrite existing files without warning. " +
+                      "Handles text content with proper encoding. "
+                      "**Only works within the directories: $workspaceRoots.**")
+    :parameters {:type "object"
+                 :properties {"path" {:type "string"
+                                      :description "The absolute path to the new file"}
+                              "content" {:type "string"
+                                         :description "The content of the new file"}}
+                 :required ["path" "content"]}
+    :handler #'write-file}
+   "move_file"
+   {:description (str "Move or rename files and directories. Can move files between directories "
+                      "and rename them in a single operation. If the destination exists, the "
+                      "operation will fail. Works across different directories and can be used "
+                      "for simple renaming within the same directory. "
+                      "Both source and destination must be within the directories: $workspaceRoots.")
+    :parameters  {:type "object"
+                  :properties {"source" {:type "string"
+                                         :description "The absolute origin file path to move."}
+                               "destination" {:type "string"
+                                              :description "The new absolute file path to move to."}}
+                  :required ["source" "destination"]}
+    :handler #'move-file}
    "search_files"
    {:description (str "Recursively search for files and directories matching a pattern. "
                       "Searches through all subdirectories from the starting path. The search "
@@ -270,20 +303,4 @@
                                "all_occurrences" {:type "boolean"
                                                   :description "Whether to replace all occurences of the file or just the first one (default)"}}
                   :required ["path" "original_content" "new_content"]}
-    :handler #'replace-in-file}
-   "move_file"
-   {:description (str "Move or rename files and directories. Can move files between directories "
-                      "and rename them in a single operation. If the destination exists, the "
-                      "operation will fail. Works across different directories and can be used "
-                      "for simple renaming within the same directory. "
-                      "Both source and destination must be within the directories: $workspaceRoots.")
-    :parameters  {:type "object"
-                  :properties {"source" {:type "string"
-                                         :description "The absolute origin file path to move."}
-                               "destination" {:type "string"
-                                              :description "The new absolute file path to move to."}}
-                  :required ["source" "destination"]}
-    :handler #'move-file}
-   ;; TODO write-file
-   ;; TODO delete-files
-   })
+    :handler #'replace-in-file}})

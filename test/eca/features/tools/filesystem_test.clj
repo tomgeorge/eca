@@ -103,56 +103,69 @@
              "tail" 2}
             {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}))))))
 
-(deftest search-files-test
-  (testing "invalid pattern"
+(deftest write-file-test
+  (testing "Not allowed path"
     (is (match?
          {:contents [{:type :text
                       :error true
-                      :content "Invalid glob pattern ' '"}]}
-         (with-redefs [fs/exists? (constantly true)]
-           ((get-in f.tools.filesystem/definitions ["search_files" :handler])
-            {"path" (h/file-path "/project/foo")
-             "pattern" " "}
-            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+                      :content (format "Access denied - path %s outside allowed directories: %s"
+                                       (h/file-path "/foo/qux/new_file.clj")
+                                       (h/file-path "/foo/bar"))}]}
+         (with-redefs [f.tools.filesystem/allowed-path? (constantly false)]
+           ((get-in f.tools.filesystem/definitions ["write_file" :handler])
+            {"path" (h/file-path "/foo/qux/new_file.clj")}
+            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar") :name "bar"}]}))))))
+
+(deftest search-files-test
+  (testing "invalid pattern"
+    (is (match?
+          {:contents [{:type :text
+                       :error true
+                       :content "Invalid glob pattern ' '"}]}
+          (with-redefs [fs/exists? (constantly true)]
+            ((get-in f.tools.filesystem/definitions ["search_files" :handler])
+             {"path" (h/file-path "/project/foo")
+              "pattern" " "}
+             {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
   (testing "no matches"
     (is (match?
-         {:contents [{:type :text
-                      :error false
-                      :content "No matches found"}]}
-         (with-redefs [fs/exists? (constantly true)
-                       fs/glob (constantly [])]
-           ((get-in f.tools.filesystem/definitions ["search_files" :handler])
-            {"path" (h/file-path "/project/foo")
-             "pattern" "foo"}
-            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+          {:contents [{:type :text
+                       :error false
+                       :content "No matches found"}]}
+          (with-redefs [fs/exists? (constantly true)
+                        fs/glob (constantly [])]
+            ((get-in f.tools.filesystem/definitions ["search_files" :handler])
+             {"path" (h/file-path "/project/foo")
+              "pattern" "foo"}
+             {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
   (testing "matches with wildcard"
     (is (match?
-         {:contents [{:type :text
-                      :error false
-                      :content (str (h/file-path "/project/foo/bar/baz.txt") "\n"
-                                    (h/file-path "/project/foo/qux.txt") "\n"
-                                    (h/file-path "/project/foo/qux.clj"))}]}
-         (with-redefs [fs/exists? (constantly true)
-                       fs/glob (constantly [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
-                                            (fs/path (h/file-path "/project/foo/qux.txt"))
-                                            (fs/path (h/file-path "/project/foo/qux.clj"))])]
-           ((get-in f.tools.filesystem/definitions ["search_files" :handler])
-            {"path" (h/file-path "/project/foo")
-             "pattern" "**"}
-            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+          {:contents [{:type :text
+                       :error false
+                       :content (str (h/file-path "/project/foo/bar/baz.txt") "\n"
+                                     (h/file-path "/project/foo/qux.txt") "\n"
+                                     (h/file-path "/project/foo/qux.clj"))}]}
+          (with-redefs [fs/exists? (constantly true)
+                        fs/glob (constantly [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
+                                             (fs/path (h/file-path "/project/foo/qux.txt"))
+                                             (fs/path (h/file-path "/project/foo/qux.clj"))])]
+            ((get-in f.tools.filesystem/definitions ["search_files" :handler])
+             {"path" (h/file-path "/project/foo")
+              "pattern" "**"}
+             {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
   (testing "matches without wildcard"
     (is (match?
-         {:contents [{:type :text
-                      :error false
-                      :content (str (h/file-path "/project/foo/bar/baz.txt") "\n"
-                                    (h/file-path "/project/foo/qux.txt"))}]}
-         (with-redefs [fs/exists? (constantly true)
-                       fs/glob (constantly [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
-                                            (fs/path (h/file-path "/project/foo/qux.txt"))])]
-           ((get-in f.tools.filesystem/definitions ["search_files" :handler])
-            {"path" (h/file-path "/project/foo")
-             "pattern" ".txt"}
-            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}))))))
+          {:contents [{:type :text
+                       :error false
+                       :content (str (h/file-path "/project/foo/bar/baz.txt") "\n"
+                                     (h/file-path "/project/foo/qux.txt"))}]}
+          (with-redefs [fs/exists? (constantly true)
+                        fs/glob (constantly [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
+                                             (fs/path (h/file-path "/project/foo/qux.txt"))])]
+            ((get-in f.tools.filesystem/definitions ["search_files" :handler])
+             {"path" (h/file-path "/project/foo")
+              "pattern" ".txt"}
+             {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}))))))
 
 (deftest grep-test
   (testing "invalid pattern"

@@ -8,7 +8,7 @@
    :client-capabilities {}
    :chats {}
    :chat-behaviors ["agent" "chat"]
-   :chat-default-behavior "chat"
+   :chat-default-behavior "agent"
    :models {"o4-mini" {:tools true
                        :web-search false}
             "o3" {:tools true

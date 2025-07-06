@@ -58,3 +58,8 @@
   (logger/logging-task
    :eca/chat-query-context
    (f.chat/query-context params db* config)))
+
+(defn chat-prompt-stop [{:keys [db* messenger]} params]
+  (logger/logging-task
+   :eca/chat-prompt-stop
+   (f.chat/prompt-stop params db* messenger)))

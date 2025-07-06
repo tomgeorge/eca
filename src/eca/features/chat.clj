@@ -8,10 +8,13 @@
    [eca.features.rules :as f.rules]
    [eca.features.tools :as f.tools]
    [eca.llm-api :as llm-api]
+   [eca.logger :as logger]
    [eca.messenger :as messenger]
    [eca.shared :as shared]))
 
 (set! *warn-on-reflection* true)
+
+(def ^:private logger-tag "[CHAT]")
 
 (defn ^:private raw-contexts->refined [contexts]
   (mapcat (fn [{:keys [type path]}]
@@ -58,6 +61,20 @@
     ollama-model
     (:default-model db)))
 
+(defn ^:private assert-chat-not-stopped! [chat-id request-id db* messenger]
+  (when (identical? :stoping (get-in @db* [:chats chat-id :status]))
+    (logger/info logger-tag "Chat prompt stopped:" chat-id)
+    (messenger/chat-content-received
+     messenger
+     {:chat-id chat-id
+      :request-id request-id
+      :role :system
+      :content {:type :progress
+                :state :finished}})
+    (swap! db* assoc-in [:chats chat-id :status] :idle)
+    (throw (ex-info "Chat prompt stopped" {:silent? true
+                                           :chat-id chat-id}))))
+
 (defn prompt
   [{:keys [message model behavior contexts chat-id request-id]}
    db*
@@ -65,8 +82,10 @@
    config]
   (let [chat-id (or chat-id
                     (let [new-id (str (random-uuid))]
-                      (swap! db* assoc-in [:chats new-id] {:id new-id})
+                      (swap! db* assoc-in [:chats new-id] {:id new-id
+                                                           :status :running})
                       new-id))
+        _ (swap! db* assoc-in [:chats chat-id :current-request-id] request-id)
         _ (messenger/chat-content-received
            messenger
            {:chat-id chat-id
@@ -113,6 +132,7 @@
       :config config
       :tools all-tools
       :on-first-message-received (fn [_]
+                                   (assert-chat-not-stopped! chat-id request-id db* messenger)
                                    (add-to-history! {:role "user" :content user-prompt})
                                    (messenger/chat-content-received
                                     messenger
@@ -123,6 +143,7 @@
                                                :state :running
                                                :text "Generating"}}))
       :on-message-received (fn [{:keys [type] :as msg}]
+                             (assert-chat-not-stopped! chat-id request-id db* messenger)
                              (case type
                                :text (do
                                        (swap! received-msgs* str (:text msg))
@@ -143,6 +164,7 @@
                                                 :url (:url msg)}})
                                :finish (do
                                          (add-to-history! {:role "assistant" :content @received-msgs*})
+                                         (swap! db* assoc-in [:chats chat-id :status] :idle)
                                          (messenger/chat-content-received
                                           messenger
                                           {:chat-id chat-id
@@ -151,6 +173,7 @@
                                            :content {:type :progress
                                                      :state :finished}}))))
       :on-prepare-tool-call (fn [{:keys [id name argument]}]
+                              (assert-chat-not-stopped! chat-id request-id db* messenger)
                               (messenger/chat-content-received
                                messenger
                                {:chat-id chat-id
@@ -162,6 +185,7 @@
                                           :id id
                                           :manual-approval false}}))
       :on-tool-called (fn [{:keys [id name arguments] :as tool-call}]
+                        (assert-chat-not-stopped! chat-id request-id db* messenger)
                         (messenger/chat-content-received
                          messenger
                          {:chat-id chat-id
@@ -190,6 +214,7 @@
                                       :outputs (:contents result)}})
                           result))
       :on-reason (fn [{:keys [status]}]
+                   (assert-chat-not-stopped! chat-id request-id db* messenger)
                    (let [msg (case status
                                :started "Reasoning"
                                :finished "Waiting model"
@@ -203,13 +228,14 @@
                                  :state :running
                                  :text msg}})))
       :on-error (fn [{:keys [message exception]}]
+                  (swap! db* assoc-in [:chats chat-id :status] :idle)
                   (messenger/chat-content-received
                    messenger
                    {:chat-id chat-id
                     :request-id request-id
                     :role :system
                     :content {:type :text
-                              :text (str (or message (ex-message exception)) "\n")}})
+                              :text (or message (ex-message exception))}})
                   (messenger/chat-content-received
                    messenger
                    {:chat-id chat-id
@@ -252,3 +278,21 @@
     {:chat-id chat-id
      :contexts (set/difference (set all-contexts)
                                (set contexts))}))
+(defn prompt-stop
+  [{:keys [chat-id]} db* messenger]
+  (let [request-id (get-in @db* [:chats chat-id :current-request-id])]
+    (swap! db* assoc-in [:chats chat-id :status] :stoping)
+    (messenger/chat-content-received
+     messenger
+     {:chat-id chat-id
+      :request-id request-id
+      :role :system
+      :content {:type :text
+                :text "Prompt stopped"}})
+    (messenger/chat-content-received
+     messenger
+     {:chat-id chat-id
+      :request-id request-id
+      :role :system
+      :content {:type :progress
+                :state :finished}})))

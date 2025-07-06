@@ -645,6 +645,25 @@ interface ChatQueryContextResponse {
 }
 ```
 
+### Chat stop prompt (➡️)
+
+A client notification telling server to stop the current chat prompt with LLM if running.
+This will stop LLM loops or ignore subsequent LLM responses so other prompts can be trigerred.
+
+_Notification:_
+
+* method: `chat/promptStop`
+* params: `ChatPromptStopParams` defined as follows:
+
+```typescript
+interface ChatPromptStopParams {
+    /**
+     * The chat session identifier.
+     */
+    chatId: string;
+}
+```
+
 ### Completion (↩️)
 
 Soon

@@ -90,7 +90,7 @@
               :role :system}
              {:chat-id chat-id
               :request-id req-id
-              :content {:type :text :text "Error from mocked API\n"}
+              :content {:type :text :text "Error from mocked API"}
               :role :system}
              {:chat-id chat-id
               :request-id req-id

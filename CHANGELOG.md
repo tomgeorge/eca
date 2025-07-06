@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Support stop chat prompts via `chat/promptStop` notification.
+
 ## 0.2.0
 
 - Add native tools: filesystem

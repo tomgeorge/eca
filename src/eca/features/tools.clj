@@ -40,7 +40,7 @@
      (mapv #(assoc % :source :mcp) mcp-tools))))
 
 (defn call-tool! [^String name ^Map arguments db config]
-  (logger/debug logger-tag (format "Calling tool '%s' with args '%s'" name arguments))
+  (logger/info logger-tag (format "Calling tool '%s' with args '%s'" name arguments))
   (if-let [native-tool-handler (get-in (native-definitions db config) [name :handler])]
     (native-tool-handler arguments {:db db :config config})
     (f.mcp/call-tool! name arguments db)))

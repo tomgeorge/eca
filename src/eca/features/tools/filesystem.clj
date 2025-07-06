@@ -48,7 +48,7 @@
   (or (tools.util/invalid-arguments arguments [["path" (partial allowed-path? db) (str "Access denied - path $path outside allowed directories: " (tools.util/workspace-roots-strs db))]])
       (let [path (get arguments "path")
             content (get arguments "content")]
-        (fs/create-dirs path)
+        (fs/create-dirs (fs/parent (fs/path path)))
         (spit path content)
         (tools.util/single-text-content (format "Successfully wrote to %s" path)))))
 

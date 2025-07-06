@@ -165,6 +165,15 @@
                                       :content {:type :url
                                                 :title (:title msg)
                                                 :url (:url msg)}})
+                               :limit-reached (do
+                                                (messenger/chat-content-received
+                                                 messenger
+                                                 {:chat-id chat-id
+                                                  :request-id request-id
+                                                  :role :system
+                                                  :content {:type :text
+                                                            :text (str "API limit reached. Tokens: " (:tokens msg))}})
+                                                (finish-chat-prompt! chat-id :idle messenger db*))
                                :finish (do
                                          (add-to-history! {:role "assistant" :content @received-msgs*})
                                          (finish-chat-prompt! chat-id :idle messenger db*))))

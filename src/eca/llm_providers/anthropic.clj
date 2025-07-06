@@ -154,6 +154,8 @@
                                                  :on-response handle-response}))))
                               "end_turn" (on-message-received {:type :finish
                                                                :finish-reason (-> data :delta :stop_reason)})
+                              "max_tokens" (on-message-received {:type :limit-reached
+                                                                 :tokens (:usage data)})
                               nil)
             nil))]
     (base-request!

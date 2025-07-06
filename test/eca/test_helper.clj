@@ -4,7 +4,8 @@
    [clojure.test :refer [use-fixtures]]
    [eca.config :as config]
    [eca.db :as db]
-   [eca.messenger :as messenger]))
+   [eca.messenger :as messenger]
+   [eca.shared :as shared]))
 
 (def windows? (string/starts-with? (System/getProperty "os.name") "Windows"))
 
@@ -43,7 +44,7 @@
 (defn config [] (:config (components)))
 
 (defn config! [config]
-  (swap! components* merge :config config))
+  (swap! components* update :config shared/deep-merge config))
 
 (defn reset-components! [] (reset! components* (make-components)))
 (defn reset-components-before-test []

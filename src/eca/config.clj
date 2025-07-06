@@ -19,7 +19,9 @@
   {:openaiApiKey nil
    :anthropicApiKey nil
    :rules []
-   :nativeTools {:filesystem {:enabled true}}
+   :nativeTools {:filesystem {:enabled true}
+                 :shell {:enabled true
+                         :excludeCommands []}}
    :mcpTimeoutSeconds 60
    :mcpServers {}
    :ollama {:host "http://localhost"

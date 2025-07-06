@@ -4,6 +4,11 @@
    [clojure.string :as string]
    [eca.shared :as shared]))
 
+(defn single-text-content [text & [error]]
+  {:contents [{:type :text
+               :content text
+               :error (boolean error)}]})
+
 (defn workspace-roots-strs [db]
   (->> (:workspace-folders db)
        (map #(shared/uri->filename (:uri %)))
@@ -13,3 +18,11 @@
   (try
     (zero? (:exit (apply shell/sh (concat [command] args))))
     (catch Exception _ false)))
+
+(defn invalid-arguments [arguments validator]
+  (first (keep (fn [[key pred error-msg]]
+                 (let [value (get arguments key)]
+                   (when-not (pred value)
+                     (single-text-content (string/replace error-msg (str "$" key) (str value))
+                                          :error))))
+               validator)))

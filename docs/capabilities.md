@@ -18,17 +18,21 @@ Provides access to filesystem under workspace root, listing and reading files an
 - `grep`: ripgrep/grep for paths with specified content.
 - `replace_in_file`: replace a text with another one in file.
 
-### TODO - Shell
+### Shell
+
+Provides access to run shell commands, useful to run build tools, tests, and other common commands, supports exclude/include commands. 
+
+- `shell_command`: run shell command. Supports configs to exclude commands via `:nativeTools :shell :excludeCommands`.
 
 ### TODO - Web
 
 ## Supported LLM models and capaibilities
 
-| model     | MCP / tools | thinking/reasioning | prompt caching |
-|-----------|-------------|---------------------|----------------|
-| OpenAI    | √           | X                   | X              |
-| Anthropic | √           | X                   | √              |
-| Ollama    | √           | X                   | X              |
+| model     | MCP / tools | thinking/reasioning | prompt caching | web_search |
+|-----------|-------------|---------------------|----------------|------------|
+| OpenAI    | √           | X                   | X              | √          |
+| Anthropic | √           | X                   | √              | √          |
+| Ollama    | √           | X                   | X              | X          |
 
 ### OpenAI
 

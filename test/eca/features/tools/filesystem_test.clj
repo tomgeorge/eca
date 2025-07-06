@@ -21,7 +21,7 @@
                        fs/exists? (constantly false)]
            ((get-in f.tools.filesystem/definitions ["list_directory" :handler])
             {"path" (h/file-path "/foo/qux")}
-            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]})))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "Unallowed dir"
     (is (match?
          {:contents [{:type :text
@@ -33,7 +33,7 @@
                        fs/exists? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["list_directory" :handler])
             {"path" (h/file-path "/foo/qux")}
-            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]})))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "allowed dir"
     (is (match?
          {:contents [{:type :text
@@ -50,7 +50,7 @@
                        fs/canonicalize (constantly (h/file-path "/foo/bar/baz"))]
            ((get-in f.tools.filesystem/definitions ["list_directory" :handler])
             {"path" (h/file-path "/foo/bar/baz")}
-            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}))))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}}))))))
 
 (deftest read-file-test
   (testing "Not readable path"
@@ -63,7 +63,7 @@
                        f.tools.filesystem/allowed-path? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["read_file" :handler])
             {"path" (h/file-path "/foo/qux")}
-            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]})))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "Readable path"
     (is (match?
          {:contents [{:type :text
@@ -75,7 +75,7 @@
                        f.tools.filesystem/allowed-path? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["read_file" :handler])
             {"path" (h/file-path "/foo/qux")}
-            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]})))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "heading a file"
     (is (match?
          {:contents [{:type :text
@@ -88,7 +88,7 @@
            ((get-in f.tools.filesystem/definitions ["read_file" :handler])
             {"path" (h/file-path "/foo/qux")
              "head" 2}
-            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]})))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "tailling a file"
     (is (match?
          {:contents [{:type :text
@@ -101,7 +101,7 @@
            ((get-in f.tools.filesystem/definitions ["read_file" :handler])
             {"path" (h/file-path "/foo/qux")
              "tail" 2}
-            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}))))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}}))))))
 
 (deftest write-file-test
   (testing "Not allowed path"
@@ -114,7 +114,7 @@
          (with-redefs [f.tools.filesystem/allowed-path? (constantly false)]
            ((get-in f.tools.filesystem/definitions ["write_file" :handler])
             {"path" (h/file-path "/foo/qux/new_file.clj")}
-            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar") :name "bar"}]}))))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar") :name "bar"}]}}))))))
 
 (deftest search-files-test
   (testing "invalid pattern"
@@ -126,7 +126,7 @@
             ((get-in f.tools.filesystem/definitions ["search_files" :handler])
              {"path" (h/file-path "/project/foo")
               "pattern" " "}
-             {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "no matches"
     (is (match?
           {:contents [{:type :text
@@ -137,7 +137,7 @@
             ((get-in f.tools.filesystem/definitions ["search_files" :handler])
              {"path" (h/file-path "/project/foo")
               "pattern" "foo"}
-             {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "matches with wildcard"
     (is (match?
           {:contents [{:type :text
@@ -152,7 +152,7 @@
             ((get-in f.tools.filesystem/definitions ["search_files" :handler])
              {"path" (h/file-path "/project/foo")
               "pattern" "**"}
-             {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "matches without wildcard"
     (is (match?
           {:contents [{:type :text
@@ -165,7 +165,7 @@
             ((get-in f.tools.filesystem/definitions ["search_files" :handler])
              {"path" (h/file-path "/project/foo")
               "pattern" ".txt"}
-             {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}))))))
+             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}}))))))
 
 (deftest grep-test
   (testing "invalid pattern"
@@ -178,7 +178,7 @@
            ((get-in f.tools.filesystem/definitions ["grep" :handler])
             {"path" (h/file-path "/project/foo")
              "pattern" " "}
-            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "invalid include"
     (is (match?
          {:contents [{:type :text
@@ -190,7 +190,7 @@
             {"path" (h/file-path "/project/foo")
              "pattern" ".*"
              "include" " "}
-            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "no files found"
     (is (match?
          {:contents [{:type :text
@@ -203,7 +203,7 @@
            ((get-in f.tools.filesystem/definitions ["grep" :handler])
             {"path" (h/file-path "/project/foo")
              "pattern" ".*"}
-            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "ripgrep search"
     (is (match?
          {:contents [{:type :text
@@ -216,7 +216,7 @@
            ((get-in f.tools.filesystem/definitions ["grep" :handler])
             {"path" (h/file-path "/project/foo")
              "pattern" "some-cool-content"}
-            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "grep search"
     (is (match?
          {:contents [{:type :text
@@ -229,7 +229,7 @@
            ((get-in f.tools.filesystem/definitions ["grep" :handler])
             {"path" (h/file-path "/project/foo")
              "pattern" "some-cool-content"}
-            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "java grep search"
     (is (match?
          {:contents [{:type :text
@@ -247,7 +247,7 @@
            ((get-in f.tools.filesystem/definitions ["grep" :handler])
             {"path" (h/file-path "/project/foo")
              "pattern" "some-cool-content"}
-            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}))))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}}))))))
 
 (deftest replace-in-file-test
   (testing "Not readable path"
@@ -262,7 +262,7 @@
             {"path" (h/file-path "/foo/qux")
              "original_content" "some-cool-text"
              "new_content" "another-boring-text"}
-            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]})))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "original content not found"
     (is (match?
          {:contents [{:type :text
@@ -276,7 +276,7 @@
             {"path" (h/file-path "/project/foo/my-file.txt")
              "original_content" "other-cool-text"
              "new_content" "another-boring-text"}
-            {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]})))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "original content found and replaced first"
     (let [file-content* (atom {})]
       (is (match?
@@ -292,7 +292,7 @@
               {"path" (h/file-path "/project/foo/my-file.txt")
                "original_content" "some-cool-text"
                "new_content" "another-boring-text"}
-              {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}))))
+              {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}}))))
       (is (match?
            {(h/file-path "/project/foo/my-file.txt") "Hey, here is another-boring-text in this file! here as well: some-cool-text"}
            @file-content*))))
@@ -312,7 +312,7 @@
                "original_content" "some-cool-text"
                "new_content" "another-boring-text"
                "all_occurrences" true}
-              {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}))))
+              {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}}))))
       (is (match?
            {(h/file-path "/project/foo/my-file.txt") "Hey, here is another-boring-text in this file! here as well: another-boring-text"}
            @file-content*)))))
@@ -327,7 +327,7 @@
                        f.tools.filesystem/allowed-path? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["move_file" :handler])
             {"source" (h/file-path "/foo/qux")}
-            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]})))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "Destination already exists"
     (is (match?
          {:contents [{:type :text
@@ -338,7 +338,7 @@
            ((get-in f.tools.filesystem/definitions ["move_file" :handler])
             {"source" (h/file-path "/foo/bar/some_file.clj")
              "destination" (h/file-path "/foo/bar/other_file.clj")}
-            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar") :name "foo"}]})))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar") :name "foo"}]}})))))
   (testing "Move successfully"
     (is (match?
          {:contents [{:type :text
@@ -352,4 +352,4 @@
            ((get-in f.tools.filesystem/definitions ["move_file" :handler])
             {"source" (h/file-path "/foo/bar/some_file.clj")
              "destination" (h/file-path "/foo/bar/other_file.clj")}
-            {:workspace-folders [{:uri (h/file-uri "file:///foo/bar") :name "foo"}]}))))))
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar") :name "foo"}]}}))))))

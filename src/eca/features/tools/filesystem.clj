@@ -9,30 +9,18 @@
 
 (set! *warn-on-reflection* true)
 
-(defn ^:private single-text-content [text & [error]]
-  {:contents [{:type :text
-               :content text
-               :error (boolean error)}]})
-
 (defn ^:private allowed-path? [db path]
   (some #(fs/starts-with? path (shared/uri->filename (:uri %)))
         (:workspace-folders db)))
-
-(defn ^:private invalid-arguments [arguments validator]
-  (first (keep (fn [[key pred error-msg]]
-                 (let [value (get arguments key)]
-                   (when-not (pred value)
-                     (single-text-content (string/replace error-msg (str "$" key) (str value)) :error))))
-               validator)))
 
 (defn ^:private path-validations [db]
   [["path" fs/exists? "$path is not a valid path"]
    ["path" (partial allowed-path? db) (str "Access denied - path $path outside allowed directories: " (tools.util/workspace-roots-strs db))]])
 
-(defn ^:private list-directory [arguments db]
+(defn ^:private list-directory [arguments {:keys [db]}]
   (let [path (delay (fs/canonicalize (get arguments "path")))]
-    (or (invalid-arguments arguments (path-validations db))
-        (single-text-content
+    (or (tools.util/invalid-arguments arguments (path-validations db))
+        (tools.util/single-text-content
          (reduce
           (fn [out path]
             (str out
@@ -42,9 +30,9 @@
           ""
           (fs/list-dir @path))))))
 
-(defn ^:private read-file [arguments db]
-  (or (invalid-arguments arguments (concat (path-validations db)
-                                           [["path" fs/readable? "File $path is not readable"]]))
+(defn ^:private read-file [arguments {:keys [db]}]
+  (or (tools.util/invalid-arguments arguments (concat (path-validations db)
+                                                      [["path" fs/readable? "File $path is not readable"]]))
       (let [head (get arguments "head")
             tail (get arguments "tail")
             content (cond-> (slurp (fs/file (fs/canonicalize (get arguments "path"))))
@@ -54,19 +42,19 @@
                       tail (->> (string/split-lines)
                                 (take-last tail)
                                 (string/join "\n")))]
-        (single-text-content content))))
+        (tools.util/single-text-content content))))
 
-(defn ^:private write-file [arguments db]
-  (or (invalid-arguments arguments [["path" (partial allowed-path? db) (str "Access denied - path $path outside allowed directories: " (tools.util/workspace-roots-strs db))]])
+(defn ^:private write-file [arguments {:keys [db]}]
+  (or (tools.util/invalid-arguments arguments [["path" (partial allowed-path? db) (str "Access denied - path $path outside allowed directories: " (tools.util/workspace-roots-strs db))]])
       (let [path (get arguments "path")
             content (get arguments "content")]
         (fs/create-dirs path)
         (spit path content)
-        (single-text-content (format "Successfully wrote to %s" path)))))
+        (tools.util/single-text-content (format "Successfully wrote to %s" path)))))
 
-(defn ^:private search-files [arguments db]
-  (or (invalid-arguments arguments (concat (path-validations db)
-                                           [["pattern" #(not (string/blank? %)) "Invalid glob pattern '$pattern'"]]))
+(defn ^:private search-files [arguments {:keys [db]}]
+  (or (tools.util/invalid-arguments arguments (concat (path-validations db)
+                                                      [["pattern" #(not (string/blank? %)) "Invalid glob pattern '$pattern'"]]))
       (let [pattern (get arguments "pattern")
             pattern (if (string/includes? pattern "*")
                       pattern
@@ -77,9 +65,9 @@
                                             pattern)))
                    []
                    (:workspace-folders db))]
-        (single-text-content (if (seq paths)
-                               (string/join "\n" paths)
-                               "No matches found")))))
+        (tools.util/single-text-content (if (seq paths)
+                                          (string/join "\n" paths)
+                                          "No matches found")))))
 
 (defn ^:private run-ripgrep [path pattern include]
   (let [cmd (cond-> ["rg" "--files-with-matches" "--no-heading"]
@@ -147,12 +135,12 @@
 
    Returns matching file paths, prioritizing by modification time when possible.
    Validates that the search path is within allowed workspace directories."
-  [arguments db]
-  (or (invalid-arguments arguments (concat (path-validations db)
-                                           [["path" fs/readable? "File $path is not readable"]
-                                            ["pattern" #(and % (not (string/blank? %))) "Invalid content regex pattern '$pattern'"]
-                                            ["include" #(or (nil? %) (not (string/blank? %))) "Invalid file pattern '$include'"]
-                                            ["max_results" #(or (nil? %) number?) "Invalid number '$max_results'"]]))
+  [arguments {:keys [db]}]
+  (or (tools.util/invalid-arguments arguments (concat (path-validations db)
+                                                      [["path" fs/readable? "File $path is not readable"]
+                                                       ["pattern" #(and % (not (string/blank? %))) "Invalid content regex pattern '$pattern'"]
+                                                       ["include" #(or (nil? %) (not (string/blank? %))) "Invalid file pattern '$include'"]
+                                                       ["max_results" #(or (nil? %) number?) "Invalid number '$max_results'"]]))
       (let [path (get arguments "path")
             pattern (get arguments "pattern")
             include (get arguments "include")
@@ -169,19 +157,19 @@
                    (run-java-grep path pattern include))
                  (take max-results))]
         ;; TODO sort by modification time.
-        (single-text-content (if (seq paths)
-                               (string/join "\n" paths)
-                               "No files found for given pattern")))))
+        (tools.util/single-text-content (if (seq paths)
+                                          (string/join "\n" paths)
+                                          "No files found for given pattern")))))
 
-(defn ^:private replace-in-file [arguments db]
-  (or (invalid-arguments arguments (concat (path-validations db)
-                                           [["path" fs/readable? "File $path is not readable"]]))
+(defn ^:private replace-in-file [arguments {:keys [db]}]
+  (or (tools.util/invalid-arguments arguments (concat (path-validations db)
+                                                      [["path" fs/readable? "File $path is not readable"]]))
       (let [path (get arguments "path")
             original-content (get arguments "original_content")
             new-content (get arguments "new_content")
             all? (boolean (get arguments "all_occurrences"))
             content (slurp path)]
-        (single-text-content
+        (tools.util/single-text-content
          (if (string/includes? content original-content)
            (let [content (if all?
                            (string/replace content original-content new-content)
@@ -190,16 +178,16 @@
              (format "Successfully replaced content in %s." path))
            (format "Original content not found in %s" path))))))
 
-(defn ^:private move-file [arguments db]
+(defn ^:private move-file [arguments {:keys [db]}]
   (let [workspace-dirs (tools.util/workspace-roots-strs db)]
-    (or (invalid-arguments arguments [["source" fs/exists? "$source is not a valid path"]
-                                      ["source" (partial allowed-path? db) (str "Access denied - path $source outside allowed directories: " workspace-dirs)]
-                                      ["destination" (partial allowed-path? db) (str "Access denied - path $destination outside allowed directories: " workspace-dirs)]
-                                      ["destination" (complement fs/exists?) "Path $destination already exists"]])
+    (or (tools.util/invalid-arguments arguments [["source" fs/exists? "$source is not a valid path"]
+                                                 ["source" (partial allowed-path? db) (str "Access denied - path $source outside allowed directories: " workspace-dirs)]
+                                                 ["destination" (partial allowed-path? db) (str "Access denied - path $destination outside allowed directories: " workspace-dirs)]
+                                                 ["destination" (complement fs/exists?) "Path $destination already exists"]])
         (let [source (get arguments "source")
               destination (get arguments "destination")]
           (fs/move source destination {:replace-existing false})
-          (single-text-content (format "Successfully moved %s to %s" source destination))))))
+          (tools.util/single-text-content (format "Successfully moved %s to %s" source destination))))))
 
 (def definitions
   {"list_directory"

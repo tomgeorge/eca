@@ -37,7 +37,7 @@
       db*
       config))
    {:models (keys (:models @db*))
-    :chat-default-model (f.chat/default-model @db*)
+    :chat-default-model (f.chat/default-model @db* config)
     :chat-behaviors (:chat-behaviors @db*)
     :chat-default-behavior (:chat-default-behavior @db*)
     :chat-welcome-message (:welcomeMessage (:chat config))}))

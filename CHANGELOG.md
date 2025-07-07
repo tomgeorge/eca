@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Improve default model logic to check for configs and env vars of known models.
+
 ## 0.3.0
 
 - Support stop chat prompts via `chat/promptStop` notification.

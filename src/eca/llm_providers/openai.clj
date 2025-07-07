@@ -20,9 +20,7 @@
           path))
 
 (defn ^:private base-completion-request! [{:keys [rid body api-key on-error on-response]}]
-  (let [api-key (or api-key
-                    (System/getenv "OPENAI_API_KEY"))
-        url (url responses-path)]
+  (let [url (url responses-path)]
     (llm-util/log-request logger-tag rid url body)
     (http/post
      url

@@ -1,17 +1,16 @@
 (ns eca.features.chat
   (:require
    [babashka.fs :as fs]
+   [cheshire.core :as json]
    [clojure.set :as set]
    [clojure.string :as string]
-   [eca.config :as config]
    [eca.features.index :as f.index]
    [eca.features.rules :as f.rules]
    [eca.features.tools :as f.tools]
    [eca.llm-api :as llm-api]
    [eca.logger :as logger]
    [eca.messenger :as messenger]
-   [eca.shared :as shared]
-   [cheshire.core :as json]))
+   [eca.shared :as shared]))
 
 (set! *warn-on-reflection* true)
 
@@ -57,10 +56,8 @@
     "chat" "Help with code changes only if user requested/agreed, ask first before do changes, answer questions, and provide explanations."
     "agent" "Help with code changes when applicable, suggesting you do the changes itself, answer questions, and provide explanations."))
 
-(defn default-model [db]
-  (if-let [ollama-model (first (filter #(string/starts-with? % config/ollama-model-prefix) (vals (:models db))))]
-    ollama-model
-    (:default-model db)))
+(defn default-model [db config]
+  (llm-api/default-model db config))
 
 (defn finish-chat-prompt! [chat-id status messenger db*]
   (swap! db* assoc-in [:chats chat-id :status] status)
@@ -112,7 +109,7 @@
                            {:behavior (behavior->behavior-str (or behavior (:chat-default-behavior db)))})
         refined-contexts (raw-contexts->refined contexts)
         context-str (build-context-str refined-contexts rules)
-        chosen-model (or model (default-model db))
+        chosen-model (or model (default-model db config))
         past-messages (get-in db [:chats chat-id :messages] [])
         user-prompt message
         all-tools (f.tools/all-tools @db* config)

@@ -31,9 +31,7 @@
                       :cache_control {:type "ephemeral"}})))
 
 (defn ^:private base-request! [{:keys [rid body api-key content-block* on-error on-response]}]
-  (let [api-key (or api-key
-                    (System/getenv "ANTHROPIC_API_KEY"))
-        url (url messages-path)]
+  (let [url (url messages-path)]
     (llm-util/log-request logger-tag rid url body)
     (http/post
      url

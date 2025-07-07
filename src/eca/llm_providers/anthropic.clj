@@ -59,27 +59,25 @@
      (fn [e]
        (on-error {:exception e})))))
 
-(defn ^:private ->messages-with-history [past-messages user-prompt]
-  (conj (mapv (fn [{:keys [role content] :as msg}]
-                (case role
-                  "tool_call" {:role "assistant"
-                               :content [{:type "tool_use"
-                                          :id (:id content)
-                                          :name (:name content)
-                                          :input (or (:arguments content) {})}]}
+(defn ^:private past-messages->messages [past-messages]
+  (mapv (fn [{:keys [role content] :as msg}]
+          (case role
+            "tool_call" {:role "assistant"
+                         :content [{:type "tool_use"
+                                    :id (:id content)
+                                    :name (:name content)
+                                    :input (or (:arguments content) {})}]}
 
-                  "tool_call_output"
-                  {:role "user"
-                   :content [{:type "tool_result"
-                              :tool_use_id (:id content)
-                              :content (llm-util/stringfy-tool-result content)}]}
-                  msg))
-              past-messages)
-        ;; TODO add cache_control to last non thinking message
-        {:role "user" :content [{:type :text
-                                 :text user-prompt}]}))
+            "tool_call_output"
+            {:role "user"
+             :content [{:type "tool_result"
+                        :tool_use_id (:id content)
+                        :content (llm-util/stringfy-tool-result content)}]}
+            msg))
+        past-messages))
 
 (defn ^:private add-cache-to-last-message [messages]
+  ;; TODO add cache_control to last non thinking message
   (shared/update-last
    (vec messages)
    #(assoc-in % [:content 0 :cache_control] {:type "ephemeral"})))
@@ -87,10 +85,12 @@
 (defn completion!
   [{:keys [model user-prompt temperature context max-tokens
            api-key past-messages tools web-search]
-    :or {max-tokens 1024
+    :or {max-tokens 4096
          temperature 1.0}}
    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called]}]
-  (let [messages (->messages-with-history past-messages user-prompt)
+  (let [messages (conj (past-messages->messages past-messages)
+                       {:role "user" :content [{:type :text
+                                                :text user-prompt}]})
         body {:model model
               :messages (add-cache-to-last-message messages)
               :max_tokens max-tokens
@@ -131,10 +131,10 @@
                                            (when (= "tool_use" (:type content-block))
                                              (let [function-name (:name content-block)
                                                    function-args (:input-json content-block)
-                                                   response (on-tool-called {:id (:id content-block)
-                                                                             :name function-name
-                                                                             :arguments (json/parse-string function-args)})
-                                                   messages (-> (concat messages
+                                                   {:keys [result past-messages]} (on-tool-called {:id (:id content-block)
+                                                                                                   :name function-name
+                                                                                                   :arguments (json/parse-string function-args)})
+                                                   messages (-> (concat (past-messages->messages past-messages)
                                                                         [{:role "assistant"
                                                                           :content [(dissoc content-block :input-json)]}]
                                                                         (mapv
@@ -143,7 +143,7 @@
                                                                             :content [{:type "tool_result"
                                                                                        :tool_use_id (:id content-block)
                                                                                        :content content}]})
-                                                                         (:contents response)))
+                                                                         (:contents result)))
                                                                 add-cache-to-last-message)]
                                                (base-request!
                                                 {:rid (llm-util/gen-rid)

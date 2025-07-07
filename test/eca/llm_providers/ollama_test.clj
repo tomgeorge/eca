@@ -7,20 +7,17 @@
 (deftest ->messages-with-history-test
   (testing "no previous history"
     (is (match?
-         [{:role "system" :content "You are ECA"}
-          {:role "user" :content "Hey"}]
-         (#'llm-providers.ollama/->messages-with-history "You are ECA" [] "Hey"))))
+         [{:role "system" :content "You are ECA"}]
+         (#'llm-providers.ollama/past-messages->messages [] "You are ECA"))))
   (testing "With basic text history"
     (is (match?
          [{:role "system" :content "You are ECA"}
           {:role "user" :content "Count with me: 1"}
-          {:role "assistant" :content "2"}
-          {:role "user" :content "3"}]
-         (#'llm-providers.ollama/->messages-with-history
-          "You are ECA"
+          {:role "assistant" :content "2"}]
+         (#'llm-providers.ollama/past-messages->messages
           [{:role "user" :content "Count with me: 1"}
            {:role "assistant" :content "2"}]
-          "3"))))
+          "You are ECA"))))
   (testing "With tool_call history"
     (is (match?
          [{:role "system" :content "You are ECA"}
@@ -30,10 +27,8 @@
                                            :function {:name "list_allowed_directories"
                                                       :arguments {}}}]}
           {:role "tool" :content "Allowed directories: /foo/bar\n"}
-          {:role "assistant" :content "I see /foo/bar"}
-          {:role "user" :content "Thanks"}]
-         (#'llm-providers.ollama/->messages-with-history
-          "You are ECA"
+          {:role "assistant" :content "I see /foo/bar"}]
+         (#'llm-providers.ollama/past-messages->messages
           [{:role "user" :content "List the files you are allowed"}
            {:role "assistant" :content "Ok!"}
            {:role "tool_call" :content {:id "call-1" :name "list_allowed_directories" :arguments {}}}
@@ -44,4 +39,4 @@
                                                                     :error false
                                                                     :content "Allowed directories: /foo/bar"}]}}}
            {:role "assistant" :content "I see /foo/bar"}]
-          "Thanks")))))
+          "You are ECA")))))

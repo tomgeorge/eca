@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Support stop chat prompts via `chat/promptStop` notification.
+- Fix anthropic messages history.
 
 ## 0.2.0
 

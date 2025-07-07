@@ -10,7 +10,8 @@
    [eca.llm-api :as llm-api]
    [eca.logger :as logger]
    [eca.messenger :as messenger]
-   [eca.shared :as shared]))
+   [eca.shared :as shared]
+   [cheshire.core :as json]))
 
 (set! *warn-on-reflection* true)
 
@@ -172,7 +173,7 @@
                                                   :request-id request-id
                                                   :role :system
                                                   :content {:type :text
-                                                            :text (str "API limit reached. Tokens: " (:tokens msg))}})
+                                                            :text (str "API limit reached. Tokens: " (json/generate-string (:tokens msg)))}})
                                                 (finish-chat-prompt! chat-id :idle messenger db*))
                                :finish (do
                                          (add-to-history! {:role "assistant" :content @received-msgs*})
@@ -217,7 +218,8 @@
                                       :arguments arguments
                                       :id id
                                       :outputs (:contents result)}})
-                          result))
+                          {:result result
+                           :past-messages (get-in @db* [:chats chat-id :messages] [])}))
       :on-reason (fn [{:keys [status]}]
                    (assert-chat-not-stopped! chat-id db* messenger)
                    (let [msg (case status

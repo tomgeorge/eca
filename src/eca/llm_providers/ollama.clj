@@ -64,7 +64,7 @@
            :function (select-keys tool [:name :description :parameters])})
         tools))
 
-(defn ^:private ->messages-with-history [context past-messages user-prompt]
+(defn ^:private past-messages->messages [past-messages context]
   (concat
    [{:role "system" :content context}]
    (mapv (fn [{:keys [role content] :as msg}]
@@ -73,12 +73,13 @@
                                                           :function content}]}
              "tool_call_output" {:role "tool" :content (llm-util/stringfy-tool-result content)}
              msg))
-         past-messages)
-   [{:role "user" :content user-prompt}]))
+         past-messages)))
 
 (defn completion! [{:keys [model user-prompt context host port past-messages tools]}
                    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called]}]
-  (let [messages (->messages-with-history context past-messages user-prompt)
+  (let [messages (concat
+                  (past-messages->messages past-messages context)
+                  [{:role "user" :content user-prompt}])
         body {:model model
               :messages messages
               :think false
@@ -100,18 +101,18 @@
 
                              done_reason
                              (if-let [tool-call (get @tool-calls* rid)]
-                               (let [response (on-tool-called tool-call)]
+                               (let [{:keys [result past-messages]} (on-tool-called tool-call)]
                                  (swap! tool-calls* dissoc rid)
                                  (base-completion-request!
                                   {:rid (llm-util/gen-rid)
                                    :url url
-                                   :body (assoc body :messages (concat messages
+                                   :body (assoc body :messages (concat (past-messages->messages past-messages context)
                                                                        [message]
                                                                        (mapv
                                                                         (fn [{:keys [_type content]}]
                                                                           {:role "tool"
                                                                            :content content})
-                                                                        (:contents response))))
+                                                                        (:contents result))))
                                    :on-error on-error
                                    :on-response handle-response}))
                                (on-message-received {:type :finish

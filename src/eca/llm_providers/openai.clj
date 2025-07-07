@@ -47,25 +47,25 @@
      (fn [e]
        (on-error {:exception e})))))
 
-(defn ^:private ->input-with-history [past-messages user-prompt]
-  (conj (mapv (fn [{:keys [role content] :as msg}]
-                (case role
-                  "tool_call" {:type "function_call"
-                               :name (:name content)
-                               :call_id (:id content)
-                               :arguments (json/generate-string (:arguments content))}
-                  "tool_call_output"
-                  {:type "function_call_output"
-                   :call_id (:id content)
-                   :output (llm-util/stringfy-tool-result content)}
-                  msg))
-              past-messages)
-        {:role "user" :content user-prompt}))
+(defn ^:private past-messages->input [past-messages]
+  (mapv (fn [{:keys [role content] :as msg}]
+          (case role
+            "tool_call" {:type "function_call"
+                         :name (:name content)
+                         :call_id (:id content)
+                         :arguments (json/generate-string (:arguments content))}
+            "tool_call_output"
+            {:type "function_call_output"
+             :call_id (:id content)
+             :output (llm-util/stringfy-tool-result content)}
+            msg))
+        past-messages))
 
 (defn completion! [{:keys [model user-prompt context temperature api-key past-messages tools web-search]
                     :or {temperature 1.0}}
                    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called on-reason]}]
-  (let [input (->input-with-history past-messages user-prompt)
+  (let [input (conj (past-messages->input past-messages)
+                    {:role "user" :content user-prompt})
         tools (cond-> tools
                 web-search (conj {:type "web_search_preview"}))
         body {:model model
@@ -93,12 +93,12 @@
             (case (:type (:item data))
               "function_call" (let [function-name (-> data :item :name)
                                     function-args (-> data :item :arguments)
-                                    response (on-tool-called {:id (-> data :item :call_id)
-                                                              :name function-name
-                                                              :arguments (json/parse-string function-args)})]
+                                    {:keys [result past-messages]} (on-tool-called {:id (-> data :item :call_id)
+                                                                                    :name function-name
+                                                                                    :arguments (json/parse-string function-args)})]
                                 (base-completion-request!
                                  {:rid (llm-util/gen-rid)
-                                  :body (assoc body :input (concat input
+                                  :body (assoc body :input (concat (past-messages->input past-messages)
                                                                    [{:type "function_call"
                                                                      :call_id (-> data :item :call_id)
                                                                      :name function-name
@@ -109,7 +109,7 @@
                                                                       {:type "function_call_output"
                                                                        :call_id (-> data :item :call_id)
                                                                        :output content})
-                                                                    (:contents response))))
+                                                                    (:contents result))))
                                   :api-key api-key
                                   :on-error on-error
                                   :on-response handle-response})

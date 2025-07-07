@@ -58,7 +58,7 @@
       (let [pattern (get arguments "pattern")
             pattern (if (string/includes? pattern "*")
                       pattern
-                      (format "**/*%s*/**" pattern))
+                      (format "**%s**" pattern))
             paths (reduce
                    (fn [paths {:keys [uri]}]
                      (concat paths (fs/glob (shared/uri->filename uri)
@@ -254,7 +254,7 @@
                                       :description "The absolute path to start searching files from there."}
                               "pattern" {:type "string"
                                          :description (str "Glob pattern following java FileSystem#getPathMatcher matching files or directory names."
-                                                           "Use '**/*' to match search in multiple levels like '**/*.txt'")}}
+                                                           "Use '**' to match search in multiple levels like '**.txt'")}}
                  :required ["path" "pattern"]}
     :handler #'search-files}
    "grep"

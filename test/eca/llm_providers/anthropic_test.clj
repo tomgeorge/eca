@@ -7,17 +7,15 @@
 (deftest ->messages-with-history-test
   (testing "no previous history"
     (is (match?
-         [{:role "user" :content [{:type :text :text "Hey"}]}]
-         (#'llm-providers.anthropic/->messages-with-history [] "Hey"))))
+         []
+         (#'llm-providers.anthropic/past-messages->messages []))))
   (testing "With basic text history"
     (is (match?
          [{:role "user" :content "Count with me: 1"}
-          {:role "assistant" :content "2"}
-          {:role "user" :content [{:type :text :text "3"}]}]
-         (#'llm-providers.anthropic/->messages-with-history
+          {:role "assistant" :content "2"}]
+         (#'llm-providers.anthropic/past-messages->messages
           [{:role "user" :content "Count with me: 1"}
-           {:role "assistant" :content "2"}]
-          "3"))))
+           {:role "assistant" :content "2"}]))))
   (testing "With tool_call history"
     (is (match?
          [{:role "user" :content "List the files you are allowed"}
@@ -29,9 +27,8 @@
           {:role "user" :content [{:type "tool_result"
                                    :tool_use_id "call-1"
                                    :content "Allowed directories: /foo/bar\n"}]}
-          {:role "assistant" :content "I see /foo/bar"}
-          {:role "user" :content [{:type :text :text "Thanks"}]}]
-         (#'llm-providers.anthropic/->messages-with-history
+          {:role "assistant" :content "I see /foo/bar"}]
+         (#'llm-providers.anthropic/past-messages->messages
           [{:role "user" :content "List the files you are allowed"}
            {:role "assistant" :content "Ok!"}
            {:role "tool_call" :content {:id "call-1" :name "list_allowed_directories" :arguments {}}}
@@ -41,8 +38,7 @@
                                                :output {:contents [{:type :text
                                                                     :error false
                                                                     :content "Allowed directories: /foo/bar"}]}}}
-           {:role "assistant" :content "I see /foo/bar"}]
-          "Thanks")))))
+           {:role "assistant" :content "I see /foo/bar"}])))))
 
 (deftest add-cache-to-last-message-test
   (is (match?

@@ -19,7 +19,7 @@
     (or (tools.util/invalid-arguments arguments [["working_directory" #(or (nil? %)
                                                                            (fs/exists? %)) "working directory $working_directory does not exist"]
                                                  ["commmand" (constantly (not (contains? exclude-cmds (first command-args)))) (format "Cannot run command '%s' because it is excluded by eca config."
-                                                                                                                                (first command-args))]])
+                                                                                                                                      (first command-args))]])
         (let [work-dir (or (some-> user-work-dir fs/canonicalize str)
                            (shared/uri->filename (:uri (first (:workspace-folders db)))))
               command-and-opts (concat [] command-args [:dir work-dir])
@@ -34,7 +34,7 @@
             (tools.util/single-text-content (str "Command failed with exit code " (:exit result) ": " (:err result)) :error))))))
 
 (def definitions
-  {"shell_command"
+  {"eca_shell_command"
    {:description (str "Execute an arbitrary shell command and return the output. "
                       "Useful to run commands like `ls`, `git status`, etc.")
     :parameters {:type "object"

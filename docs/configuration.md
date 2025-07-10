@@ -77,10 +77,9 @@ For MCP servers configuration, use the `mcpServers` config, example:
 ```javascript
 {
   "mcpServers": {
-    "filesystem": {
-        "command": "npx",
-        "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/greg/dev/eca-emacs"
-      ]
+    "memory": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
     }
   }
 }

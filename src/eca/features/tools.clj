@@ -29,7 +29,10 @@
           (when (get-in config [:nativeTools :shell :enabled])
             f.tools.shell/definitions))))
 
-(defn all-tools [db config]
+(defn all-tools
+  "Returns all available tools, including both native ECA tools
+   (like filesystem and shell tools) and tools provided by MCP servers."
+  [db config]
   (let [native-tools (concat
                       []
                       (mapv #(select-keys % [:name :description :parameters])

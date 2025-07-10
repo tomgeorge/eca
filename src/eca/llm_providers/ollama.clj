@@ -101,18 +101,12 @@
 
                              done_reason
                              (if-let [tool-call (get @tool-calls* rid)]
-                               (let [{:keys [result past-messages]} (on-tool-called tool-call)]
+                               (let [{:keys [past-messages]} (on-tool-called tool-call)]
                                  (swap! tool-calls* dissoc rid)
                                  (base-completion-request!
                                   {:rid (llm-util/gen-rid)
                                    :url url
-                                   :body (assoc body :messages (concat (past-messages->messages past-messages context)
-                                                                       [message]
-                                                                       (mapv
-                                                                        (fn [{:keys [_type content]}]
-                                                                          {:role "tool"
-                                                                           :content content})
-                                                                        (:contents result))))
+                                   :body (assoc body :messages (past-messages->messages past-messages context))
                                    :on-error on-error
                                    :on-response handle-response}))
                                (on-message-received {:type :finish

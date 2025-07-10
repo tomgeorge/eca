@@ -28,9 +28,9 @@
            {:message "Hey!"
             :request-id "1"}
            {:api-mock
-            (fn [{:keys [on-first-message-received
+            (fn [{:keys [on-first-response-received
                          on-message-received]}]
-              (on-first-message-received {:type :text :text "Hey"})
+              (on-first-response-received {:type :text :text "Hey"})
               (on-message-received {:type :text :text "Hey"})
               (on-message-received {:type :text :text " you!"})
               (on-message-received {:type :finish}))})]
@@ -106,9 +106,9 @@
            {:message "Count with me: 1 mississippi"
             :request-id "1"}
            {:api-mock
-            (fn [{:keys [on-first-message-received
+            (fn [{:keys [on-first-response-received
                          on-message-received]}]
-              (on-first-message-received {:type :text :text "2"})
+              (on-first-response-received {:type :text :text "2"})
               (on-message-received {:type :text :text "2"})
               (on-message-received {:type :text :text " mississippi"})
               (on-message-received {:type :finish}))})
@@ -153,9 +153,9 @@
               :chat-id chat-id-1
               :request-id "2"}
              {:api-mock
-              (fn [{:keys [on-first-message-received
+              (fn [{:keys [on-first-response-received
                            on-message-received]}]
-                (on-first-message-received {:type :text :text "4"})
+                (on-first-response-received {:type :text :text "4"})
                 (on-message-received {:type :text :text "4"})
                 (on-message-received {:type :text :text " mississippi"})
                 (on-message-received {:type :finish}))})
@@ -205,11 +205,11 @@ for allowed directories and then list files"
            {:message "List the files you are allowed to see"
             :request-id "1"}
            {:api-mock
-            (fn [{:keys [on-first-message-received
+            (fn [{:keys [on-first-response-received
                          on-message-received
                          on-prepare-tool-call
                          on-tool-called]}]
-              (on-first-message-received {:type :text :text "Ok,"})
+              (on-first-response-received {:type :text :text "Ok,"})
               (on-message-received {:type :text :text "Ok,"})
               (on-message-received {:type :text :text " working on it"})
               (on-prepare-tool-call {:id "call-1" :name "list_allowed_directories" :argumentsText ""})

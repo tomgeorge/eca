@@ -129,19 +129,10 @@
                                            (when (= "tool_use" (:type content-block))
                                              (let [function-name (:name content-block)
                                                    function-args (:input-json content-block)
-                                                   {:keys [result past-messages]} (on-tool-called {:id (:id content-block)
-                                                                                                   :name function-name
-                                                                                                   :arguments (json/parse-string function-args)})
-                                                   messages (-> (concat (past-messages->messages past-messages)
-                                                                        [{:role "assistant"
-                                                                          :content [(dissoc content-block :input-json)]}]
-                                                                        (mapv
-                                                                         (fn [{:keys [_type content]}]
-                                                                           {:role "user"
-                                                                            :content [{:type "tool_result"
-                                                                                       :tool_use_id (:id content-block)
-                                                                                       :content content}]})
-                                                                         (:contents result)))
+                                                   {:keys [past-messages]} (on-tool-called {:id (:id content-block)
+                                                                                            :name function-name
+                                                                                            :arguments (json/parse-string function-args)})
+                                                   messages (-> (past-messages->messages past-messages)
                                                                 add-cache-to-last-message)]
                                                (base-request!
                                                 {:rid (llm-util/gen-rid)

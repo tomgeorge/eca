@@ -48,15 +48,20 @@
          :type "function"))
 
 (defn complete!
-  [{:keys [model model-config context user-prompt config on-first-message-received
+  [{:keys [model model-config context user-prompt config on-first-response-received
            on-message-received on-error on-prepare-tool-call on-tool-called on-reason
            past-messages tools]}]
-  (let [first-message-received* (atom false)
+  (let [first-response-received* (atom false)
+        emit-first-message-fn (fn [& args]
+                                (when-not @first-response-received*
+                                  (reset! first-response-received* true)
+                                  (apply on-first-response-received args)))
         on-message-received-wrapper (fn [& args]
-                                      (when-not @first-message-received*
-                                        (reset! first-message-received* true)
-                                        (apply on-first-message-received args))
+                                      (apply emit-first-message-fn args)
                                       (apply on-message-received args))
+        on-prepare-tool-call-wrapper (fn [& args]
+                                       (apply emit-first-message-fn args)
+                                       (apply on-prepare-tool-call args))
         on-error-wrapper (fn [{:keys [exception] :as args}]
                            (when-not (:silent? (ex-data exception))
                              (logger/error args)
@@ -78,7 +83,7 @@
         :api-key (openai-api-key config)}
        {:on-message-received on-message-received-wrapper
         :on-error on-error-wrapper
-        :on-prepare-tool-call on-prepare-tool-call
+        :on-prepare-tool-call on-prepare-tool-call-wrapper
         :on-tool-called on-tool-called
         :on-reason on-reason})
 
@@ -95,8 +100,9 @@
         :api-key (anthropic-api-key config)}
        {:on-message-received on-message-received-wrapper
         :on-error on-error-wrapper
-        :on-prepare-tool-call on-prepare-tool-call
-        :on-tool-called on-tool-called})
+        :on-prepare-tool-call on-prepare-tool-call-wrapper
+        :on-tool-called on-tool-called
+        :on-reason on-reason})
 
       (string/starts-with? model config/ollama-model-prefix)
       (llm-providers.ollama/completion!
@@ -109,8 +115,9 @@
         :user-prompt user-prompt}
        {:on-message-received on-message-received-wrapper
         :on-error on-error-wrapper
-        :on-prepare-tool-call on-prepare-tool-call
-        :on-tool-called on-tool-called})
+        :on-prepare-tool-call on-prepare-tool-call-wrapper
+        :on-tool-called on-tool-called
+        :on-reason on-reason})
 
       :else
       (on-error-wrapper {:msg (str "ECA Unsupported model: " model)}))))

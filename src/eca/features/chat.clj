@@ -132,17 +132,17 @@
       :past-messages past-messages
       :config config
       :tools all-tools
-      :on-first-message-received (fn [_]
-                                   (assert-chat-not-stopped! chat-id db* messenger)
-                                   (add-to-history! {:role "user" :content user-prompt})
-                                   (messenger/chat-content-received
-                                    messenger
-                                    {:chat-id chat-id
-                                     :request-id request-id
-                                     :role :system
-                                     :content {:type :progress
-                                               :state :running
-                                               :text "Generating"}}))
+      :on-first-response-received (fn [& _]
+                                    (assert-chat-not-stopped! chat-id db* messenger)
+                                    (add-to-history! {:role "user" :content user-prompt})
+                                    (messenger/chat-content-received
+                                     messenger
+                                     {:chat-id chat-id
+                                      :request-id request-id
+                                      :role :system
+                                      :content {:type :progress
+                                                :state :running
+                                                :text "Generating"}}))
       :on-message-received (fn [{:keys [type] :as msg}]
                              (assert-chat-not-stopped! chat-id db* messenger)
                              (case type

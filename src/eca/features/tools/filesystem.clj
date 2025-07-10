@@ -190,7 +190,7 @@
           (tools.util/single-text-content (format "Successfully moved %s to %s" source destination))))))
 
 (def definitions
-  {"list_directory"
+  {"eca_list_directory"
    {:description (str "Get a detailed listing of all files and directories in a specified path. "
                       "Results clearly distinguish between files and directories with [FILE] and [DIR] "
                       "prefixes. This tool is essential for understanding directory structure and "
@@ -201,7 +201,7 @@
                                       :description "The absolute path to the directory to list."}}
                  :required ["path"]}
     :handler #'list-directory}
-   "read_file"
+   "eca_read_file"
    {:description (str "Read the complete contents of a file from the file system. "
                       "Handles various text encodings and provides detailed error messages "
                       "if the file cannot be read. Use this tool when you need to examine "
@@ -218,7 +218,7 @@
                                       :description "If provided, returns only the last N lines of the file"}}
                  :required ["path"]}
     :handler #'read-file}
-   "write_file"
+   "eca_write_file"
    {:description (str "Create a new file or completely overwrite an existing file with new content. " +
                       "Use with caution as it will overwrite existing files without warning. " +
                       "Handles text content with proper encoding. "
@@ -230,7 +230,7 @@
                                          :description "The content of the new file"}}
                  :required ["path" "content"]}
     :handler #'write-file}
-   "move_file"
+   "eca_move_file"
    {:description (str "Move or rename files and directories. Can move files between directories "
                       "and rename them in a single operation. If the destination exists, the "
                       "operation will fail. Works across different directories and can be used "
@@ -243,7 +243,7 @@
                                               :description "The new absolute file path to move to."}}
                   :required ["source" "destination"]}
     :handler #'move-file}
-   "search_files"
+   "eca_search_files"
    {:description (str "Recursively search for files and directories matching a pattern. "
                       "Searches through all subdirectories from the starting path. The search "
                       "is case-insensitive and matches partial names following java's FileSystem#getPathMatcher. Returns full paths to all "
@@ -257,7 +257,7 @@
                                                            "Use '**' to match search in multiple levels like '**.txt'")}}
                  :required ["path" "pattern"]}
     :handler #'search-files}
-   "grep"
+   "eca_grep"
    {:description (str "Fast content search tool that works with any codebase size. "
                       "Finds the paths to files that have matching contents using regular expressions. "
                       "Supports full regex syntax (eg. \"log.*Error\", \"function\\s+\\w+\", etc.). "
@@ -275,7 +275,7 @@
                                               :description "Maximum number of results to return (default: 1000)"}}
                   :required ["path" "pattern"]}
     :handler #'grep}
-   "replace_in_file"
+   "eca_replace_in_file"
    {:description (str "Replace a specific string or content block in a file with new content. "
                       "Finds the exact original content and replaces it with new content. "
                       "Be extra careful to format the original-content exactly correctly, "

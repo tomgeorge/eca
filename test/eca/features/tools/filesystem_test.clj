@@ -19,7 +19,7 @@
                       :content (str (h/file-path "/foo/qux") " is not a valid path")}]}
          (with-redefs [fs/canonicalize (constantly (h/file-path "/foo/qux"))
                        fs/exists? (constantly false)]
-           ((get-in f.tools.filesystem/definitions ["list_directory" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_list_directory" :handler])
             {"path" (h/file-path "/foo/qux")}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "Unallowed dir"
@@ -31,7 +31,7 @@
                                        (h/file-path "/foo/bar/baz"))}]}
          (with-redefs [fs/canonicalize (constantly (h/file-path "/foo/qux"))
                        fs/exists? (constantly true)]
-           ((get-in f.tools.filesystem/definitions ["list_directory" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_list_directory" :handler])
             {"path" (h/file-path "/foo/qux")}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "allowed dir"
@@ -48,7 +48,7 @@
                                                 (fs/path (h/file-path "/foo/bar/baz/qux"))])
                        fs/directory? (fn [path] (not (string/ends-with? (str path) ".clj")))
                        fs/canonicalize (constantly (h/file-path "/foo/bar/baz"))]
-           ((get-in f.tools.filesystem/definitions ["list_directory" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_list_directory" :handler])
             {"path" (h/file-path "/foo/bar/baz")}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}}))))))
 
@@ -61,7 +61,7 @@
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly false)
                        f.tools.filesystem/allowed-path? (constantly true)]
-           ((get-in f.tools.filesystem/definitions ["read_file" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_read_file" :handler])
             {"path" (h/file-path "/foo/qux")}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "Readable path"
@@ -73,7 +73,7 @@
                        fs/exists? (constantly true)
                        fs/readable? (constantly true)
                        f.tools.filesystem/allowed-path? (constantly true)]
-           ((get-in f.tools.filesystem/definitions ["read_file" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_read_file" :handler])
             {"path" (h/file-path "/foo/qux")}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "heading a file"
@@ -85,7 +85,7 @@
                        fs/exists? (constantly true)
                        fs/readable? (constantly true)
                        f.tools.filesystem/allowed-path? (constantly true)]
-           ((get-in f.tools.filesystem/definitions ["read_file" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_read_file" :handler])
             {"path" (h/file-path "/foo/qux")
              "head" 2}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
@@ -98,7 +98,7 @@
                        fs/exists? (constantly true)
                        fs/readable? (constantly true)
                        f.tools.filesystem/allowed-path? (constantly true)]
-           ((get-in f.tools.filesystem/definitions ["read_file" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_read_file" :handler])
             {"path" (h/file-path "/foo/qux")
              "tail" 2}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}}))))))
@@ -112,7 +112,7 @@
                                        (h/file-path "/foo/qux/new_file.clj")
                                        (h/file-path "/foo/bar"))}]}
          (with-redefs [f.tools.filesystem/allowed-path? (constantly false)]
-           ((get-in f.tools.filesystem/definitions ["write_file" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_write_file" :handler])
             {"path" (h/file-path "/foo/qux/new_file.clj")}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar") :name "bar"}]}}))))))
 
@@ -123,7 +123,7 @@
                        :error true
                        :content "Invalid glob pattern ' '"}]}
           (with-redefs [fs/exists? (constantly true)]
-            ((get-in f.tools.filesystem/definitions ["search_files" :handler])
+            ((get-in f.tools.filesystem/definitions ["eca_search_files" :handler])
              {"path" (h/file-path "/project/foo")
               "pattern" " "}
              {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
@@ -134,7 +134,7 @@
                        :content "No matches found"}]}
           (with-redefs [fs/exists? (constantly true)
                         fs/glob (constantly [])]
-            ((get-in f.tools.filesystem/definitions ["search_files" :handler])
+            ((get-in f.tools.filesystem/definitions ["eca_search_files" :handler])
              {"path" (h/file-path "/project/foo")
               "pattern" "foo"}
              {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
@@ -149,7 +149,7 @@
                         fs/glob (constantly [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
                                              (fs/path (h/file-path "/project/foo/qux.txt"))
                                              (fs/path (h/file-path "/project/foo/qux.clj"))])]
-            ((get-in f.tools.filesystem/definitions ["search_files" :handler])
+            ((get-in f.tools.filesystem/definitions ["eca_search_files" :handler])
              {"path" (h/file-path "/project/foo")
               "pattern" "**"}
              {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
@@ -162,7 +162,7 @@
           (with-redefs [fs/exists? (constantly true)
                         fs/glob (constantly [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
                                              (fs/path (h/file-path "/project/foo/qux.txt"))])]
-            ((get-in f.tools.filesystem/definitions ["search_files" :handler])
+            ((get-in f.tools.filesystem/definitions ["eca_search_files" :handler])
              {"path" (h/file-path "/project/foo")
               "pattern" ".txt"}
              {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}}))))))
@@ -175,7 +175,7 @@
                       :content "Invalid content regex pattern ' '"}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)]
-           ((get-in f.tools.filesystem/definitions ["grep" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_grep" :handler])
             {"path" (h/file-path "/project/foo")
              "pattern" " "}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
@@ -186,7 +186,7 @@
                       :content "Invalid file pattern ' '"}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)]
-           ((get-in f.tools.filesystem/definitions ["grep" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_grep" :handler])
             {"path" (h/file-path "/project/foo")
              "pattern" ".*"
              "include" " "}
@@ -200,7 +200,7 @@
                        fs/readable? (constantly true)
                        tools.util/command-available? (fn [command & _args] (= "rg" command))
                        shell/sh (constantly {:out ""})]
-           ((get-in f.tools.filesystem/definitions ["grep" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_grep" :handler])
             {"path" (h/file-path "/project/foo")
              "pattern" ".*"}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
@@ -213,7 +213,7 @@
                        fs/readable? (constantly true)
                        tools.util/command-available? (fn [command & _args] (= "rg" command))
                        shell/sh (constantly {:out "/project/foo/bla.txt\n/project/foo/qux.txt"})]
-           ((get-in f.tools.filesystem/definitions ["grep" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_grep" :handler])
             {"path" (h/file-path "/project/foo")
              "pattern" "some-cool-content"}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
@@ -226,7 +226,7 @@
                        fs/readable? (constantly true)
                        tools.util/command-available? (fn [command & _args] (= "grep" command))
                        shell/sh (constantly {:out "/project/foo/bla.txt\n/project/foo/qux.txt"})]
-           ((get-in f.tools.filesystem/definitions ["grep" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_grep" :handler])
             {"path" (h/file-path "/project/foo")
              "pattern" "some-cool-content"}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
@@ -244,7 +244,7 @@
                        fs/directory? (constantly false)
                        fs/hidden? (constantly false)
                        fs/file (constantly (ByteArrayInputStream. (.getBytes "some-cool-content")))]
-           ((get-in f.tools.filesystem/definitions ["grep" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_grep" :handler])
             {"path" (h/file-path "/project/foo")
              "pattern" "some-cool-content"}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}}))))))
@@ -258,7 +258,7 @@
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly false)
                        f.tools.filesystem/allowed-path? (constantly true)]
-           ((get-in f.tools.filesystem/definitions ["replace_in_file" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_replace_in_file" :handler])
             {"path" (h/file-path "/foo/qux")
              "original_content" "some-cool-text"
              "new_content" "another-boring-text"}
@@ -272,7 +272,7 @@
                        fs/readable? (constantly true)
                        f.tools.filesystem/allowed-path? (constantly true)
                        slurp (constantly "Hey, here is some-cool-text in this file!")]
-           ((get-in f.tools.filesystem/definitions ["replace_in_file" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_replace_in_file" :handler])
             {"path" (h/file-path "/project/foo/my-file.txt")
              "original_content" "other-cool-text"
              "new_content" "another-boring-text"}
@@ -288,7 +288,7 @@
                          f.tools.filesystem/allowed-path? (constantly true)
                          slurp (constantly "Hey, here is some-cool-text in this file! here as well: some-cool-text")
                          spit (fn [f content] (swap! file-content* assoc f content))]
-             ((get-in f.tools.filesystem/definitions ["replace_in_file" :handler])
+             ((get-in f.tools.filesystem/definitions ["eca_replace_in_file" :handler])
               {"path" (h/file-path "/project/foo/my-file.txt")
                "original_content" "some-cool-text"
                "new_content" "another-boring-text"}
@@ -307,7 +307,7 @@
                          f.tools.filesystem/allowed-path? (constantly true)
                          slurp (constantly "Hey, here is some-cool-text in this file! here as well: some-cool-text")
                          spit (fn [f content] (swap! file-content* assoc f content))]
-             ((get-in f.tools.filesystem/definitions ["replace_in_file" :handler])
+             ((get-in f.tools.filesystem/definitions ["eca_replace_in_file" :handler])
               {"path" (h/file-path "/project/foo/my-file.txt")
                "original_content" "some-cool-text"
                "new_content" "another-boring-text"
@@ -325,7 +325,7 @@
                       :content (format "%s is not a valid path" (h/file-path "/foo/qux"))}]}
          (with-redefs [fs/exists? (constantly false)
                        f.tools.filesystem/allowed-path? (constantly true)]
-           ((get-in f.tools.filesystem/definitions ["move_file" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_move_file" :handler])
             {"source" (h/file-path "/foo/qux")}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "Destination already exists"
@@ -335,7 +335,7 @@
                       :content (format "Path %s already exists" (h/file-path "/foo/bar/other_file.clj"))}]}
          (with-redefs [fs/exists? (constantly true)
                        f.tools.filesystem/allowed-path? (constantly true)]
-           ((get-in f.tools.filesystem/definitions ["move_file" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_move_file" :handler])
             {"source" (h/file-path "/foo/bar/some_file.clj")
              "destination" (h/file-path "/foo/bar/other_file.clj")}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar") :name "foo"}]}})))))
@@ -349,7 +349,7 @@
          (with-redefs [fs/exists? (fn [path] (not (string/includes? path "other_file.clj")))
                        f.tools.filesystem/allowed-path? (constantly true)
                        fs/move (constantly true)]
-           ((get-in f.tools.filesystem/definitions ["move_file" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_move_file" :handler])
             {"source" (h/file-path "/foo/bar/some_file.clj")
              "destination" (h/file-path "/foo/bar/other_file.clj")}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar") :name "foo"}]}}))))))

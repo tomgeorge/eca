@@ -38,7 +38,7 @@
                      :description (format "Only in %s" (h/file-path "/path/to/project/foo"))
                      :parameters some?
                      :source :native}])
-         (with-redefs [f.tools.filesystem/definitions {"list_directory" {:description "Only in $workspaceRoots"
-                                                                         :parameters {}}}]
+         (with-redefs [f.tools.filesystem/definitions {"eca_list_directory" {:description "Only in $workspaceRoots"
+                                                                             :parameters {}}}]
            (f.tools/all-tools {:workspace-folders [{:name "foo" :uri (h/file-uri "file:///path/to/project/foo")}]}
                               {:nativeTools {:filesystem {:enabled true}}}))))))

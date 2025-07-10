@@ -14,7 +14,7 @@
                       :error true
                       :content (format "working directory %s does not exist" (h/file-path "/baz"))}]}
          (with-redefs [fs/exists? (constantly false)]
-           ((get-in f.tools.shell/definitions ["shell_command" :handler])
+           ((get-in f.tools.shell/definitions ["eca_shell_command" :handler])
             {"command" "ls -lh"
              "working_directory" (h/file-path "/baz")}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
@@ -25,7 +25,7 @@
                       :content "Command failed with exit code 1: Some error"}]}
          (with-redefs [fs/exists? (constantly true)
                        shell/sh (constantly {:exit 1 :err "Some error"})]
-           ((get-in f.tools.shell/definitions ["shell_command" :handler])
+           ((get-in f.tools.shell/definitions ["eca_shell_command" :handler])
             {"command" "ls -lh"}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "command succeeds"
@@ -35,7 +35,7 @@
                       :content "Some text"}]}
          (with-redefs [fs/exists? (constantly true)
                        shell/sh (constantly {:exit 0 :out "Some text" :err "Other text"})]
-           ((get-in f.tools.shell/definitions ["shell_command" :handler])
+           ((get-in f.tools.shell/definitions ["eca_shell_command" :handler])
             {"command" "ls -lh"}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "command succeeds with different working directory"
@@ -45,7 +45,7 @@
                       :content "Some text"}]}
          (with-redefs [fs/exists? (constantly true)
                        shell/sh (constantly {:exit 0 :out "Some text" :err "Other text"})]
-           ((get-in f.tools.shell/definitions ["shell_command" :handler])
+           ((get-in f.tools.shell/definitions ["eca_shell_command" :handler])
             {"command" "ls -lh"
              "working_directory" (h/file-path "/project/foo/src")}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
@@ -56,7 +56,7 @@
                       :content "Some text"}]}
          (with-redefs [fs/exists? (constantly true)
                        shell/sh (constantly {:exit 0 :out "Some text" :err "Other text"})]
-           ((get-in f.tools.shell/definitions ["shell_command" :handler])
+           ((get-in f.tools.shell/definitions ["eca_shell_command" :handler])
             {"command" "rm -r /project/foo/src"}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}
              :config {:nativeTools {:shell {:enabled true
@@ -67,7 +67,7 @@
                       :error true
                       :content "Cannot run command 'rm' because it is excluded by eca config."}]}
          (with-redefs [fs/exists? (constantly true)]
-           ((get-in f.tools.shell/definitions ["shell_command" :handler])
+           ((get-in f.tools.shell/definitions ["eca_shell_command" :handler])
             {"command" "rm -r /project/foo/src"}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}
              :config {:nativeTools {:shell {:enabled true

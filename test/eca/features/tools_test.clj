@@ -23,18 +23,18 @@
                             {}))))
   (testing "Include enabled native tools"
     (is (match?
-         (m/embeds [{:name "list_directory"
+         (m/embeds [{:name "eca_list_directory"
                      :description string?
                      :parameters some?
                      :source :native}])
          (f.tools/all-tools {} {:nativeTools {:filesystem {:enabled true}}}))))
   (testing "Do not include disabled native tools"
     (is (match?
-         (m/embeds [(m/mismatch {:name "list_directory"})])
+         (m/embeds [(m/mismatch {:name "eca_list_directory"})])
          (f.tools/all-tools {} {:nativeTools {:filesystem {:enabled false}}}))))
   (testing "Replace special vars description"
     (is (match?
-         (m/embeds [{:name "list_directory"
+         (m/embeds [{:name "eca_list_directory"
                      :description (format "Only in %s" (h/file-path "/path/to/project/foo"))
                      :parameters some?
                      :source :native}])

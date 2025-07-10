@@ -107,17 +107,22 @@
                         (keep (fn [{:keys [client tools]}]
                                 (when (some #(= name (:name %)) tools)
                                   client)))
-                        first)
-        result (.callTool ^McpSyncClient mcp-client
-                          (McpSchema$CallToolRequest. name arguments))]
-    (logger/debug logger-tag "ToolCall result: " result)
-    {:contents (map (fn [content]
-                      (case (.type ^McpSchema$Content content)
-                        "text" {:type :text
-                                :error (.isError result)
-                                :content (.text ^McpSchema$TextContent content)}
-                        nil))
-                    (.content result))}))
+                        first)]
+    (try
+      (let [result (.callTool ^McpSyncClient mcp-client
+                              (McpSchema$CallToolRequest. name arguments))]
+        (logger/debug logger-tag "ToolCall result: " result)
+        {:contents (map (fn [content]
+                          (case (.type ^McpSchema$Content content)
+                            "text" {:type :text
+                                    :error (.isError result)
+                                    :content (.text ^McpSchema$TextContent content)}
+                            nil))
+                        (.content result))})
+      (catch Exception e
+        {:contents [{:type :text
+                     :error true
+                     :content (.getMessage e)}]}))))
 
 (defn shutdown! [db*]
   (doseq [[_name {:keys [_client]}] (:mcp-clients @db*)]

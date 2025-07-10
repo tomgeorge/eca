@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.1
+
 - Improve default model logic to check for configs and env vars of known models.
 - Fix past messages sent to LLMs.
 

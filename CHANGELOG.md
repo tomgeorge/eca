@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add support for global rules.
+
 ## 0.3.1
 
 - Improve default model logic to check for configs and env vars of known models.

@@ -252,7 +252,7 @@ interface ChatPromptParams {
     /**
      * The chat behavior used by server to handle chat communication and actions.
      */
-    behavior?: 'agent' | 'ask';
+    behavior?: ChatBehavior;
 
     /**
      * Optional contexts about the current workspace.

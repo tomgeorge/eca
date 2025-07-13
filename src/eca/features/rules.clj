@@ -1,12 +1,26 @@
 (ns eca.features.rules
   (:require
    [babashka.fs :as fs]
+   [clojure.java.io :as io]
    [clojure.string :as string]
+   [eca.config :as config]
    [eca.shared :as shared]))
 
 (set! *warn-on-reflection* true)
 
-(defn ^:private file-rules [roots]
+(defn ^:private global-file-rules []
+  (let [xdg-config-home (or (config/get-env "XDG_CONFIG_HOME")
+                            (io/file (config/get-property "user.home") ".config"))
+        rules-dir (io/file xdg-config-home "eca" "rules")]
+    (when (fs/exists? rules-dir)
+      (map (fn [file]
+             {:name (fs/file-name file)
+              :path (str (fs/canonicalize file))
+              :type :user-global-file
+              :content (slurp (fs/file file))})
+           (fs/list-dir rules-dir)))))
+
+(defn ^:private local-file-rules [roots]
   (->> roots
        (mapcat (fn [{:keys [uri]}]
                  (let [rules-dir (fs/file (shared/uri->filename uri) ".eca" "rules")]
@@ -15,7 +29,7 @@
        (map (fn [file]
               {:name (fs/file-name file)
                :path (str (fs/canonicalize file))
-               :type :user-file
+               :type :user-local-file
                :content (slurp (fs/file file))}))))
 
 (defn ^:private config-rules [config roots]
@@ -55,4 +69,5 @@
            variables))
         (concat (system-rules)
                 (config-rules config roots)
-                (file-rules roots))))
+                (global-file-rules)
+                (local-file-rules roots))))

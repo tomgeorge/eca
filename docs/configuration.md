@@ -43,14 +43,27 @@ ECA_CONFIG='{"myConfig": "my_value"}' eca server
 
 ## Rules
 
-Rules are contexts that are passed to the LLM during a prompt.
-There are 2 possible ways following this order of priority:
+Rules are contexts that are passed to the LLM during a prompt and are useful to tune prompts or LLM behavior.
+There are 3 possible ways following this order of priority:
 
 ### Project file
 
 A `.eca/rules` folder from the workspace root containing `.md` files with the rules.
 
 `.eca/rules/talk_funny.md`
+```markdown
+--- 
+name: Funny rule
+---
+
+- Talk funny like Mickey!
+```
+
+### Global file
+
+A `$XDG_CONFIG_HOME/eca/rules` or `~/.config/eca/rules` folder containing `.md` files with the rules.
+
+`~/.config/eca/rules/talk_funny.md`
 ```markdown
 --- 
 name: Funny rule

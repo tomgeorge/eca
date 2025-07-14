@@ -117,6 +117,7 @@
         user-prompt message
         all-tools (f.tools/all-tools @db* config)
         received-msgs* (atom "")
+        tool-call-args-by-id* (atom {})
         add-to-history! (fn [msg]
                           (swap! db* update-in [:chats chat-id :messages] (fnil conj []) msg))]
     (messenger/chat-content-received
@@ -180,6 +181,7 @@
                                          (finish-chat-prompt! chat-id :idle messenger db*))))
       :on-prepare-tool-call (fn [{:keys [id name arguments-text]}]
                               (assert-chat-not-stopped! chat-id db* messenger)
+                              (swap! tool-call-args-by-id* update id str arguments-text)
                               (messenger/chat-content-received
                                messenger
                                {:chat-id chat-id
@@ -188,7 +190,7 @@
                                 :content {:type :toolCallPrepare
                                           :name name
                                           :origin (tool-name->origin name all-tools)
-                                          :arguments-text arguments-text
+                                          :arguments-text (get @tool-call-args-by-id* id)
                                           :id id
                                           :manual-approval false}}))
       :on-tool-called (fn [{:keys [id name arguments] :as tool-call}]
@@ -210,6 +212,7 @@
                             (reset! received-msgs* ""))
                           (add-to-history! {:role "tool_call" :content tool-call})
                           (add-to-history! {:role "tool_call_output" :content (assoc tool-call :output result)})
+                          (swap! tool-call-args-by-id* dissoc id)
                           (messenger/chat-content-received
                            messenger
                            {:chat-id chat-id

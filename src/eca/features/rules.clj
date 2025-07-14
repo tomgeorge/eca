@@ -56,9 +56,10 @@
 (defn ^:private system-rules []
   [{:name "ECA System"
     :type :system
-    :content (str "You are an expert AI coding tool called ECA (Editor Code Assistant)."
-                  "Your behavior is to '<behavior>'."
-                  "The chat is markdown mode.")}])
+    :content (str "You are an expert AI coding tool called ECA (Editor Code Assistant). "
+                  "Your behavior is to '<behavior>'. "
+                  "The chat is markdown mode. "
+                  "When responding code blocks, pay attention to use valid markdown languages following Github markdown.")}])
 
 (defn all [config roots variables]
   (mapv (fn [rule]

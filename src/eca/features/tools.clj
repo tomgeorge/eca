@@ -39,8 +39,8 @@
                             (vals (native-definitions db config))))
         mcp-tools (f.mcp/all-tools db)]
     (concat
-     (mapv #(assoc % :source :native) native-tools)
-     (mapv #(assoc % :source :mcp) mcp-tools))))
+     (mapv #(assoc % :origin :native) native-tools)
+     (mapv #(assoc % :origin :mcp) mcp-tools))))
 
 (defn call-tool! [^String name ^Map arguments db config]
   (logger/info logger-tag (format "Calling tool '%s' with args '%s'" name arguments))

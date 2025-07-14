@@ -13,9 +13,10 @@
     (testing "system rule replacement"
       (let [rules    (f.rules/all {} [] vars)
             sys-rule (first (filter #(= :system (:type %)) rules))]
-        (is (= (str "You are an expert AI coding tool called ECA (Editor Code Assistant)."
-                    "Your behavior is to 'MY-BEHAVIOR'."
-                    "The chat is markdown mode.")
+        (is (= (str "You are an expert AI coding tool called ECA (Editor Code Assistant). "
+                    "Your behavior is to 'MY-BEHAVIOR'. "
+                    "The chat is markdown mode. "
+                    "When responding code blocks, pay attention to use valid markdown languages following Github markdown.")
                (:content sys-rule)))))
 
     (testing "absolute config rule"

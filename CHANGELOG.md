@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Add support for global rules.
+- Fix origin field of tool calls.
 
 ## 0.3.1
 

@@ -14,7 +14,7 @@
                      :description "eval code"
                      :parameters {"type" "object"
                                   :properties {"code" {:type "string"}}}
-                     :source :mcp}])
+                     :origin :mcp}])
          (f.tools/all-tools {:mcp-clients {:clojureMCP
                                            {:tools [{:name "eval"
                                                      :description "eval code"
@@ -26,7 +26,7 @@
          (m/embeds [{:name "eca_list_directory"
                      :description string?
                      :parameters some?
-                     :source :native}])
+                     :origin :native}])
          (f.tools/all-tools {} {:nativeTools {:filesystem {:enabled true}}}))))
   (testing "Do not include disabled native tools"
     (is (match?
@@ -37,7 +37,7 @@
          (m/embeds [{:name "eca_list_directory"
                      :description (format "Only in %s" (h/file-path "/path/to/project/foo"))
                      :parameters some?
-                     :source :native}])
+                     :origin :native}])
          (with-redefs [f.tools.filesystem/definitions {"eca_list_directory" {:description "Only in $workspaceRoots"
                                                                              :parameters {}}}]
            (f.tools/all-tools {:workspace-folders [{:name "foo" :uri (h/file-uri "file:///path/to/project/foo")}]}

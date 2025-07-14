@@ -195,6 +195,7 @@
                           :request-id request-id
                           :role :assistant
                           :content {:type :toolCallRun
+                                    :origin (:origin (first (filter #(= name (:name %)) all-tools)))
                                     :name name
                                     :arguments arguments
                                     :id id

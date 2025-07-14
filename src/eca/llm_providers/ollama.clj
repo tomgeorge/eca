@@ -96,7 +96,7 @@
                                    tool-call {:id call-id
                                               :name (:name function)
                                               :arguments (:arguments function)}]
-                               (on-prepare-tool-call (assoc tool-call :argumentsText ""))
+                               (on-prepare-tool-call (assoc tool-call :arguments-text ""))
                                (swap! tool-calls* assoc rid tool-call))
 
                              done_reason

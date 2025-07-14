@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix arguments test when preparing tool call.
+
 ## 0.4.0
 
 - Add support for global rules.

@@ -104,7 +104,7 @@
                                     "tool_use" (do
                                                  (on-prepare-tool-call {:name (-> data :content_block :name)
                                                                         :id (-> data :content_block :id)
-                                                                        :argumentsText ""})
+                                                                        :arguments-text ""})
                                                  (swap! content-block* assoc (:index data) (:content_block data)))
 
                                     nil)
@@ -116,7 +116,7 @@
                                                              content-block (get @content-block* (:index data))]
                                                          (on-prepare-tool-call {:name (:name content-block)
                                                                                 :id (:id content-block)
-                                                                                :argumentsText text}))
+                                                                                :arguments-text text}))
                                     "citations_delta" (case (-> data :delta :citation :type)
                                                         "web_search_result_location" (on-message-received
                                                                                       {:type :url

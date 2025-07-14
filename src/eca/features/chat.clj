@@ -178,7 +178,7 @@
                                :finish (do
                                          (add-to-history! {:role "assistant" :content @received-msgs*})
                                          (finish-chat-prompt! chat-id :idle messenger db*))))
-      :on-prepare-tool-call (fn [{:keys [id name argument]}]
+      :on-prepare-tool-call (fn [{:keys [id name arguments-text]}]
                               (assert-chat-not-stopped! chat-id db* messenger)
                               (messenger/chat-content-received
                                messenger
@@ -188,7 +188,7 @@
                                 :content {:type :toolCallPrepare
                                           :name name
                                           :origin (tool-name->origin name all-tools)
-                                          :argumentText argument
+                                          :arguments-text arguments-text
                                           :id id
                                           :manual-approval false}}))
       :on-tool-called (fn [{:keys [id name arguments] :as tool-call}]

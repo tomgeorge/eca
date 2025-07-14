@@ -85,7 +85,7 @@
             "response.function_call_arguments.delta" (let [call (get @mcp-call-by-item-id* (:item_id data))]
                                                        (on-prepare-tool-call {:id (:id call)
                                                                               :name (:name call)
-                                                                              :argumentsText (:delta data)}))
+                                                                              :arguments-text (:delta data)}))
 
             "response.output_item.done"
             (case (:type (:item data))
@@ -124,7 +124,7 @@
                                 (swap! mcp-call-by-item-id* assoc item-id {:name name :id call-id})
                                 (on-prepare-tool-call {:id (-> data :item :call_id)
                                                        :name (-> data :item :name)
-                                                       :argumentsText (-> data :item :arguments)}))
+                                                       :arguments-text (-> data :item :arguments)}))
               nil)
 
             ;; done

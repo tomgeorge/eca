@@ -517,7 +517,7 @@ interface ToolCallPrepareContent {
     /*
      * Argument text of this tool call
      */
-    argumentText: string;
+    argumentsText: string;
     
     /**
      * Whether this call requires manual approval from the user.
@@ -546,7 +546,7 @@ interface ToolCallRunContent {
     /*
      * Arguments of this tool call
      */
-    arguments: string[];
+    arguments: {[key: string]: string};
     
     /**
      * Whether this call requires manual approval from the user.

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.4.0
+
 - Add support for global rules.
 - Fix origin field of tool calls.
 - Allow chat communication with no workspace opened.

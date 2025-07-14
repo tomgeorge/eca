@@ -76,6 +76,9 @@
     (throw (ex-info "Chat prompt stopped" {:silent? true
                                            :chat-id chat-id}))))
 
+(defn ^:private tool-name->origin [name all-tools]
+  (:origin (first (filter #(= name (:name %)) all-tools))))
+
 (defn prompt
   [{:keys [message model behavior contexts chat-id request-id]}
    db*
@@ -184,6 +187,7 @@
                                 :role :assistant
                                 :content {:type :toolCallPrepare
                                           :name name
+                                          :origin (tool-name->origin name all-tools)
                                           :argumentText argument
                                           :id id
                                           :manual-approval false}}))
@@ -195,8 +199,8 @@
                           :request-id request-id
                           :role :assistant
                           :content {:type :toolCallRun
-                                    :origin (:origin (first (filter #(= name (:name %)) all-tools)))
                                     :name name
+                                    :origin (tool-name->origin name all-tools)
                                     :arguments arguments
                                     :id id
                                     :manual-approval false}})
@@ -212,6 +216,7 @@
                             :request-id request-id
                             :role :assistant
                             :content {:type :toolCalled
+                                      :origin (tool-name->origin name all-tools)
                                       :name name
                                       :arguments arguments
                                       :id id

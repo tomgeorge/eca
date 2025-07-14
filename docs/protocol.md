@@ -133,7 +133,7 @@ interface ClientCapabilities {
     }
 }
 
-type ChatBehavior = 'agent' | 'ask';
+type ChatBehavior = 'agent' | 'chat';
 ```
 
 _Response:_
@@ -149,7 +149,7 @@ interface InitializeResult {
     /*
      * Default model used by server.
      */
-    defaultModel: ChatModel;
+    chatDefaultModel: ChatModel;
     
     /*
      * The chat behaviors available.

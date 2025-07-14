@@ -3,6 +3,7 @@
    [cheshire.core :as json]
    [clojure.java.io :as io]
    [clojure.string :as string]
+   [eca.config :as config]
    [eca.logger :as logger]
    [eca.shared :as shared])
   (:import
@@ -45,11 +46,16 @@
         b (if env
             (.env b (update-keys env name))
             b)
-        pb-init-args []]
+        pb-init-args []
+        ;; TODO we are hard coding the first workspace
+        work-dir (or (some-> workspaces
+                             first
+                             :uri
+                             shared/uri->filename)
+                     (config/get-property "user.home"))]
     (proxy [StdioClientTransport] [(.build b)]
       (getProcessBuilder [] (-> (ProcessBuilder. ^List pb-init-args)
-                                ;; TODO we are hard coding the first workspace
-                                (.directory (io/file (shared/uri->filename (:uri (first workspaces))))))))))
+                                (.directory (io/file work-dir)))))))
 
 (defn ^:private ->client ^McpSyncClient [transport config]
   (-> (McpClient/sync transport)

@@ -3,6 +3,7 @@
    [babashka.fs :as fs]
    [clojure.java.shell :as shell]
    [clojure.string :as string]
+   [eca.config :as config]
    [eca.features.tools.util :as tools.util]
    [eca.logger :as logger]
    [eca.shared :as shared]))
@@ -21,7 +22,11 @@
                                                  ["commmand" (constantly (not (contains? exclude-cmds (first command-args)))) (format "Cannot run command '%s' because it is excluded by eca config."
                                                                                                                                       (first command-args))]])
         (let [work-dir (or (some-> user-work-dir fs/canonicalize str)
-                           (shared/uri->filename (:uri (first (:workspace-folders db)))))
+                           (some-> (:workspace-folders db)
+                                   first
+                                   :uri
+                                   shared/uri->filename)
+                           (config/get-property "user.home"))
               command-and-opts (concat [] command-args [:dir work-dir])
               _ (logger/debug logger-tag "Running command:" command-and-opts)
               result (try

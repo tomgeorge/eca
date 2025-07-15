@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.4.1
+
 - Fix arguments test when preparing tool call.
 
 ## 0.4.0

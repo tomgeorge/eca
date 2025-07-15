@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.4.2
+
 - Fix output of errored tool calls.
 
 ## 0.4.1

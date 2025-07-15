@@ -7,7 +7,7 @@
 :warning: The project is still alpha, expect bugs and WIP features, but being consistently improved, feedback is more than welcome.
 
 _Demo using [eca-emacs](https://github.com/editor-code-assistant/eca-emacs)_
-![demo](./images/demo.gif)
+![demo](https://raw.githubusercontent.com/editor-code-assistant/eca-emacs/master/demo.gif)
 
 <hr>
 <p align="center">

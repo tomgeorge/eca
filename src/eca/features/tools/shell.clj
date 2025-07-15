@@ -32,11 +32,24 @@
               result (try
                        (apply shell/sh command-and-opts)
                        (catch Exception e
-                         {:exit 1 :err (.getMessage e)}))]
+                         {:exit 1 :err (.getMessage e)}))
+              err (some-> (:err result) string/trim)
+              out (some-> (:out result) string/trim)]
           (logger/debug logger-tag "Command executed:" result)
           (if (zero? (:exit result))
             (tools.util/single-text-content (:out result))
-            (tools.util/single-text-content (str "Command failed with exit code " (:exit result) ": " (:err result)) :error))))))
+            {:contents (remove nil?
+                               (concat [{:type :text
+                                         :content (str "Exit code " (:exit result))
+                                         :error true}]
+                                       (when-not (string/blank? err)
+                                         [{:type :text
+                                           :content (str "Stderr:\n" err)
+                                           :error true}])
+                                       (when-not (string/blank? out)
+                                         [{:type :text
+                                           :content (str "Stdout:\n" out)
+                                           :error true}])))})))))
 
 (def definitions
   {"eca_shell_command"

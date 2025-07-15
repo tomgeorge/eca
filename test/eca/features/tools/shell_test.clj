@@ -22,7 +22,10 @@
     (is (match?
          {:contents [{:type :text
                       :error true
-                      :content "Command failed with exit code 1: Some error"}]}
+                      :content "Exit code 1"}
+                     {:type :text
+                      :error true
+                      :content "Stderr:\nSome error"}]}
          (with-redefs [fs/exists? (constantly true)
                        shell/sh (constantly {:exit 1 :err "Some error"})]
            ((get-in f.tools.shell/definitions ["eca_shell_command" :handler])

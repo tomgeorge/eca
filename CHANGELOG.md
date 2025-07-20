@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Improve context query performance.
+
 ## 0.4.2
 
 - Fix output of errored tool calls.

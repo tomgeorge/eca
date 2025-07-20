@@ -253,6 +253,11 @@
      :model chosen-model
      :status :success}))
 
+(defn ^:private contexts-for [root-filename query config]
+  (let [all-files (fs/glob root-filename (str "**" (or query "") "**"))
+        allowed-files (f.index/filter-allowed all-files root-filename config)]
+    allowed-files))
+
 (defn query-context
   [{:keys [query contexts chat-id]}
    db*
@@ -261,14 +266,7 @@
                                     (comp
                                      (map :uri)
                                      (map shared/uri->filename)
-                                     (mapcat (fn [root-filename]
-                                               (let [all-files (fs/glob root-filename (str "**" (or query "") "**"))
-                                                     all-dirs (filter fs/directory? all-files)
-                                                     excluded-dirs (filter #(f.index/ignore? (str %) root-filename config) all-dirs)]
-                                                 (->> all-files
-                                                      (remove (fn [path]
-                                                                (or (some #(fs/starts-with? (str path) %) excluded-dirs)
-                                                                    (f.index/ignore? (str path) root-filename config))))))))
+                                     (mapcat #(contexts-for % query config))
                                      (take 200) ;; for performance, user can always make query specific for better results.
                                      (map (fn [file-or-dir]
                                             {:type (if (fs/directory? file-or-dir)

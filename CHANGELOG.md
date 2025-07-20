@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.4.3
+
 - Improve context query performance.
 
 ## 0.4.2

@@ -9,6 +9,9 @@
 _Demo using [eca-emacs](https://github.com/editor-code-assistant/eca-emacs)_
 ![demo](https://raw.githubusercontent.com/editor-code-assistant/eca-emacs/master/demo.gif)
 
+_Demo using [eca-vscode](https://github.com/editor-code-assistant/eca-vscode)_
+![demo](https://raw.githubusercontent.com/editor-code-assistant/eca-vscode/master/demo.gif)
+
 <hr>
 <p align="center">
   <a href="#installation"><strong>installation</strong></a> •

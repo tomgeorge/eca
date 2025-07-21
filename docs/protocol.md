@@ -615,7 +615,7 @@ interface ChatQueryContextParams {
     /**
      * The chat session identifier.
      */
-    chatId: string;
+    chatId?: string;
 
     /**
      * The query to filter results, blank string returns all available contexts.
@@ -636,7 +636,7 @@ interface ChatQueryContextResponse {
     /**
      * The chat session identifier.
      */
-    chatId: string;
+    chatId?: string;
 
     /**
      * The returned available contexts.

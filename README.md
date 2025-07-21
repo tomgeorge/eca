@@ -54,7 +54,7 @@ Editors should spawn the server via `eca server` and communicate via stdin/stdou
 ## Supported editors
 
 - [Emacs](https://github.com/editor-code-assistant/eca-emacs)
-- [VsCode](https://github.com/editor-code-assistant/eca-vscode): WIP
+- [VsCode](https://github.com/editor-code-assistant/eca-vscode)
 - Intellij: Planned
 - Vim: Planned, help welcome
 

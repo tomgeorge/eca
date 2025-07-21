@@ -11,14 +11,9 @@
 
 (def ^:private logger-tag "[ANTHROPIC]")
 
-(def ^:private anthropic-url "https://api.anthropic.com")
 (def ^:private messages-path "/v1/messages")
 
-(defn ^:private url [path]
-  (format "%s%s"
-          (or (System/getenv "ANTHROPIC_API_URL")
-              anthropic-url)
-          path))
+(def base-url "https://api.anthropic.com")
 
 (defn ^:private ->tools [tools web-search]
   (cond->
@@ -30,8 +25,8 @@
                       :max_uses 10
                       :cache_control {:type "ephemeral"}})))
 
-(defn ^:private base-request! [{:keys [rid body api-key content-block* on-error on-response]}]
-  (let [url (url messages-path)]
+(defn ^:private base-request! [{:keys [rid body api-url api-key content-block* on-error on-response]}]
+  (let [url (str api-url messages-path)]
     (llm-util/log-request logger-tag rid url body)
     (http/post
      url
@@ -82,7 +77,7 @@
 
 (defn completion!
   [{:keys [model user-prompt temperature context max-tokens
-           api-key past-messages tools web-search]
+           api-url api-key past-messages tools web-search]
     :or {max-tokens 4096
          temperature 1.0}}
    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called]}]
@@ -137,6 +132,7 @@
                                                (base-request!
                                                 {:rid (llm-util/gen-rid)
                                                  :body (assoc body :messages messages)
+                                                 :api-url api-url
                                                  :api-key api-key
                                                  :content-block* (atom nil)
                                                  :on-error on-error
@@ -150,6 +146,7 @@
     (base-request!
      {:rid (llm-util/gen-rid)
       :body body
+      :api-url api-url
       :api-key api-key
       :content-block* (atom nil)
       :on-error on-error

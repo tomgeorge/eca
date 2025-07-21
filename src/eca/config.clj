@@ -28,6 +28,7 @@
             :port 11434
             :useTools true}
    :chat {:welcomeMessage "Welcome to ECA! What you have in mind?\n\n"}
+   :customProviders {}
    :index {:ignoreFiles [{:type :gitignore}]}})
 
 (defn get-env [env] (System/getenv env))

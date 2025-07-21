@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Support custom LLM providers via config.
+
 ## 0.4.3
 
 - Improve context query performance.

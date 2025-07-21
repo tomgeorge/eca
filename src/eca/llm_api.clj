@@ -21,11 +21,19 @@
 
 (defn ^:private anthropic-api-key [config]
   (or (:anthropicApiKey config)
-      (System/getenv "ANTHROPIC_API_KEY")))
+      (config/get-env "ANTHROPIC_API_KEY")))
+
+(defn ^:private anthropic-api-url []
+  (or (System/getenv "ANTHROPIC_API_URL")
+      llm-providers.anthropic/base-url))
 
 (defn ^:private openai-api-key [config]
-  (or (:openaiApiKey config)
-      (System/getenv "OPENAI_API_KEY")))
+  (or (:openaiapikey config)
+      (config/get-env "openai_api_key")))
+
+(defn ^:private openai-api-url []
+  (or (config/get-env "OPENAI_API_URL")
+      llm-providers.openai/base-url))
 
 (defn default-model
   "Returns the default LLM model checking this waterfall:
@@ -68,7 +76,16 @@
                              (on-error args)))
         tools (when (:tools model-config)
                 (mapv tool->llm-tool tools))
-        web-search (:web-search model-config)]
+        web-search (:web-search model-config)
+        custom-providers (:customProviders config)
+        custom-models (set (mapcat (fn [[k v]]
+                                     (map #(str (name k) "/" %) (:models v)))
+                                   custom-providers))
+        callbacks {:on-message-received on-message-received-wrapper
+                   :on-error on-error-wrapper
+                   :on-prepare-tool-call on-prepare-tool-call-wrapper
+                   :on-tool-called on-tool-called
+                   :on-reason on-reason}]
     (cond
       (contains? #{"o4-mini"
                    "o3"
@@ -80,12 +97,9 @@
         :past-messages past-messages
         :tools tools
         :web-search web-search
+        :api-url (openai-api-url)
         :api-key (openai-api-key config)}
-       {:on-message-received on-message-received-wrapper
-        :on-error on-error-wrapper
-        :on-prepare-tool-call on-prepare-tool-call-wrapper
-        :on-tool-called on-tool-called
-        :on-reason on-reason})
+       callbacks)
 
       (contains? #{"claude-sonnet-4-0"
                    "claude-opus-4-0"
@@ -97,27 +111,39 @@
         :past-messages past-messages
         :tools tools
         :web-search web-search
+        :api-url (anthropic-api-url)
         :api-key (anthropic-api-key config)}
-       {:on-message-received on-message-received-wrapper
-        :on-error on-error-wrapper
-        :on-prepare-tool-call on-prepare-tool-call-wrapper
-        :on-tool-called on-tool-called
-        :on-reason on-reason})
+       callbacks)
 
       (string/starts-with? model config/ollama-model-prefix)
       (llm-providers.ollama/completion!
        {:host (-> config :ollama :host)
         :port (-> config :ollama :port)
         :model (string/replace-first model config/ollama-model-prefix "")
-        :past-messages past-messages
         :context context
-        :tools tools
-        :user-prompt user-prompt}
-       {:on-message-received on-message-received-wrapper
-        :on-error on-error-wrapper
-        :on-prepare-tool-call on-prepare-tool-call-wrapper
-        :on-tool-called on-tool-called
-        :on-reason on-reason})
+        :user-prompt user-prompt
+        :past-messages past-messages
+        :tools tools}
+       callbacks)
+
+      (contains? custom-models model)
+      (let [[provider model] (string/split model #"/")
+            provider-config (get custom-providers (keyword provider))
+            provider-fn (case (:api provider-config)
+                          "openai" llm-providers.openai/completion!
+                          "anthropic" llm-providers.anthropic/completion!
+                          (on-error-wrapper {:msg (format "Unknown custom model %s for provider %s" (:api provider-config) provider)}))
+            url (or (:url provider-config) (config/get-env (:urlEnv provider-config)))
+            key (or (:key provider-config) (config/get-env (:keyEnv provider-config)))]
+        (provider-fn
+         {:model model
+          :context context
+          :user-prompt user-prompt
+          :past-messages past-messages
+          :tools tools
+          :api-url url
+          :api-key key}
+         callbacks))
 
       :else
       (on-error-wrapper {:msg (str "ECA Unsupported model: " model)}))))

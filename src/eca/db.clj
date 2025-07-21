@@ -20,7 +20,7 @@
             "claude-opus-4-0" {:tools true
                                :web-search true}
             "claude-3-5-haiku-latest" {:tools true
-                                       :web-search true}} ;; + ollama local models
+                                       :web-search true}} ;; + ollama local models + custom provider models
    :mcp-clients {}})
 
 (defonce db* (atom initial-db))

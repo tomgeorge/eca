@@ -10,17 +10,12 @@
 
 (def ^:private logger-tag "[OPENAI]")
 
-(def ^:private openai-url "https://api.openai.com")
 (def ^:private responses-path "/v1/responses")
 
-(defn ^:private url [path]
-  (format "%s%s"
-          (or (System/getenv "OPENAI_API_URL")
-              openai-url)
-          path))
+(def base-url "https://api.openai.com")
 
-(defn ^:private base-completion-request! [{:keys [rid body api-key on-error on-response]}]
-  (let [url (url responses-path)]
+(defn ^:private base-completion-request! [{:keys [rid body api-url api-key on-error on-response]}]
+  (let [url (str api-url responses-path)]
     (llm-util/log-request logger-tag rid url body)
     (http/post
      url
@@ -59,7 +54,7 @@
             msg))
         past-messages))
 
-(defn completion! [{:keys [model user-prompt context temperature api-key past-messages tools web-search]
+(defn completion! [{:keys [model user-prompt context temperature api-key api-url past-messages tools web-search]
                     :or {temperature 1.0}}
                    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called on-reason]}]
   (let [input (conj (past-messages->input past-messages)
@@ -98,6 +93,7 @@
                                 (base-completion-request!
                                  {:rid (llm-util/gen-rid)
                                   :body (assoc body :input input)
+                                  :api-url api-url
                                   :api-key api-key
                                   :on-error on-error
                                   :on-response handle-response})
@@ -136,6 +132,7 @@
     (base-completion-request!
      {:rid (llm-util/gen-rid)
       :body body
+      :api-url api-url
       :api-key api-key
       :on-error on-error
       :on-response on-response-fn})))

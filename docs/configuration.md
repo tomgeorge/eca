@@ -117,8 +117,16 @@ interface Config {
     mcpTimeoutSeconds: number;
     mcpServers: {[key: string]: {
         command: string;
-        args: string[];
-        disabled: boolean;
+        args?: string[];
+        disabled?: boolean; 
+    }};
+    customProviders: {[key: string]: {
+        api: 'openai' | 'anthropic';
+        models: string[];
+        url?: string;
+        urlEnv?: string;
+        key?: string;
+        keyEnv?: string;
     }};
     ollama?: {
         host: string;
@@ -148,6 +156,7 @@ interface Config {
                             "excludeCommands": []}},
   "mcpTimeoutSeconds" : 10,
   "mcpServers" : [],
+  "customProviders": {},
   "ollama" : {
     "host" : "http://localhost",
     "port" : 11434,

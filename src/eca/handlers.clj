@@ -11,6 +11,19 @@
 (set! *warn-on-reflection* true)
 
 (defn ^:private initialize-extra-models! [db* config]
+  (when-let [custom-providers (seq (:customProviders config))]
+    (swap! db* update :models merge
+           (reduce
+            (fn [models [provider {provider-models :models}]]
+              (reduce
+               (fn [m model]
+                 (assoc m
+                        (str (name provider) "/" model)
+                        {:tools true}))
+               models
+               provider-models))
+            {}
+            custom-providers)))
   (when-let [ollama-models (seq (llm-api/extra-models config))]
     (swap! db* update :models merge
            (reduce

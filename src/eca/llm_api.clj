@@ -29,7 +29,7 @@
 
 (defn ^:private openai-api-key [config]
   (or (:openaiapikey config)
-      (config/get-env "openai_api_key")))
+      (config/get-env "OPENAI_API_KEY")))
 
 (defn ^:private openai-api-url []
   (or (config/get-env "OPENAI_API_URL")

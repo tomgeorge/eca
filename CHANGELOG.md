@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.0
+
 - Support custom LLM providers via config.
 
 ## 0.4.3

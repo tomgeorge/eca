@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.0
+
 - Add usage tokens + cost to chat messages.
 
 ## 0.5.1

@@ -44,16 +44,21 @@ ECA_CONFIG='{"myConfig": "my_value"}' eca server
 ## Rules
 
 Rules are contexts that are passed to the LLM during a prompt and are useful to tune prompts or LLM behavior.
-There are 3 possible ways following this order of priority:
+Rules are Multi-Document context files (`.mdc`) and the following metadata is supported:
+
+- `description`: a description used by LLM to decide whether to include this rule in context, absent means always include this rule.
+- `globs`: list of globs separated by `,`. When present the rule will be applied only when files mentioned matches those globs.
+
+There are 3 possible ways to configure rules following this order of priority:
 
 ### Project file
 
-A `.eca/rules` folder from the workspace root containing `.md` files with the rules.
+A `.eca/rules` folder from the workspace root containing `.mdc` files with the rules.
 
-`.eca/rules/talk_funny.md`
+`.eca/rules/talk_funny.mdc`
 ```markdown
 --- 
-name: Funny rule
+description: Use when responding anything
 ---
 
 - Talk funny like Mickey!
@@ -61,24 +66,24 @@ name: Funny rule
 
 ### Global file
 
-A `$XDG_CONFIG_HOME/eca/rules` or `~/.config/eca/rules` folder containing `.md` files with the rules.
+A `$XDG_CONFIG_HOME/eca/rules` or `~/.config/eca/rules` folder containing `.mdc` files with the rules.
 
-`~/.config/eca/rules/talk_funny.md`
+`~/.config/eca/rules/talk_funny.mdc`
 ```markdown
 --- 
-name: Funny rule
+description: Use when responding anything
 ---
 
 - Talk funny like Mickey!
 ```
 
-### Config 
+### Config
 
-Just add to your config the `:rules` pointing to `.md` files that will be searched from the workspace root if not an absolute path:
+Just add to your config the `:rules` pointing to `.mdc` files that will be searched from the workspace root if not an absolute path:
 
 ```javascript
 {
-  "rules": [{"path": "my-rule.md"}]
+  "rules": [{"path": "my-rule.mdc"}]
 }
 ```
 
@@ -123,11 +128,7 @@ It's possible to configure ECA to be aware of custom LLM providers if they follo
 interface Config {
     openaiApiKey?: string;
     anthropicApiKey?: string;
-    rules: [{
-        name: string;
-        type: 'user-config' | 'user-local-file' | 'user-global-file';
-        content: string;
-    }];
+    rules: [{path: string;}];
     nativeTools: {
         {[key: string] {enabled: boolean}}
     }

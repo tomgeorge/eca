@@ -106,19 +106,33 @@ For MCP servers configuration, use the `mcpServers` config, example:
 interface Config {
     openaiApiKey?: string;
     anthropicApiKey?: string;
+    rules: [{
+        name: string;
+        type: 'user-config' | 'user-local-file' | 'user-global-file';
+        content: string;
+    }];
+    nativeTools: {
+        {[key: string] {enabled: boolean}}
+    }
+    mcpTimeoutSeconds: number;
+    mcpServers: {[key: string]: {
+        command: string;
+        args: string[];
+        disabled: boolean;
+    }};
     ollama?: {
         host: string;
         port: string;
         useTools: boolean;
-    }
+    };
     chat?: {
         welcomeMessage: string;
-    }
+    };
     index?: {
         ignoreFiles: [{
             type: string;
-        }]
-    }
+        }];
+    };
 }
 ```
 
@@ -128,12 +142,12 @@ interface Config {
 {
   "openaiApiKey" : null,
   "anthropicApiKey" : null,
-  "rules" : [ ],
+  "rules" : [],
   "nativeTools": {"filesystem": {"enabled": true}
                   "shell": {"enabled": true
                             "excludeCommands": []}},
   "mcpTimeoutSeconds" : 10,
-  "mcpServers" : [ ],
+  "mcpServers" : [],
   "ollama" : {
     "host" : "http://localhost",
     "port" : 11434,

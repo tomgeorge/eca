@@ -83,7 +83,7 @@
 
 (def eca-version (memoize eca-version*))
 
-(def ollama-model-prefix "ollama:")
+(def ollama-model-prefix "ollama/")
 
 (defn all [db]
   (deep-merge initial-config

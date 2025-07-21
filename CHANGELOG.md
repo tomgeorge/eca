@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix openai key
+
 ## 0.5.0
 
 - Support custom LLM providers via config.

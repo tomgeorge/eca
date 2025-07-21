@@ -98,6 +98,23 @@ For MCP servers configuration, use the `mcpServers` config, example:
 }
 ```
 
+## Custom LLM providers
+
+It's possible to configure ECA to be aware of custom LLM providers if they follow a API schema similar to currently supported ones (openai, anthropic), example for a custom hosted litellm server:
+
+```javascript
+{
+  "customProviders": {
+    "my-company": {
+       "api": "openai",
+       "urlEnv": "MY_COMPANY_API_URL", // or "url": "https://litellm.my-company.com",
+       "keyEnv": "MY_COMPANY_API_KEY", // or "key": "123",
+       "models": ["gpt-4.1", "deepseek-r1"]
+    }
+  }
+}
+```
+
 ## All configs
 
 ### Schema

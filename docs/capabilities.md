@@ -26,7 +26,9 @@ Provides access to run shell commands, useful to run build tools, tests, and oth
 
 ### TODO - Web
 
-## Supported LLM models and capaibilities
+## LLM providers
+
+### Built-in providers and capabilities
 
 | model     | MCP / tools | thinking/reasioning | prompt caching | web_search |
 |-----------|-------------|---------------------|----------------|------------|
@@ -34,19 +36,22 @@ Provides access to run shell commands, useful to run build tools, tests, and oth
 | Anthropic | √           | X                   | √              | √          |
 | Ollama    | √           | X                   | X              | X          |
 
-### OpenAI
+#### OpenAI
 
 - [o4-mini](https://platform.openai.com/docs/models/o4-mini)
 - [o3](https://platform.openai.com/docs/models/o3)
 - [gpt-4.1](https://platform.openai.com/docs/models/gpt-4.1)
 
-### Anthropic
+#### Anthropic
 
 - [claude-sonnet-4-0](https://docs.anthropic.com/en/docs/about-claude/models/overview)
 - [claude-opus-4-0](https://docs.anthropic.com/en/docs/about-claude/models/overview)
 - [claude-3-5-haiku-latest](https://docs.anthropic.com/en/docs/about-claude/models/overview)
 
-### Ollama
+#### Ollama
 
 - [any local ollama model](https://ollama.com/search)
 
+### Custom providers
+
+ECA support configure any extra LLM provider via `customProviders` config.

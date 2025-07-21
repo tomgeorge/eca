@@ -20,8 +20,21 @@
 
 (defn deep-merge [v & vs]
   (letfn [(rec-merge [v1 v2]
-                     (if (and (map? v1) (map? v2))
-                       (merge-with deep-merge v1 v2)
-                       v2))]
+            (if (and (map? v1) (map? v2))
+              (merge-with deep-merge v1 v2)
+              v2))]
     (when (some identity vs)
       (reduce #(rec-merge %1 %2) v vs))))
+
+(defn assoc-some
+  "Assoc[iate] if the value is not nil. "
+  ([m k v]
+   (if (nil? v) m (assoc m k v)))
+  ([m k v & kvs]
+   (let [ret (assoc-some m k v)]
+     (if kvs
+       (if (next kvs)
+         (recur ret (first kvs) (second kvs) (nnext kvs))
+         (throw (IllegalArgumentException.
+                 "assoc-some expects even number of arguments after map/vector, found odd number")))
+       ret))))

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add usage tokens + cost to chat messages.
+
 ## 0.5.1
 
 - Fix openai key

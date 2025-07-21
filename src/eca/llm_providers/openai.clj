@@ -127,6 +127,8 @@
             "response.completed"
             (when-not (= "function_call" (-> data :response :output last :type))
               (on-message-received {:type :finish
+                                    :usage {:input-tokens (-> data :response :usage :input_tokens)
+                                            :output-tokens (-> data :response :usage :output_tokens)}
                                     :finish-reason (-> data :response :status)}))
             nil))]
     (base-completion-request!

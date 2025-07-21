@@ -138,6 +138,8 @@
                                                  :on-error on-error
                                                  :on-response handle-response}))))
                               "end_turn" (on-message-received {:type :finish
+                                                               :usage {:input-tokens (-> data :usage :input_tokens)
+                                                                       :output-tokens (-> data :usage :output_tokens)}
                                                                :finish-reason (-> data :delta :stop_reason)})
                               "max_tokens" (on-message-received {:type :limit-reached
                                                                  :tokens (:usage data)})

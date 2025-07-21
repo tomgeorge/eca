@@ -10,7 +10,7 @@
    [eca.llm-api :as llm-api]
    [eca.logger :as logger]
    [eca.messenger :as messenger]
-   [eca.shared :as shared]))
+   [eca.shared :as shared :refer [assoc-some]]))
 
 (set! *warn-on-reflection* true)
 
@@ -79,6 +79,15 @@
 (defn ^:private tool-name->origin [name all-tools]
   (:origin (first (filter #(= name (:name %)) all-tools))))
 
+(defn ^:private tokens->cost [input-tokens output-tokens model db]
+  (let [normalized-model (if (string/includes? model "/")
+                           (last (string/split model #"/"))
+                           model)
+        {:keys [input-token-cost output-token-cost]} (get-in db [:models normalized-model])]
+    (when (and input-token-cost output-token-cost)
+      (format "%.2f" (+ (* input-tokens input-token-cost)
+                        (* output-tokens output-token-cost))))))
+
 (defn prompt
   [{:keys [message model behavior contexts chat-id request-id]}
    db*
@@ -119,7 +128,10 @@
         received-msgs* (atom "")
         tool-call-args-by-id* (atom {})
         add-to-history! (fn [msg]
-                          (swap! db* update-in [:chats chat-id :messages] (fnil conj []) msg))]
+                          (swap! db* update-in [:chats chat-id :messages] (fnil conj []) msg))
+        sum-sesison-tokens! (fn [input-tokens output-tokens]
+                              (swap! db* update-in [:chats chat-id :total-input-tokens] (fnil + 0) input-tokens)
+                              (swap! db* update-in [:chats chat-id :total-output-tokens] (fnil + 0) output-tokens))]
     (messenger/chat-content-received
      messenger
      {:chat-id chat-id
@@ -178,6 +190,23 @@
                                                 (finish-chat-prompt! chat-id :idle messenger db*))
                                :finish (do
                                          (add-to-history! {:role "assistant" :content @received-msgs*})
+                                         (when-let [{:keys [output-tokens input-tokens]} (:usage msg)]
+                                           (when (and output-tokens input-tokens)
+                                             (sum-sesison-tokens! input-tokens output-tokens)
+                                             (let [db @db*
+                                                   total-input-tokens (get-in db [:chats chat-id :total-input-tokens] 0)
+                                                   total-output-tokens (get-in db [:chats chat-id :total-output-tokens] 0)]
+                                               (messenger/chat-content-received
+                                                messenger
+                                                {:chat-id chat-id
+                                                 :request-id request-id
+                                                 :role :system
+                                                 :content (assoc-some {:type :usage
+                                                                       :message-output-tokens output-tokens
+                                                                       :message-input-tokens input-tokens
+                                                                       :session-tokens (+ total-input-tokens total-output-tokens)}
+                                                                      :message-cost (tokens->cost input-tokens output-tokens chosen-model db)
+                                                                      :session-cost (tokens->cost total-input-tokens total-output-tokens chosen-model db))}))))
                                          (finish-chat-prompt! chat-id :idle messenger db*))))
       :on-prepare-tool-call (fn [{:keys [id name arguments-text]}]
                               (assert-chat-not-stopped! chat-id db* messenger)

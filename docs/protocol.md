@@ -346,7 +346,7 @@ interface ChatPromptResponse {
      * The model used for this chat request.
      */
     model: ChatModel;
-
+    
     status: 'success';
 }
 ```
@@ -376,16 +376,6 @@ interface ChatContentReceivedParams {
      * The owner of this content.
      */
     role: 'user' | 'system' | 'assistant';
-
-    /**
-     * Optional metadata about the generation
-     */
-    metadata?: {
-        /**
-         * Number of tokens used in the generation
-         */
-        tokensUsed?: number;
-    };
 }
 
 /**
@@ -395,6 +385,7 @@ type ChatContent =
     | TextContent 
     | URLContent 
     | ProgressContent 
+    | UsageContent
     | FileChangeContent
     | ToolCallPrepareContent
     | ToolCallRunContent
@@ -429,20 +420,35 @@ interface URLContent {
 }
 
 /**
- * Details about the progress of the chat completion.
+ * Details about the chat's usage, like used tokens and costs.
  */
-interface ProgressContent {
-    type: 'progress';
-
-    /**
-     * The statue of this progress
+interface UsageContent {
+    type: 'usage';
+    
+    /*
+     * Number of tokens sent on previous prompt including all context used by ECA.
      */
-    state: 'running' | 'finished';
+    messageInputTokens: number;
+    
+    /*
+     * Number of tokens received from LLm in last prompt.
+     */
+    messageOutputTokens: number;
     
     /**
-     * The text detailing the progress
+     * The total input + output tokens of the whole chat session so far.
      */
-    text?: string;
+    sessionTokens: number;
+    
+    /**
+     * The cost of the last sent message summing input + output tokens.
+     */
+    messageCost?: string; 
+    
+    /**
+     * The cost of the whole chat session so far.
+     */
+    sessionCost?: string;
 }
 
 /**

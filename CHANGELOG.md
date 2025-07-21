@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.5.1
+
 - Fix openai key
 
 ## 0.5.0

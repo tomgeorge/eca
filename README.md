@@ -36,7 +36,7 @@ A Free and OpenSource editor-agnostic tool that aims to easily link LLMs <-> Edi
 
 ## Installation
 
-Eca is written in Clojure and compiled into a native binary via graalvm. You can download the binaries from Github Releases or use the install script for convenience:
+Eca is written in Clojure and compiled into a native binary via graalvm. You can download the [native binaries from Github Releases](https://github.com/editor-code-assistant/eca/releases) or use the install script for convenience:
 
 Stable release:
 
@@ -47,23 +47,23 @@ bash <(curl -s https://raw.githubusercontent.com/editor-code-assistant/eca/maste
 nightly build:
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/editor-code-assistant/eca/master/install) --version nightly
+bash <(curl -s https://raw.githubusercontent.com/editor-code-assistant/eca/master/install) --version nightly --dir ~/
 ```
 
 ## Usage
 
-Editors should spawn the server via `eca server` and communicate via stdin/stdout.
+Editors should spawn the server via `eca server` and communicate via stdin/stdout. Logs are printed to stderr, use `--verbose` to log client<->server communication or `--log-level debug`  to log more info like LLM responses.
 
 ## Supported editors
 
 - [Emacs](https://github.com/editor-code-assistant/eca-emacs)
 - [VsCode](https://github.com/editor-code-assistant/eca-vscode)
-- Intellij: Planned
+- Intellij: Planned, help welcome
 - Vim: Planned, help welcome
 
 ## Protocol
 
-The protocol can be found [here](./docs/protocol.md), it follows the same standard of LSP documentation, defining how server and client communicate with each other.
+The protocol can be found [here](./docs/protocol.md), it follows the same standard of LSP documentation, defining how clients and server communicate with each other.
 
 ## Roadmap
 
@@ -77,3 +77,7 @@ You can start eca with `--log-level debug` which should log helpful information 
 
 Contributions are very welcome, please open an issue for discussion or a pull request.
 For developer details, check [this doc](./docs/development.md).
+
+## Support the project
+
+Consider [sponsoring the project](https://github.com/sponsors/ericdallo) to help grow faster, the support helps to keep the project going, being updated and maintained!

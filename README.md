@@ -1,6 +1,8 @@
 <img src="images/logo.png" width="110" align="right">
 
 [![GitHub Release](https://img.shields.io/github/v/release/editor-code-assistant/eca?display_name=release&style=flat-square)](https://github.com/editor-code-assistant/eca/releases/latest)
+<a href="https://github.com/editor-code-assistant/eca/stargazers"><img alt="GitHub Stars" title="Total number of GitHub stars the ECA project has received"
+src="https://img.shields.io/github/stars/editor-code-assistant/eca?style=flat-square&logo=github&color=f1c40f&labelColor=555555"/></a>
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](./LICENSE)
 
 # ECA (Editor Code Assistant)
@@ -19,17 +21,13 @@ _Demo using [eca-vscode](https://github.com/editor-code-assistant/eca-vscode)_
   <a href="./docs/protocol.md"><strong>protocol</strong></a>
 </p>
 <hr>
-  
-<a href="https://github.com/editor-code-assistant/eca/stargazers"><img alt="GitHub Stars" title="Total number of GitHub stars the ECA project has received"
 
-## Features
-
--  **Editor-agnostic** protocol for any editor to integrate.
-- **Single configuration**: Configure eca making it work the same in any editor via global or local configs.
-- **Chat** interface: ask questions, review code, work together to code.
-- **Agentic** let LLM work as an agent with its native tools and MCPs you can configure.
-- **Context** support: giving more details about your code to the LLM.
-- **Multi models**: OpenAI, Anthropic, Ollama local models, and custom user config models.
+- :page_facing_up: **Editor-agnostic**: protocol for any editor to integrate.
+- :gear: **Single configuration**: Configure eca making it work the same in any editor via global or local configs.
+- :loop: **Chat** interface: ask questions, review code, work together to code.
+- :coffee: **Agentic**: let LLM work as an agent with its native tools and MCPs you can configure.
+- :syringe: **Context**: support: giving more details about your code to the LLM.
+- :rocket: **Multi models**: OpenAI, Anthropic, Ollama local models, and custom user config models.
 
 ## Rationale 
 

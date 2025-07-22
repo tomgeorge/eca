@@ -1,6 +1,7 @@
 <img src="images/logo.png" width="110" align="right">
 
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](./LICENSE)
+[![GitHub Release](https://img.shields.io/github/v/release/editor-code-assistant/eca?display_name=release&style=flat-square)](https://github.com/editor-code-assistant/eca/releases/latest)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](./LICENSE)
 
 # ECA (Editor Code Assistant)
 
@@ -27,7 +28,7 @@ _Demo using [eca-vscode](https://github.com/editor-code-assistant/eca-vscode)_
 
 A Free and OpenSource editor-agnostic tool that aims to easily link LLMs <-> Editors, giving the best UX possible for AI pair programming using a well-defined protocol. The server is written in Clojure and heavily inspired by the [LSP protocol](https://microsoft.github.io/language-server-protocol/) which is a success case for this kind of integration.
 
-- **Editor-agnostic** protocol for any editor to integrate.
+-  **Editor-agnostic** protocol for any editor to integrate.
 - **Single configuration**: Configure eca making it work the same in any editor via global or local configs.
 - **Chat** interface: ask questions, review code, work together to code.
 - **Agentic** let LLM work as an agent with its native tools and MCPs you can configure.
@@ -78,6 +79,6 @@ You can start eca with `--log-level debug` which should log helpful information 
 Contributions are very welcome, please open an issue for discussion or a pull request.
 For developer details, check [this doc](./docs/development.md).
 
-## Support the project
+## Support the project 💖
 
 Consider [sponsoring the project](https://github.com/sponsors/ericdallo) to help grow faster, the support helps to keep the project going, being updated and maintained!

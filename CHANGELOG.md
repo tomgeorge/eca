@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.1
+
 - Support defaultModel in custom providers.
 
 ## 0.6.0

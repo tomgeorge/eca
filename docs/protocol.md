@@ -139,7 +139,7 @@ type ChatBehavior = 'agent' | 'chat';
 _Response:_
 
 ```typescript
-interface InitializeResult {
+interface InitializeResponse {
     
     /*
      * The models supported by the server.
@@ -653,7 +653,7 @@ interface ChatQueryContextResponse {
 
 ### Chat stop prompt (➡️)
 
-A client notification telling server to stop the current chat prompt with LLM if running.
+A client notification for server to stop the current chat prompt with LLM if running.
 This will stop LLM loops or ignore subsequent LLM responses so other prompts can be trigerred.
 
 _Notification:_
@@ -668,6 +668,31 @@ interface ChatPromptStopParams {
      */
     chatId: string;
 }
+```
+
+### Chat delete (↩️)
+
+A client request to delete a existing chat, removing all previous messages and used tokens/costs from memory, good for reduce context or start a new clean chat.
+After response, clients should reset chat UI to a clean state.
+
+_Request:_ 
+
+* method: `chat/delete`
+* params: `ChatDeleteParams` defined as follows:
+
+```typescript
+interface ChatDeleteParams {
+    /**
+     * The chat session identifier.
+     */
+    chatId?: string;
+}
+```
+
+_Response:_
+
+```typescript
+interface ChatDeleteResponse {}
 ```
 
 ### Completion (↩️)

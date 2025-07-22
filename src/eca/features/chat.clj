@@ -323,3 +323,7 @@
         :content {:type :text
                   :text "\nPrompt stopped"}})
       (finish-chat-prompt! chat-id :stoping messenger db*))))
+
+(defn delete-chat
+  [{:keys [chat-id]} db*]
+  (swap! db* update :chats dissoc chat-id))

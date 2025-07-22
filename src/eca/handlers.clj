@@ -78,3 +78,9 @@
   (logger/logging-task
    :eca/chat-prompt-stop
    (f.chat/prompt-stop params db* messenger)))
+
+(defn chat-delete [{:keys [db*]} params]
+  (logger/logging-task
+   :eca/chat-delete
+   (f.chat/delete-chat params db*)
+   {}))

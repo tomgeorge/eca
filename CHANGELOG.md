@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add client request to delete a chat.
+
 ## 0.6.1
 
 - Support defaultModel in custom providers.

@@ -74,10 +74,20 @@
    :eca/chat-query-context
    (f.chat/query-context params db* config)))
 
+(defn chat-tool-call-approve [{:keys [db*]} params]
+  (logger/logging-task
+   :eca/chat-tool-call-approve
+   (f.chat/tool-call-approve params db*)))
+
+(defn chat-tool-call-reject [{:keys [db*]} params]
+  (logger/logging-task
+   :eca/chat-tool-call-reject
+   (f.chat/tool-call-reject params db*)))
+
 (defn chat-prompt-stop [{:keys [db* messenger]} params]
   (logger/logging-task
-   :eca/chat-prompt-stop
-   (f.chat/prompt-stop params db* messenger)))
+      :eca/chat-prompt-stop
+      (f.chat/prompt-stop params db* messenger)))
 
 (defn chat-delete [{:keys [db*]} params]
   (logger/logging-task

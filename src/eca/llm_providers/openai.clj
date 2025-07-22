@@ -86,10 +86,10 @@
             (case (:type (:item data))
               "function_call" (let [function-name (-> data :item :name)
                                     function-args (-> data :item :arguments)
-                                    {:keys [past-messages]} (on-tool-called {:id (-> data :item :call_id)
-                                                                             :name function-name
-                                                                             :arguments (json/parse-string function-args)})
-                                    input (past-messages->input past-messages)]
+                                    {:keys [new-messages]} (on-tool-called {:id (-> data :item :call_id)
+                                                                            :name function-name
+                                                                            :arguments (json/parse-string function-args)})
+                                    input (past-messages->input new-messages)]
                                 (base-completion-request!
                                  {:rid (llm-util/gen-rid)
                                   :body (assoc body :input input)

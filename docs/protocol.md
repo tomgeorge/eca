@@ -604,6 +604,32 @@ interface ToolCalledContent {
     }];
 }
 
+interface ToolCallRejected {
+    type: 'toolCallRejected';
+    
+    origin: ToolCallOrigin;
+    
+    /**
+     * id of the tool call
+     */
+    id: string;
+    
+    /**
+     * Name of the tool
+     */
+    name: string;
+    
+    /*
+     * Arguments of this tool call
+     */
+    arguments: {[key: string]: string};
+    
+    /**
+     * The reason why this tool call was rejected
+     */
+    reason: 'user';
+}
+
 type ToolCallOrigin = 'mcp' | 'native';
 ```
 
@@ -648,6 +674,54 @@ interface ChatQueryContextResponse {
      * The returned available contexts.
      */
     contexts: ChatContext[];
+}
+```
+
+### Chat approve tool call (➡️)
+
+A client notification for server to approve a waiting tool call.
+This will execute the tool call and continue the LLM chat loop.
+
+_Notification:_
+
+* method: `chat/toolCallApprove`
+* params: `ChatToolCallApproveParams` defined as follows:
+
+```typescript
+interface ChatToolCallApproveParams {
+    /**
+     * The chat session identifier.
+     */
+    chatId: string;
+    
+    /**
+     * The tool call identifier to approve.
+     */
+    toolCallId: string; 
+}
+```
+
+### Chat reject tool call (➡️)
+
+A client notification for server to reject a waiting tool call.
+This will not execute the tool call and return to the LLM chat loop.
+
+_Notification:_
+
+* method: `chat/toolCallReject`
+* params: `ChatToolCallRejectParams` defined as follows:
+
+```typescript
+interface ChatToolCallRejectParams {
+    /**
+     * The chat session identifier.
+     */
+    chatId: string;
+    
+    /**
+     * The tool call identifier to reject.
+     */
+    toolCallId: string; 
 }
 ```
 

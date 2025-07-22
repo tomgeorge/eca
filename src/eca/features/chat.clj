@@ -120,6 +120,7 @@
                            (:workspace-folders db)
                            {:behavior (behavior->behavior-str (or behavior (:chat-default-behavior db)))})
         refined-contexts (raw-contexts->refined contexts)
+        manual-approval? (get-in config [:toolCall :manualApproval] false)
         context-str (build-context-str refined-contexts rules)
         chosen-model (or model (default-model db config))
         past-messages (get-in db [:chats chat-id :messages] [])
@@ -221,7 +222,7 @@
                                           :origin (tool-name->origin name all-tools)
                                           :arguments-text (get @tool-call-args-by-id* id)
                                           :id id
-                                          :manual-approval false}}))
+                                          :manual-approval manual-approval?}}))
       :on-tool-called (fn [{:keys [id name arguments] :as tool-call}]
                         (assert-chat-not-stopped! chat-id db* messenger)
                         (messenger/chat-content-received
@@ -234,27 +235,66 @@
                                     :origin (tool-name->origin name all-tools)
                                     :arguments arguments
                                     :id id
-                                    :manual-approval false}})
-                        (let [result (f.tools/call-tool! name arguments @db* config)]
+                                    :manual-approval manual-approval?}})
+                        (let [approved?* (promise)]
+                          (swap! db* assoc-in [:chats chat-id :tool-calls id :approved?*] approved?*)
                           (when-not (string/blank? @received-msgs*)
                             (add-to-history! {:role "assistant" :content @received-msgs*})
                             (reset! received-msgs* ""))
-                          (add-to-history! {:role "tool_call" :content tool-call})
-                          (add-to-history! {:role "tool_call_output" :content (assoc tool-call :output result)})
-                          (swap! tool-call-args-by-id* dissoc id)
-                          (messenger/chat-content-received
-                           messenger
-                           {:chat-id chat-id
-                            :request-id request-id
-                            :role :assistant
-                            :content {:type :toolCalled
-                                      :origin (tool-name->origin name all-tools)
-                                      :name name
-                                      :arguments arguments
-                                      :id id
-                                      :outputs (:contents result)}})
-                          {:result result
-                           :past-messages (get-in @db* [:chats chat-id :messages] [])}))
+                          (if manual-approval?
+                            (messenger/chat-content-received
+                             messenger
+                             {:chat-id chat-id
+                              :request-id request-id
+                              :role :system
+                              :content {:type :progress
+                                        :state :running
+                                        :text "Waiting for tool call approval"}})
+                            ;; Otherwise auto approve
+                            (deliver approved?* true))
+                          (if @approved?*
+                            (let [output (f.tools/call-tool! name arguments @db* config)]
+                              (add-to-history! {:role "tool_call" :content tool-call})
+                              (add-to-history! {:role "tool_call_output" :content (assoc tool-call :output output)})
+                              (swap! tool-call-args-by-id* dissoc id)
+                              (messenger/chat-content-received
+                               messenger
+                               {:chat-id chat-id
+                                :request-id request-id
+                                :role :assistant
+                                :content {:type :toolCalled
+                                          :origin (tool-name->origin name all-tools)
+                                          :name name
+                                          :arguments arguments
+                                          :id id
+                                          :outputs (:contents output)}})
+                              {:new-messages (get-in @db* [:chats chat-id :messages])})
+                            (do
+                              (add-to-history! {:role "tool_call" :content tool-call})
+                              (add-to-history! {:role "tool_call_output" :content (assoc tool-call :output {:contents [{:content "Tool call rejected by user"
+                                                                                                                        :error true
+                                                                                                                        :type :text}]})})
+                              (swap! tool-call-args-by-id* dissoc id)
+                              (messenger/chat-content-received
+                               messenger
+                               {:chat-id chat-id
+                                :request-id request-id
+                                :role :system
+                                :content {:type :progress
+                                          :state :running
+                                          :text "Generating"}})
+                              (messenger/chat-content-received
+                               messenger
+                               {:chat-id chat-id
+                                :request-id request-id
+                                :role :assistant
+                                :content {:type :toolCallRejected
+                                          :origin (tool-name->origin name all-tools)
+                                          :name name
+                                          :arguments arguments
+                                          :reason :user
+                                          :id id}})
+                              {:new-messages (get-in @db* [:chats chat-id :messages])}))))
       :on-reason (fn [{:keys [status]}]
                    (assert-chat-not-stopped! chat-id db* messenger)
                    (let [msg (case status
@@ -281,6 +321,12 @@
     {:chat-id chat-id
      :model chosen-model
      :status :success}))
+
+(defn tool-call-approve [{:keys [chat-id tool-call-id]} db*]
+  (deliver (get-in @db* [:chats chat-id :tool-calls tool-call-id :approved?*]) true))
+
+(defn tool-call-reject [{:keys [chat-id tool-call-id]} db*]
+  (deliver (get-in @db* [:chats chat-id :tool-calls tool-call-id :approved?*]) false))
 
 (defn ^:private contexts-for [root-filename query config]
   (let [all-files (fs/glob root-filename (str "**" (or query "") "**"))

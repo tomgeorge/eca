@@ -124,10 +124,10 @@
                                            (when (= "tool_use" (:type content-block))
                                              (let [function-name (:name content-block)
                                                    function-args (:input-json content-block)
-                                                   {:keys [past-messages]} (on-tool-called {:id (:id content-block)
-                                                                                            :name function-name
-                                                                                            :arguments (json/parse-string function-args)})
-                                                   messages (-> (past-messages->messages past-messages)
+                                                   {:keys [new-messages]} (on-tool-called {:id (:id content-block)
+                                                                                           :name function-name
+                                                                                           :arguments (json/parse-string function-args)})
+                                                   messages (-> (past-messages->messages new-messages)
                                                                 add-cache-to-last-message)]
                                                (base-request!
                                                 {:rid (llm-util/gen-rid)

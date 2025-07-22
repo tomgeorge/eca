@@ -132,7 +132,10 @@ interface Config {
     rules: [{path: string;}];
     nativeTools: {
         {[key: string] {enabled: boolean}}
-    }
+    };
+    toolCall?: {
+      manualApproval?: boolean,
+    };
     mcpTimeoutSeconds: number;
     mcpServers: {[key: string]: {
         command: string;
@@ -174,6 +177,9 @@ interface Config {
   "nativeTools": {"filesystem": {"enabled": true}
                   "shell": {"enabled": true
                             "excludeCommands": []}},
+  "toolCall": {
+    "manualApproval": false,
+  },
   "mcpTimeoutSeconds" : 10,
   "mcpServers" : [],
   "customProviders": {},

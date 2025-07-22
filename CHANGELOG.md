@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Support tool call approval and configuration to manual approval.
+
 ## 0.7.0
 
 - Add client request to delete a chat.

@@ -5,8 +5,6 @@
 
 # ECA (Editor Code Assistant)
 
-:warning: The project is still alpha, expect bugs and WIP features, but being consistently improved and maintained, feedback is more than welcome.
-
 _Demo using [eca-emacs](https://github.com/editor-code-assistant/eca-emacs)_
 ![demo](https://raw.githubusercontent.com/editor-code-assistant/eca-emacs/master/demo.gif)
 
@@ -21,12 +19,10 @@ _Demo using [eca-vscode](https://github.com/editor-code-assistant/eca-vscode)_
   <a href="./docs/protocol.md"><strong>protocol</strong></a>
 </p>
 <hr>
+  
+<a href="https://github.com/editor-code-assistant/eca/stargazers"><img alt="GitHub Stars" title="Total number of GitHub stars the ECA project has received"
 
-## Rationale 
-
-<img src="images/rationale.jpg" width="500">
-
-A Free and OpenSource editor-agnostic tool that aims to easily link LLMs <-> Editors, giving the best UX possible for AI pair programming using a well-defined protocol. The server is written in Clojure and heavily inspired by the [LSP protocol](https://microsoft.github.io/language-server-protocol/) which is a success case for this kind of integration.
+## Features
 
 -  **Editor-agnostic** protocol for any editor to integrate.
 - **Single configuration**: Configure eca making it work the same in any editor via global or local configs.
@@ -34,6 +30,14 @@ A Free and OpenSource editor-agnostic tool that aims to easily link LLMs <-> Edi
 - **Agentic** let LLM work as an agent with its native tools and MCPs you can configure.
 - **Context** support: giving more details about your code to the LLM.
 - **Multi models**: OpenAI, Anthropic, Ollama local models, and custom user config models.
+
+## Rationale 
+
+<img src="images/rationale.jpg" width="500">
+
+A Free and OpenSource editor-agnostic tool that aims to easily link LLMs <-> Editors, giving the best UX possible for AI pair programming using a well-defined protocol. The server is written in Clojure and heavily inspired by the [LSP protocol](https://microsoft.github.io/language-server-protocol/) which is a success case for this kind of integration.
+
+The protocol makes easier for other editors integrate and having a server in the middle helps adding more features quickly like exporting metrics of features usage or single way to configure it for any editor.
 
 ## Installation
 
@@ -55,7 +59,9 @@ bash <(curl -s https://raw.githubusercontent.com/editor-code-assistant/eca/maste
 
 Editors should spawn the server via `eca server` and communicate via stdin/stdout. Logs are printed to stderr, use `--verbose` to log client<->server communication or `--log-level debug`  to log more info like LLM responses.
 
-## Supported editors
+Supported editors already download latest server on start and require no extra configuration
+
+### Supported editors
 
 - [Emacs](https://github.com/editor-code-assistant/eca-emacs)
 - [VsCode](https://github.com/editor-code-assistant/eca-vscode)

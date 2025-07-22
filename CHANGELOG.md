@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Support defaultModel in custom providers.
+
 ## 0.6.0
 
 - Add usage tokens + cost to chat messages.

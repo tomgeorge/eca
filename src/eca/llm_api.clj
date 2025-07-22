@@ -24,7 +24,7 @@
       (config/get-env "ANTHROPIC_API_KEY")))
 
 (defn ^:private anthropic-api-url []
-  (or (System/getenv "ANTHROPIC_API_URL")
+  (or (config/get-env "ANTHROPIC_API_URL")
       llm-providers.anthropic/base-url))
 
 (defn ^:private openai-api-key [config]
@@ -37,17 +37,26 @@
 
 (defn default-model
   "Returns the default LLM model checking this waterfall:
+  - Any custom provider with defaultModel set
   - Anthropic api key set
   - Openai api key set
   - Ollama first model if running
   - Anthropic default model."
   [db config]
-  (let [[decision model] (or (first (filter #(string/starts-with? % config/ollama-model-prefix) (vals (:models db))))
-                             (when (anthropic-api-key config)
-                               [:api-key-found "claude-sonnet-4-0"])
-                             (when (openai-api-key config)
-                               [:api-key-found "o4-mini"])
-                             [:default "claude-sonnet-4-0"])]
+  (let [[decision model]
+        (or (when-let [custom-provider-default-model (first (keep (fn [[model config]]
+                                                                    (when (and (:custom-provider? config)
+                                                                               (:default-model? config))
+                                                                      model))
+                                                                  (:models db)))]
+              [:custom-provider-default-model custom-provider-default-model])
+            (when-let [ollama-model (first (filter #(string/starts-with? % config/ollama-model-prefix) (keys (:models db))))]
+              [:ollama-running ollama-model])
+            (when (anthropic-api-key config)
+              [:api-key-found "claude-sonnet-4-0"])
+            (when (openai-api-key config)
+              [:api-key-found "o4-mini"])
+            [:default "claude-sonnet-4-0"])]
     (logger/info logger-tag (format "Default LLM model '%s' decision '%s'" model decision))
     model))
 

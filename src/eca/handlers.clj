@@ -14,12 +14,14 @@
   (when-let [custom-providers (seq (:customProviders config))]
     (swap! db* update :models merge
            (reduce
-            (fn [models [provider {provider-models :models}]]
+            (fn [models [provider {provider-models :models default-model :defaultModel}]]
               (reduce
                (fn [m model]
                  (assoc m
                         (str (name provider) "/" model)
-                        {:tools true}))
+                        {:tools true
+                         :custom-provider? true
+                         :default-model? (= model default-model)}))
                models
                provider-models))
             {}

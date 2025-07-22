@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.7.0
+
 - Add client request to delete a chat.
 
 ## 0.6.1

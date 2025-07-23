@@ -48,6 +48,3 @@ plugins:
   - search
   - awesome-pages
   - git-revision-date-localized
-
-google_analytics:
-  - auto

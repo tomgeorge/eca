@@ -51,10 +51,6 @@ Supported editors already download latest server on start and require no extra c
 - Intellij: Planned, help welcome
 - Vim: Planned, help welcome
 
-## Protocol
-
-The protocol can be found [here](./docs/protocol.md), it follows the same standard of LSP documentation, defining how clients and server communicate with each other.
-
 ## Roadmap
 
 Check the planned work [here](https://github.com/orgs/editor-code-assistant/projects/1/views/1).

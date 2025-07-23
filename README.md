@@ -15,9 +15,10 @@ _Demo using [eca-vscode](https://github.com/editor-code-assistant/eca-vscode)_
 
 <hr>
 <p align="center">
-  <a href="#installation"><strong>installation</strong></a> •
+  <a href="./docs/installation.md"><strong>installation</strong></a> •
+  <a href="./docs/features.md"><strong>features</strong></a> •
   <a href="./docs/configuration.md"><strong>configuration</strong></a> •
-  <a href="./docs/capabilities.md"><strong>capabilities</strong></a> •
+  <a href="./docs/models.md"><strong>models</strong></a> •
   <a href="./docs/protocol.md"><strong>protocol</strong></a>
 </p>
 <hr>
@@ -36,22 +37,6 @@ _Demo using [eca-vscode](https://github.com/editor-code-assistant/eca-vscode)_
 A Free and OpenSource editor-agnostic tool that aims to easily link LLMs <-> Editors, giving the best UX possible for AI pair programming using a well-defined protocol. The server is written in Clojure and heavily inspired by the [LSP protocol](https://microsoft.github.io/language-server-protocol/) which is a success case for this kind of integration.
 
 The protocol makes easier for other editors integrate and having a server in the middle helps adding more features quickly like exporting metrics of features usage or single way to configure it for any editor.
-
-## Installation
-
-Eca is written in Clojure and compiled into a native binary via graalvm. You can download the [native binaries from Github Releases](https://github.com/editor-code-assistant/eca/releases) or use the install script for convenience:
-
-Stable release:
-
-```bash
-bash <(curl -s https://raw.githubusercontent.com/editor-code-assistant/eca/master/install)
-```
-
-nightly build:
-
-```bash
-bash <(curl -s https://raw.githubusercontent.com/editor-code-assistant/eca/master/install) --version nightly --dir ~/
-```
 
 ## Usage
 

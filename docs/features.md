@@ -33,6 +33,15 @@ Provides access to run shell commands, useful to run build tools, tests, and oth
 
 - `eca_shell_command`: run shell command. Supports configs to exclude commands via `:nativeTools :shell :excludeCommands`.
 
+### Contexts
+
+User can include contexts to the chat, which can help LLM generate output with better quality.
+Here are the current supported contexts types:
+
+- `file`: a file in the workspace, server will pass its content to LLM.
+- `directoryu`: a directory in the workspace, server will read all file contexts and pass to LLM.
+- `repoMap`: a summary view of workspaces files and folders, server will calculate this and pass to LLM. Currently, the repo-map includes only the file paths in git.
+
 ##  Completion
 
 Soon

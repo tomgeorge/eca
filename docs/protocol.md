@@ -278,7 +278,7 @@ type ChatModel =
  */
 type OllamaRunningModel = string
 
-type ChatContext = FileContext | DirectoryContext | WebContext | CodeContext;
+type ChatContext = FileContext | DirectoryContext | WebContext | RepoMapContext;
 
 /**
  * Context related to a file in the workspace
@@ -314,23 +314,13 @@ interface WebContext {
 }
 
 /**
- * Context related to code snippets
+ * Context about the workspaces repo-map, automatically calculated by server.
+ * Clients should include this to chat by default but users may want exclude 
+ * this context to reduce context size if needed.
  */
-interface CodeContext {
-    type: 'code';
-    /**
-     * The code content
-     */
-    content: string;
-    /**
-     * The programming language of the code
-     */
-    language: string;
-    /**
-     * Name or description of what this code represents
-     */
-    description?: string;
-}
+interface RepoMapContext {
+    type: 'repoMap'; 
+ }
 ```
 
 _Response:_

@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Support tool call approval and configuration to manual approval.
+- Initial support for repo-map context.
 
 ## 0.7.0
 

@@ -29,10 +29,10 @@
                                         {:type :file
                                          :path filename
                                          :content (llm-api/refine-file-context filename)}))))
-              nil))
+              "repoMap" [{:type :repoMap}]))
           contexts))
 
-(defn ^:private build-context-str [refined-contexts rules]
+(defn ^:private build-context-str [refined-contexts rules repo-map*]
   (str
    "<rules>\n"
    (reduce
@@ -46,6 +46,7 @@
     (fn [context-str {:keys [type path content]}]
       (str context-str (case type
                          :file (format "<file path=\"%s\">%s</file>\n" path content)
+                         :repoMap (format "<repoMap description=\"Workspaces structure in a tree view, spaces represent file hierarchy\" >%s</repoMap>" @repo-map*)
                          "")))
     ""
     refined-contexts)
@@ -59,19 +60,23 @@
 (defn default-model [db config]
   (llm-api/default-model db config))
 
-(defn finish-chat-prompt! [chat-id status messenger db*]
-  (swap! db* assoc-in [:chats chat-id :status] status)
+(defn ^:private send-content! [{:keys [messenger chat-id request-id]} role content]
   (messenger/chat-content-received
    messenger
    {:chat-id chat-id
-    :request-id (get-in @db* [:chats chat-id :current-request-id])
-    :role :system
-    :content {:type :progress
-              :state :finished}}))
+    :request-id request-id
+    :role role
+    :content content}))
 
-(defn ^:private assert-chat-not-stopped! [chat-id db* messenger]
+(defn finish-chat-prompt! [status {:keys [chat-id db*] :as chat-ctx}]
+  (swap! db* assoc-in [:chats chat-id :status] status)
+  (send-content! chat-ctx :system
+                 {:type :progress
+                  :state :finished}))
+
+(defn ^:private assert-chat-not-stopped! [{:keys [chat-id db*] :as chat-ctx}]
   (when (identical? :stoping (get-in @db* [:chats chat-id :status]))
-    (finish-chat-prompt! chat-id :idle messenger db*)
+    (finish-chat-prompt! :idle chat-ctx)
     (logger/info logger-tag "Chat prompt stopped:" chat-id)
     (throw (ex-info "Chat prompt stopped" {:silent? true
                                            :chat-id chat-id}))))
@@ -97,31 +102,26 @@
                     (let [new-id (str (random-uuid))]
                       (swap! db* assoc-in [:chats new-id] {:id new-id})
                       new-id))
+        chat-ctx {:chat-id chat-id
+                  :request-id request-id
+                  :db* db*
+                  :messenger messenger}
         _ (swap! db* assoc-in [:chats chat-id :current-request-id] request-id)
         _ (swap! db* assoc-in [:chats chat-id :status] :running)
-        _ (messenger/chat-content-received
-           messenger
-           {:chat-id chat-id
-            :request-id request-id
-            :role :user
-            :content {:type :text
-                      :text (str message "\n")}})
+        _ (send-content! chat-ctx :user {:type :text
+                                         :text (str message "\n")})
         _ (when (seq contexts)
-            (messenger/chat-content-received
-             messenger
-             {:chat-id chat-id
-              :request-id request-id
-              :role :system
-              :content {:type :progress
-                        :state :running
-                        :text "Parsing given context"}}))
+            (send-content! chat-ctx :system {:type :progress
+                                             :state :running
+                                             :text "Parsing given context"}))
         db @db*
         rules (f.rules/all config
                            (:workspace-folders db)
                            {:behavior (behavior->behavior-str (or behavior (:chat-default-behavior db)))})
         refined-contexts (raw-contexts->refined contexts)
         manual-approval? (get-in config [:toolCall :manualApproval] false)
-        context-str (build-context-str refined-contexts rules)
+        repo-map* (delay (f.index/repo-map db {:as-string? true}))
+        context-str (build-context-str refined-contexts rules repo-map*)
         chosen-model (or model (default-model db config))
         past-messages (get-in db [:chats chat-id :messages] [])
         user-prompt message
@@ -133,14 +133,9 @@
         sum-sesison-tokens! (fn [input-tokens output-tokens]
                               (swap! db* update-in [:chats chat-id :total-input-tokens] (fnil + 0) input-tokens)
                               (swap! db* update-in [:chats chat-id :total-output-tokens] (fnil + 0) output-tokens))]
-    (messenger/chat-content-received
-     messenger
-     {:chat-id chat-id
-      :request-id request-id
-      :role :system
-      :content {:type :progress
-                :state :running
-                :text "Waiting model"}})
+    (send-content! chat-ctx :system {:type :progress
+                                     :state :running
+                                     :text "Waiting model"})
     (llm-api/complete!
      {:model chosen-model
       :model-config (get-in db [:models chosen-model])
@@ -150,45 +145,27 @@
       :config config
       :tools all-tools
       :on-first-response-received (fn [& _]
-                                    (assert-chat-not-stopped! chat-id db* messenger)
+                                    (assert-chat-not-stopped! chat-ctx)
                                     (add-to-history! {:role "user" :content user-prompt})
-                                    (messenger/chat-content-received
-                                     messenger
-                                     {:chat-id chat-id
-                                      :request-id request-id
-                                      :role :system
-                                      :content {:type :progress
-                                                :state :running
-                                                :text "Generating"}}))
+                                    (send-content! chat-ctx :system {:type :progress
+                                                                     :state :running
+                                                                     :text "Generating"}))
       :on-message-received (fn [{:keys [type] :as msg}]
-                             (assert-chat-not-stopped! chat-id db* messenger)
+                             (assert-chat-not-stopped! chat-ctx)
                              (case type
                                :text (do
                                        (swap! received-msgs* str (:text msg))
-                                       (messenger/chat-content-received
-                                        messenger
-                                        {:chat-id chat-id
-                                         :request-id request-id
-                                         :role :assistant
-                                         :content {:type :text
-                                                   :text (:text msg)}}))
-                               :url (messenger/chat-content-received
-                                     messenger
-                                     {:chat-id chat-id
-                                      :request-id request-id
-                                      :role :assistant
-                                      :content {:type :url
-                                                :title (:title msg)
-                                                :url (:url msg)}})
+                                       (send-content! chat-ctx :assistant {:type :text
+                                                                           :text (:text msg)}))
+                               :url (send-content! chat-ctx :assistant {:type :url
+                                                                        :title (:title msg)
+                                                                        :url (:url msg)})
                                :limit-reached (do
-                                                (messenger/chat-content-received
-                                                 messenger
-                                                 {:chat-id chat-id
-                                                  :request-id request-id
-                                                  :role :system
-                                                  :content {:type :text
-                                                            :text (str "API limit reached. Tokens: " (json/generate-string (:tokens msg)))}})
-                                                (finish-chat-prompt! chat-id :idle messenger db*))
+                                                (send-content! chat-ctx :system
+                                                               {:type :text
+                                                                :text (str "API limit reached. Tokens: " (json/generate-string (:tokens msg)))})
+
+                                                (finish-chat-prompt! :idle chat-ctx))
                                :finish (do
                                          (add-to-history! {:role "assistant" :content @received-msgs*})
                                          (when-let [{:keys [output-tokens input-tokens]} (:usage msg)]
@@ -197,59 +174,43 @@
                                              (let [db @db*
                                                    total-input-tokens (get-in db [:chats chat-id :total-input-tokens] 0)
                                                    total-output-tokens (get-in db [:chats chat-id :total-output-tokens] 0)]
-                                               (messenger/chat-content-received
-                                                messenger
-                                                {:chat-id chat-id
-                                                 :request-id request-id
-                                                 :role :system
-                                                 :content (assoc-some {:type :usage
-                                                                       :message-output-tokens output-tokens
-                                                                       :message-input-tokens input-tokens
-                                                                       :session-tokens (+ total-input-tokens total-output-tokens)}
-                                                                      :message-cost (tokens->cost input-tokens output-tokens chosen-model db)
-                                                                      :session-cost (tokens->cost total-input-tokens total-output-tokens chosen-model db))}))))
-                                         (finish-chat-prompt! chat-id :idle messenger db*))))
+                                               (send-content! chat-ctx :system
+                                                              (assoc-some {:type :usage
+                                                                           :message-output-tokens output-tokens
+                                                                           :message-input-tokens input-tokens
+                                                                           :session-tokens (+ total-input-tokens total-output-tokens)}
+                                                                          :message-cost (tokens->cost input-tokens output-tokens chosen-model db)
+                                                                          :session-cost (tokens->cost total-input-tokens total-output-tokens chosen-model db))))))
+                                         (finish-chat-prompt! :idle chat-ctx))))
       :on-prepare-tool-call (fn [{:keys [id name arguments-text]}]
-                              (assert-chat-not-stopped! chat-id db* messenger)
+                              (assert-chat-not-stopped! chat-ctx)
                               (swap! tool-call-args-by-id* update id str arguments-text)
-                              (messenger/chat-content-received
-                               messenger
-                               {:chat-id chat-id
-                                :request-id request-id
-                                :role :assistant
-                                :content {:type :toolCallPrepare
-                                          :name name
-                                          :origin (tool-name->origin name all-tools)
-                                          :arguments-text (get @tool-call-args-by-id* id)
-                                          :id id
-                                          :manual-approval manual-approval?}}))
+                              (send-content! chat-ctx :assistant
+                                             {:type :toolCallPrepare
+                                              :name name
+                                              :origin (tool-name->origin name all-tools)
+                                              :arguments-text (get @tool-call-args-by-id* id)
+                                              :id id
+                                              :manual-approval manual-approval?}))
       :on-tool-called (fn [{:keys [id name arguments] :as tool-call}]
-                        (assert-chat-not-stopped! chat-id db* messenger)
-                        (messenger/chat-content-received
-                         messenger
-                         {:chat-id chat-id
-                          :request-id request-id
-                          :role :assistant
-                          :content {:type :toolCallRun
-                                    :name name
-                                    :origin (tool-name->origin name all-tools)
-                                    :arguments arguments
-                                    :id id
-                                    :manual-approval manual-approval?}})
+                        (assert-chat-not-stopped! chat-ctx)
+                        (send-content! chat-ctx :assistant
+                                       {:type :toolCallRun
+                                        :name name
+                                        :origin (tool-name->origin name all-tools)
+                                        :arguments arguments
+                                        :id id
+                                        :manual-approval manual-approval?})
                         (let [approved?* (promise)]
                           (swap! db* assoc-in [:chats chat-id :tool-calls id :approved?*] approved?*)
                           (when-not (string/blank? @received-msgs*)
                             (add-to-history! {:role "assistant" :content @received-msgs*})
                             (reset! received-msgs* ""))
                           (if manual-approval?
-                            (messenger/chat-content-received
-                             messenger
-                             {:chat-id chat-id
-                              :request-id request-id
-                              :role :system
-                              :content {:type :progress
-                                        :state :running
-                                        :text "Waiting for tool call approval"}})
+                            (send-content! chat-ctx :system
+                                           {:type :progress
+                                            :state :running
+                                            :text "Waiting for tool call approval"})
                             ;; Otherwise auto approve
                             (deliver approved?* true))
                           (if @approved?*
@@ -257,17 +218,13 @@
                               (add-to-history! {:role "tool_call" :content tool-call})
                               (add-to-history! {:role "tool_call_output" :content (assoc tool-call :output output)})
                               (swap! tool-call-args-by-id* dissoc id)
-                              (messenger/chat-content-received
-                               messenger
-                               {:chat-id chat-id
-                                :request-id request-id
-                                :role :assistant
-                                :content {:type :toolCalled
-                                          :origin (tool-name->origin name all-tools)
-                                          :name name
-                                          :arguments arguments
-                                          :id id
-                                          :outputs (:contents output)}})
+                              (send-content! chat-ctx :assistant
+                                             {:type :toolCalled
+                                              :origin (tool-name->origin name all-tools)
+                                              :name name
+                                              :arguments arguments
+                                              :id id
+                                              :outputs (:contents output)})
                               {:new-messages (get-in @db* [:chats chat-id :messages])})
                             (do
                               (add-to-history! {:role "tool_call" :content tool-call})
@@ -275,49 +232,33 @@
                                                                                                                         :error true
                                                                                                                         :type :text}]})})
                               (swap! tool-call-args-by-id* dissoc id)
-                              (messenger/chat-content-received
-                               messenger
-                               {:chat-id chat-id
-                                :request-id request-id
-                                :role :system
-                                :content {:type :progress
-                                          :state :running
-                                          :text "Generating"}})
-                              (messenger/chat-content-received
-                               messenger
-                               {:chat-id chat-id
-                                :request-id request-id
-                                :role :assistant
-                                :content {:type :toolCallRejected
-                                          :origin (tool-name->origin name all-tools)
-                                          :name name
-                                          :arguments arguments
-                                          :reason :user
-                                          :id id}})
+                              (send-content! chat-ctx :system
+                                             {:type :progress
+                                              :state :running
+                                              :text "Generating"})
+                              (send-content! chat-ctx :assistant
+                                             {:type :toolCallRejected
+                                              :origin (tool-name->origin name all-tools)
+                                              :name name
+                                              :arguments arguments
+                                              :reason :user
+                                              :id id})
                               {:new-messages (get-in @db* [:chats chat-id :messages])}))))
       :on-reason (fn [{:keys [status]}]
-                   (assert-chat-not-stopped! chat-id db* messenger)
+                   (assert-chat-not-stopped! chat-ctx)
                    (let [msg (case status
                                :started "Reasoning"
                                :finished "Waiting model"
                                nil)]
-                     (messenger/chat-content-received
-                      messenger
-                      {:chat-id chat-id
-                       :request-id request-id
-                       :role :system
-                       :content {:type :progress
-                                 :state :running
-                                 :text msg}})))
+                     (send-content! chat-ctx :system
+                                    {:type :progress
+                                     :state :running
+                                     :text msg})))
       :on-error (fn [{:keys [message exception]}]
-                  (messenger/chat-content-received
-                   messenger
-                   {:chat-id chat-id
-                    :request-id request-id
-                    :role :system
-                    :content {:type :text
-                              :text (or message (ex-message exception))}})
-                  (finish-chat-prompt! chat-id :idle messenger db*))})
+                  (send-content! chat-ctx :system
+                                 {:type :text
+                                  :text (or message (ex-message exception))})
+                  (finish-chat-prompt! :idle chat-ctx))})
     {:chat-id chat-id
      :model chosen-model
      :status :success}))
@@ -352,7 +293,8 @@
         root-dirs (mapv (fn [{:keys [uri]}] {:type "directory"
                                              :path (shared/uri->filename uri)})
                         (:workspace-folders @db*))
-        all-contexts (concat root-dirs
+        all-contexts (concat [{:type :repoMap}]
+                             root-dirs
                              all-subfiles-and-dirs)]
     {:chat-id chat-id
      :contexts (set/difference (set all-contexts)
@@ -360,15 +302,14 @@
 (defn prompt-stop
   [{:keys [chat-id]} db* messenger]
   (when (identical? :running (get-in @db* [:chats chat-id :status]))
-    (let [request-id (get-in @db* [:chats chat-id :current-request-id])]
-      (messenger/chat-content-received
-       messenger
-       {:chat-id chat-id
-        :request-id request-id
-        :role :system
-        :content {:type :text
-                  :text "\nPrompt stopped"}})
-      (finish-chat-prompt! chat-id :stoping messenger db*))))
+    (let [request-id (get-in @db* [:chats chat-id :current-request-id])
+          chat-ctx {:chat-id chat-id
+                    :request-id request-id
+                    :db* db*
+                    :messenger messenger}]
+      (send-content! chat-ctx :system {:type :text
+                                       :text "\nPrompt stopped"})
+      (finish-chat-prompt! :stoping chat-ctx))))
 
 (defn delete-chat
   [{:keys [chat-id]} db*]

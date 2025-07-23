@@ -293,7 +293,7 @@
         root-dirs (mapv (fn [{:keys [uri]}] {:type "directory"
                                              :path (shared/uri->filename uri)})
                         (:workspace-folders @db*))
-        all-contexts (concat [{:type :repoMap}]
+        all-contexts (concat [{:type "repoMap"}]
                              root-dirs
                              all-subfiles-and-dirs)]
     {:chat-id chat-id

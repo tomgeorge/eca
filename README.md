@@ -38,11 +38,9 @@ A Free and OpenSource editor-agnostic tool that aims to easily link LLMs <-> Edi
 
 The protocol makes easier for other editors integrate and having a server in the middle helps adding more features quickly like exporting metrics of features usage or single way to configure it for any editor.
 
-## Usage
+## Getting started
 
-Editors should spawn the server via `eca server` and communicate via stdin/stdout. Logs are printed to stderr, use `--verbose` to log client<->server communication or `--log-level debug`  to log more info like LLM responses.
-
-Supported editors already download latest server on start and require no extra configuration
+Install the plugin for your editor and ECA server will be downloaded and started automatically.
 
 ### Supported editors
 
@@ -50,6 +48,12 @@ Supported editors already download latest server on start and require no extra c
 - [VsCode](https://github.com/editor-code-assistant/eca-vscode)
 - Intellij: Planned, help welcome
 - Vim: Planned, help welcome
+
+## How it works
+
+Editors spawn the server via `eca server` and communicate via stdin/stdout. Logs are printed to stderr, use `--verbose` to log client<->server communication or `--log-level debug`  to log more info like LLM responses.
+
+Supported editors already download latest server on start and require no extra configuration
 
 ## Roadmap
 

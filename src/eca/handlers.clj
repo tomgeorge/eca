@@ -36,7 +36,7 @@
             {}
             ollama-models))))
 
-(defn initialize [{:keys [db* messenger config]} params]
+(defn initialize [{:keys [db* config]} params]
   (logger/logging-task
    :eca/initialize
    (swap! db* assoc
@@ -44,14 +44,16 @@
           :workspace-folders (:workspace-folders params)
           :client-capabilities (:capabilities params)
           :chat-behavior (or (-> params :initialization-options :chat-behavior) (:chat-behavior @db*)))
-   (future
-     (f.tools/init-servers! db* messenger config))
    (initialize-extra-models! db* config)
    {:models (keys (:models @db*))
     :chat-default-model (f.chat/default-model @db* config)
     :chat-behaviors (:chat-behaviors @db*)
     :chat-default-behavior (:chat-default-behavior @db*)
     :chat-welcome-message (:welcomeMessage (:chat config))}))
+
+(defn initialized [{:keys [db* messenger config]}]
+  (future
+    (f.tools/init-servers! db* messenger config)))
 
 (defn shutdown [{:keys [db*]}]
   (logger/logging-task

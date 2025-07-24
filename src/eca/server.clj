@@ -34,8 +34,8 @@
     (liveness-probe/start! parent-process-id log-wrapper-fn #(exit server)))
   (handlers/initialize (with-config components) params))
 
-(defmethod lsp.server/receive-notification "initialized" [_ _components _params]
-  (logger/info logger-tag "Initialized!"))
+(defmethod lsp.server/receive-notification "initialized" [_ components _params]
+  (handlers/initialized (with-config components)))
 
 (defmethod lsp.server/receive-request "shutdown" [_ components _params]
   (handlers/shutdown (with-config components)))

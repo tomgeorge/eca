@@ -843,6 +843,11 @@ interface ServerTool {
      * The server tool parameters.
      */
     parameters: any; 
+    
+    /**
+     * Whther this tool is disabled.
+     */
+    disabled?: boolean;
 }
 ```
 

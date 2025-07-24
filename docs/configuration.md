@@ -131,8 +131,11 @@ interface Config {
     anthropicApiKey?: string;
     rules: [{path: string;}];
     nativeTools: {
-        {[key: string] {enabled: boolean}}
+        filesystem: {enabled: boolean};
+         shell: {enabled: boolean;
+                 excludeCommands: string[]};
     };
+    disabledTools: string[],
     toolCall?: {
       manualApproval?: boolean,
     };
@@ -174,9 +177,10 @@ interface Config {
   "openaiApiKey" : null,
   "anthropicApiKey" : null,
   "rules" : [],
-  "nativeTools": {"filesystem": {"enabled": true}
-                  "shell": {"enabled": true
+  "nativeTools": {"filesystem": {"enabled": true},
+                  "shell": {"enabled": true, 
                             "excludeCommands": []}},
+  "disabledTools": [],
   "toolCall": {
     "manualApproval": false,
   },

@@ -22,6 +22,7 @@
    :nativeTools {:filesystem {:enabled true}
                  :shell {:enabled true
                          :excludeCommands []}}
+   :disabledTools []
    :mcpTimeoutSeconds 60
    :mcpServers {}
    :ollama {:host "http://localhost"

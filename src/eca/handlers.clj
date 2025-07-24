@@ -3,10 +3,10 @@
    [eca.config :as config]
    [eca.db :as db]
    [eca.features.chat :as f.chat]
+   [eca.features.tools :as f.tools]
    [eca.features.tools.mcp :as f.mcp]
    [eca.llm-api :as llm-api]
-   [eca.logger :as logger]
-   [eca.messenger :as messenger]))
+   [eca.logger :as logger]))
 
 (set! *warn-on-reflection* true)
 
@@ -44,13 +44,9 @@
           :workspace-folders (:workspace-folders params)
           :client-capabilities (:capabilities params)
           :chat-behavior (or (-> params :initialization-options :chat-behavior) (:chat-behavior @db*)))
-   (initialize-extra-models! db* config)
    (future
-     (f.mcp/initialize-servers-async!
-      {:on-server-updated (fn [server]
-                            (messenger/tool-server-updated messenger server))}
-      db*
-      config))
+     (f.tools/init-servers! db* messenger config))
+   (initialize-extra-models! db* config)
    {:models (keys (:models @db*))
     :chat-default-model (f.chat/default-model @db* config)
     :chat-behaviors (:chat-behaviors @db*)
@@ -86,8 +82,8 @@
 
 (defn chat-prompt-stop [{:keys [db* messenger]} params]
   (logger/logging-task
-      :eca/chat-prompt-stop
-      (f.chat/prompt-stop params db* messenger)))
+   :eca/chat-prompt-stop
+   (f.chat/prompt-stop params db* messenger)))
 
 (defn chat-delete [{:keys [db*]} params]
   (logger/logging-task

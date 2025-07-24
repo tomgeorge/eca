@@ -787,6 +787,12 @@ _Response:_
 type ToolServerUpdatedParams = EcaServerUpdatedParams | MCPServerUpdatedParams;
 
 interface EcaServerUpdatedParams {
+    type: 'native';
+    
+    name: 'ECA';
+    
+    status: 'running';
+
     /**
      * The built-in tools supported by eca.
      */
@@ -794,6 +800,8 @@ interface EcaServerUpdatedParams {
 }
 
 interface MCPServerUpdatedParams {
+    type: 'mcp';
+    
     /**
      * The server name.
      */

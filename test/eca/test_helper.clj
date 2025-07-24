@@ -24,7 +24,7 @@
 (defrecord TestMessenger [messages*]
   messenger/IMessenger
   (chat-content-received [_ data] (swap! messages* update :chat-content-received (fnil conj []) data))
-  (mcp-server-updated [_ data] (swap! messages* update :mcp-server-update (fnil conj []) data))
+  (tool-server-updated [_ data] (swap! messages* update :tool-server-update (fnil conj []) data))
   (showMessage [_ data] (swap! messages* update :show-message (fnil conj []) data)))
 
 (defn ^:private make-components []

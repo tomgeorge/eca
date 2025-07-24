@@ -6,5 +6,5 @@
 
 (defprotocol IMessenger
   (chat-content-received [this data])
-  (mcp-server-updated [this params])
+  (tool-server-updated [this params])
   (showMessage [this msg]))

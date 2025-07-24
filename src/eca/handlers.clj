@@ -48,7 +48,7 @@
    (future
      (f.mcp/initialize-servers-async!
       {:on-server-updated (fn [server]
-                            (messenger/mcp-server-updated messenger server))}
+                            (messenger/tool-server-updated messenger server))}
       db*
       config))
    {:models (keys (:models @db*))

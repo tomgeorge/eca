@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Make generic tool server updates for eca native tools.
+
 ## 0.8.0
 
 - Support tool call approval and configuration to manual approval.

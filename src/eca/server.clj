@@ -90,9 +90,9 @@
   (chat-content-received [_this content]
     (lsp.server/discarding-stdout
      (lsp.server/send-notification server "chat/contentReceived" content)))
-  (mcp-server-updated [_this params]
+  (tool-server-updated [_this params]
     (lsp.server/discarding-stdout
-     (lsp.server/send-notification server "mcp/serverUpdated" params)))
+     (lsp.server/send-notification server "tool/serverUpdated" params)))
   (showMessage [_this msg]
     (lsp.server/discarding-stdout
      (lsp.server/send-notification server "$/showMessage" msg))))

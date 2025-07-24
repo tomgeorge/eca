@@ -769,20 +769,30 @@ Soon
 
 ## Configuration
 
-### MCP server updated (⬅️)
+### Tool updated (⬅️)
 
-A server notification about a configured MCP server status update.
-This is useful for clients present to user the list of configured MCPs,
-their status and available tools.
+A server notification about a tool status update like a MCP or native tool.
+This is useful for clients present to user the list of configured tools/MCPs,
+their status and available tools and actions.
 
 _Request:_ 
 
-* method: `mcp/serverUpdated`
-* params: `MCPServerUpdatedParams` defined as follows:
+* method: `tool/serverUpdated`
+* params: `ToolServerUpdatedParams` defined as follows:
 
 _Response:_
 
+
 ```typescript
+type ToolServerUpdatedParams = EcaServerUpdatedParams | MCPServerUpdatedParams;
+
+interface EcaServerUpdatedParams {
+    /**
+     * The built-in tools supported by eca.
+     */
+    tools: ServerTool[];
+}
+
 interface MCPServerUpdatedParams {
     /**
      * The server name.
@@ -807,22 +817,22 @@ interface MCPServerUpdatedParams {
     /**
      * The tools supported by this mcp server if not disabled.
      */
-    tools?: MCPServerTool[];
+    tools?: ServerTool[];
 }
 
-interface MCPServerTool {
+interface ServerTool {
     /**
-     * The MCP server tool name.
+     * The server tool name.
      */
     name: string;
     
     /**
-     * The MCP server tool description.
+     * The server tool description.
      */
     description: string;
     
     /**
-     * The MCP server tool parameters.
+     * The server tool parameters.
      */
     parameters: any; 
 }

@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Include eca as a  server with tools.
+- Support disable tools via config.
 
 ## 0.8.1
 

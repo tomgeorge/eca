@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.8.1
+
 - Make generic tool server updates for eca native tools.
 
 ## 0.8.0

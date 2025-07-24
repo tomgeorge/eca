@@ -12,7 +12,7 @@
 
 (deftest ignore?-test
   (testing "gitignore type"
-    (let [root "/fake/repo"
+    (let [root (h/file-path "/fake/repo")
           file1 (fs/path root "ignored.txt")
           file2 (fs/path root "not-ignored.txt")]
       (testing "returns filtered files when `git ls-files` works"
@@ -36,14 +36,14 @@
                                                     "src/eca/core.clj"
                                                     "test/eca/core_test.clj"])]
       (is (match?
-           {"/fake/repo"
+           {(h/file-path "/fake/repo")
             {"README.md" {}
              "src" {"eca" {"core.clj" {}}}
              "test" {"eca" {"core_test.clj" {}}}}}
            (eca.features.index/repo-map {:workspace-folders [{:uri (h/file-uri "file:///fake/repo")}]})))))
   (testing "returns string tree with as-string? true"
     (with-redefs [f.index/git-ls-files (constantly ["foo.clj" "bar/baz.clj"])]
-      (is (= (str "/fake/repo\n"
+      (is (= (str (h/file-path "/fake/repo") "\n"
                   " bar\n"
                   "  baz.clj\n"
                   " foo.clj\n")

@@ -75,10 +75,10 @@
              msg))
          past-messages)))
 
-(defn completion! [{:keys [model user-prompt context host port past-messages tools]}
+(defn completion! [{:keys [model user-prompt instructions host port past-messages tools]}
                    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called]}]
   (let [messages (concat
-                  (past-messages->messages past-messages context)
+                  (past-messages->messages past-messages instructions)
                   [{:role "user" :content user-prompt}])
         body {:model model
               :messages messages
@@ -106,7 +106,7 @@
                                  (base-completion-request!
                                   {:rid (llm-util/gen-rid)
                                    :url url
-                                   :body (assoc body :messages (past-messages->messages new-messages context))
+                                   :body (assoc body :messages (past-messages->messages new-messages instructions))
                                    :on-error on-error
                                    :on-response handle-response}))
                                (on-message-received {:type :finish

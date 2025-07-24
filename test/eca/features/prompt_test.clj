@@ -1,0 +1,24 @@
+(ns eca.features.prompt-test
+  (:require
+   [clojure.test :refer [deftest is testing]]
+   [eca.features.prompt :as prompt]
+   [clojure.string :as string]))
+
+(deftest build-instructions-test
+  (testing "Should create instructions with rules, contexts, and behavior"
+    (let [refined-contexts [{:type :file :path "foo.clj" :content "(ns foo)"}
+                            {:type :repoMap :path nil :content nil}]
+          rules [{:name "rule1" :content "First rule"}
+                 {:name "rule2" :content "Second rule"}]
+          fake-repo-map (delay "TREE")
+          behavior "agent"
+          result (prompt/build-instructions refined-contexts rules fake-repo-map behavior)]
+      (is (string/includes? result "You are ECA"))
+      (is (string/includes? result "<rules>"))
+      (is (string/includes? result "<rule name=\"rule1\">First rule</rule>"))
+      (is (string/includes? result "<rule name=\"rule2\">Second rule</rule>"))
+      (is (string/includes? result "<contexts>"))
+      (is (string/includes? result "<file path=\"foo.clj\">(ns foo)</file>"))
+      (is (string/includes? result "<repoMap description=\"Workspaces structure in a tree view, spaces represent file hierarchy\" >TREE</repoMap>"))
+      (is (string/includes? result "</contexts>"))
+      (is (string? result)))))

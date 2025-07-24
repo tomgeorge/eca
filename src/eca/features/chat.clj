@@ -5,6 +5,7 @@
    [clojure.set :as set]
    [clojure.string :as string]
    [eca.features.index :as f.index]
+   [eca.features.prompt :as f.prompt]
    [eca.features.rules :as f.rules]
    [eca.features.tools :as f.tools]
    [eca.llm-api :as llm-api]
@@ -31,31 +32,6 @@
                                          :content (llm-api/refine-file-context filename)}))))
               "repoMap" [{:type :repoMap}]))
           contexts))
-
-(defn ^:private build-context-str [refined-contexts rules repo-map*]
-  (str
-   "<rules>\n"
-   (reduce
-    (fn [rule-str {:keys [name content]}]
-      (str rule-str (format "<rule name=\"%s\">%s</rule>\n" name content)))
-    ""
-    rules)
-   "</rules>\n"
-   "<contexts>\n"
-   (reduce
-    (fn [context-str {:keys [type path content]}]
-      (str context-str (case type
-                         :file (format "<file path=\"%s\">%s</file>\n" path content)
-                         :repoMap (format "<repoMap description=\"Workspaces structure in a tree view, spaces represent file hierarchy\" >%s</repoMap>" @repo-map*)
-                         "")))
-    ""
-    refined-contexts)
-   "</contexts>"))
-
-(defn ^:private behavior->behavior-str [behavior]
-  (case behavior
-    "chat" "Help with code changes only if user requested/agreed, ask first before do changes, answer questions, and provide explanations."
-    "agent" "Help with code changes when applicable, suggesting you do the changes itself, answer questions, and provide explanations."))
 
 (defn default-model [db config]
   (llm-api/default-model db config))
@@ -115,13 +91,11 @@
                                              :state :running
                                              :text "Parsing given context"}))
         db @db*
-        rules (f.rules/all config
-                           (:workspace-folders db)
-                           {:behavior (behavior->behavior-str (or behavior (:chat-default-behavior db)))})
+        rules (f.rules/all config (:workspace-folders db))
         refined-contexts (raw-contexts->refined contexts)
         manual-approval? (get-in config [:toolCall :manualApproval] false)
         repo-map* (delay (f.index/repo-map db {:as-string? true}))
-        context-str (build-context-str refined-contexts rules repo-map*)
+        instructions (f.prompt/build-instructions refined-contexts rules repo-map* (or behavior (:chat-default-behavior db)))
         chosen-model (or model (default-model db config))
         past-messages (get-in db [:chats chat-id :messages] [])
         user-prompt message
@@ -140,7 +114,7 @@
      {:model chosen-model
       :model-config (get-in db [:models chosen-model])
       :user-prompt user-prompt
-      :context context-str
+      :instructions instructions
       :past-messages past-messages
       :config config
       :tools all-tools

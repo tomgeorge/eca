@@ -2,7 +2,6 @@
   (:require
    [babashka.fs :as fs]
    [clojure.java.io :as io]
-   [clojure.string :as string]
    [eca.config :as config]
    [eca.shared :as shared]))
 
@@ -53,22 +52,7 @@
        (flatten)
        (remove nil?)))
 
-(defn ^:private system-rules []
-  [{:name "ECA System"
-    :type :system
-    :content (str "You are an expert AI coding tool called ECA (Editor Code Assistant). "
-                  "Your behavior is to '<behavior>'. "
-                  "The chat is markdown mode. "
-                  "When responding code blocks, pay attention to use valid markdown languages following Github markdown.")}])
-
-(defn all [config roots variables]
-  (mapv (fn [rule]
-          (reduce
-           (fn [rule [k v]]
-             (update rule :content #(string/replace % (str "<" (name k) ">") v)))
-           rule
-           variables))
-        (concat (system-rules)
-                (config-rules config roots)
-                (global-file-rules)
-                (local-file-rules roots))))
+(defn all [config roots]
+  (concat (config-rules config roots)
+          (global-file-rules)
+          (local-file-rules roots)))

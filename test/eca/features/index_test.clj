@@ -4,6 +4,7 @@
    [clojure.java.shell :as shell]
    [clojure.test :refer [deftest is testing]]
    [eca.features.index :as f.index]
+   [eca.shared :refer [multi-str]]
    [eca.test-helper :as h]
    [matcher-combinators.test :refer [match?]]))
 
@@ -43,9 +44,10 @@
            (eca.features.index/repo-map {:workspace-folders [{:uri (h/file-uri "file:///fake/repo")}]})))))
   (testing "returns string tree with as-string? true"
     (with-redefs [f.index/git-ls-files (constantly ["foo.clj" "bar/baz.clj"])]
-      (is (= (str (h/file-path "/fake/repo") "\n"
-                  " bar\n"
-                  "  baz.clj\n"
-                  " foo.clj\n")
+      (is (= (multi-str (h/file-path "/fake/repo")
+                        " bar"
+                        "  baz.clj"
+                        " foo.clj"
+                        "")
              (eca.features.index/repo-map {:workspace-folders [{:uri (h/file-uri "file:///fake/repo")}]}
                                           {:as-string? true}))))))

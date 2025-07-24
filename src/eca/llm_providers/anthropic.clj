@@ -76,7 +76,7 @@
    #(assoc-in % [:content 0 :cache_control] {:type "ephemeral"})))
 
 (defn completion!
-  [{:keys [model user-prompt temperature context max-tokens
+  [{:keys [model user-prompt temperature instructions max-tokens
            api-url api-key past-messages tools web-search]
     :or {max-tokens 4096
          temperature 1.0}}
@@ -91,7 +91,7 @@
               ;; TODO support :thinking
               :stream true
               :tools (->tools tools web-search)
-              :system [{:type "text" :text context :cache_control {:type "ephemeral"}}]}
+              :system [{:type "text" :text instructions :cache_control {:type "ephemeral"}}]}
         on-response-fn
         (fn handle-response [event data content-block*]
           (case event

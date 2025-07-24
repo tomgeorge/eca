@@ -13,8 +13,6 @@
 
 (set! *warn-on-reflection* true)
 
-(def ^:private logger-tag "[server]")
-
 (defn ^:private log-wrapper-fn
   [_level & args]
   (apply logger/info args))

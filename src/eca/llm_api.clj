@@ -65,7 +65,7 @@
          :type "function"))
 
 (defn complete!
-  [{:keys [model model-config context user-prompt config on-first-response-received
+  [{:keys [model model-config instructions user-prompt config on-first-response-received
            on-message-received on-error on-prepare-tool-call on-tool-called on-reason
            past-messages tools]}]
   (let [first-response-received* (atom false)
@@ -101,7 +101,7 @@
                    "gpt-4.1"} model)
       (llm-providers.openai/completion!
        {:model model
-        :context context
+        :instructions instructions
         :user-prompt user-prompt
         :past-messages past-messages
         :tools tools
@@ -115,7 +115,7 @@
                    "claude-3-5-haiku-latest"} model)
       (llm-providers.anthropic/completion!
        {:model model
-        :context context
+        :instructions instructions
         :user-prompt user-prompt
         :past-messages past-messages
         :tools tools
@@ -129,7 +129,7 @@
        {:host (-> config :ollama :host)
         :port (-> config :ollama :port)
         :model (string/replace-first model config/ollama-model-prefix "")
-        :context context
+        :instructions instructions
         :user-prompt user-prompt
         :past-messages past-messages
         :tools tools}
@@ -146,7 +146,7 @@
             key (or (:key provider-config) (config/get-env (:keyEnv provider-config)))]
         (provider-fn
          {:model model
-          :context context
+          :instructions instructions
           :user-prompt user-prompt
           :past-messages past-messages
           :tools tools

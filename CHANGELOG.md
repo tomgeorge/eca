@@ -4,6 +4,7 @@
 
 - Include eca as a  server with tools.
 - Support disable tools via config.
+- Improve ECA prompt to be more precise and output with better quality
 
 ## 0.8.1
 

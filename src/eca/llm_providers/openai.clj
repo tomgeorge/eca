@@ -54,7 +54,7 @@
             msg))
         past-messages))
 
-(defn completion! [{:keys [model user-prompt context temperature api-key api-url past-messages tools web-search]
+(defn completion! [{:keys [model user-prompt instructions temperature api-key api-url past-messages tools web-search]
                     :or {temperature 1.0}}
                    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called on-reason]}]
   (let [input (conj (past-messages->input past-messages)
@@ -64,7 +64,7 @@
         body {:model model
               :input input
               :user (str (System/getProperty "user.name") "@ECA")
-              :instructions context
+              :instructions instructions
               :temperature temperature
               :tools tools
               :stream true}

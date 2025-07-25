@@ -76,17 +76,16 @@
    #(assoc-in % [:content 0 :cache_control] {:type "ephemeral"})))
 
 (defn completion!
-  [{:keys [model user-prompt temperature instructions max-tokens
+  [{:keys [model user-prompt temperature instructions max-output-tokens
            api-url api-key past-messages tools web-search]
-    :or {max-tokens 8192
-         temperature 1.0}}
+    :or {temperature 1.0}}
    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called]}]
   (let [messages (conj (past-messages->messages past-messages)
                        {:role "user" :content [{:type :text
                                                 :text user-prompt}]})
         body {:model model
               :messages (add-cache-to-last-message messages)
-              :max_tokens max-tokens
+              :max_tokens max-output-tokens
               :temperature temperature
               ;; TODO support :thinking
               :stream true

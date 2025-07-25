@@ -86,6 +86,7 @@
         tools (when (:tools model-config)
                 (mapv tool->llm-tool tools))
         web-search (:web-search model-config)
+        max-output-tokens (:max-output-tokens model-config)
         custom-providers (:customProviders config)
         custom-models (set (mapcat (fn [[k v]]
                                      (map #(str (name k) "/" %) (:models v)))
@@ -103,6 +104,7 @@
        {:model model
         :instructions instructions
         :user-prompt user-prompt
+        :max-output-tokens max-output-tokens
         :past-messages past-messages
         :tools tools
         :web-search web-search
@@ -117,6 +119,7 @@
        {:model model
         :instructions instructions
         :user-prompt user-prompt
+        :max-output-tokens max-output-tokens
         :past-messages past-messages
         :tools tools
         :web-search web-search
@@ -148,6 +151,7 @@
          {:model model
           :instructions instructions
           :user-prompt user-prompt
+          :max-output-tokens max-output-tokens
           :past-messages past-messages
           :web-search web-search
           :tools tools

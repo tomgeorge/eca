@@ -4,6 +4,7 @@
    [clojure.java.io :as io]
    [eca.llm-util :as llm-util]
    [eca.logger :as logger]
+   [eca.shared :refer [assoc-some]]
    [hato.client :as http]))
 
 (set! *warn-on-reflection* true)
@@ -54,7 +55,8 @@
             msg))
         past-messages))
 
-(defn completion! [{:keys [model user-prompt instructions temperature api-key api-url past-messages tools web-search]
+(defn completion! [{:keys [model user-prompt instructions temperature api-key api-url
+                           max-output-tokens past-messages tools web-search]
                     :or {temperature 1.0}}
                    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called on-reason]}]
   (let [input (conj (past-messages->input past-messages)
@@ -67,7 +69,8 @@
               :instructions instructions
               :temperature temperature
               :tools tools
-              :stream true}
+              :stream true
+              :max_completion_tokens max-output-tokens}
         mcp-call-by-item-id* (atom {})
         on-response-fn
         (fn handle-response [event data]

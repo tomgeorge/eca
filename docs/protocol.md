@@ -376,7 +376,6 @@ type ChatContent =
     | URLContent 
     | ProgressContent 
     | UsageContent
-    | FileChangeContent
     | ReasonStartedContent 
     | ReasonTextContent 
     | ReasonFinishedContent 
@@ -486,57 +485,6 @@ interface UsageContent {
      * The cost of the whole chat session so far.
      */
     sessionCost?: string;
-}
-
-/**
- * File changes that may require user approval
- */
-interface FileChangeContent {
-    type: 'fileChange';
-    
-    /**
-     * Description of what changes will be made
-     */
-    description: string;
-
-    /**
-     * Whether this change requires manual approval from the user
-     */
-    manualApproval: boolean;
-
-    /**
-     * The file to be changed
-     */
-    file?: string;
-
-    /**
-     * The changes to be applied
-     */
-    changes?: [{
-        /**
-         * The type of change
-         */
-        kind: 'create' | 'change' | 'delete';
-        
-        /**
-         * The content to be added/modified
-         */
-        content?: string;
-        
-        /**
-         * The range of lines to be modified/deleted
-         */
-        range?: {
-            /**
-             * The starting line number (1-based)
-             */
-            startLine: number;
-            /**
-             * The ending line number (1-based)
-             */
-            endLine: number;
-        };
-    }];
 }
 
 /**

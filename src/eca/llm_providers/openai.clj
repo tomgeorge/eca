@@ -4,7 +4,6 @@
    [clojure.java.io :as io]
    [eca.llm-util :as llm-util]
    [eca.logger :as logger]
-   [eca.shared :refer [assoc-some]]
    [hato.client :as http]))
 
 (set! *warn-on-reflection* true)
@@ -16,7 +15,8 @@
 (def base-url "https://api.openai.com")
 
 (defn ^:private base-completion-request! [{:keys [rid body api-url api-key on-error on-response]}]
-  (let [url (str api-url responses-path)]
+  (let [url (str api-url responses-path)
+        reason-id (str (random-uuid))]
     (llm-util/log-request logger-tag rid url body)
     (http/post
      url
@@ -35,7 +35,7 @@
            (with-open [rdr (io/reader body)]
              (doseq [[event data] (llm-util/event-data-seq rdr)]
                (llm-util/log-response logger-tag rid event data)
-               (on-response event data))))
+               (on-response event data reason-id))))
          (catch Exception e
            (on-error {:exception e}))))
      (fn [e]
@@ -73,7 +73,7 @@
               :max_completion_tokens max-output-tokens}
         mcp-call-by-item-id* (atom {})
         on-response-fn
-        (fn handle-response [event data]
+        (fn handle-response [event data reason-id]
           (case event
             ;; text
             "response.output_text.delta"
@@ -101,7 +101,8 @@
                                   :on-error on-error
                                   :on-response handle-response})
                                 (swap! mcp-call-by-item-id* dissoc (-> data :item :id)))
-              "reasoning" (on-reason {:status :finished})
+              "reasoning" (on-reason {:status :finished
+                                      :id reason-id})
               nil)
 
             ;; URL mentioned
@@ -116,7 +117,8 @@
             ;; reasoning / tools
             "response.output_item.added"
             (case (-> data :item :type)
-              "reasoning" (on-reason {:status :started})
+              "reasoning" (on-reason {:status :started
+                                      :id reason-id})
               "function_call" (let [call-id (-> data :item :call_id)
                                     item-id (-> data :item :id)
                                     name (-> data :item :name)]

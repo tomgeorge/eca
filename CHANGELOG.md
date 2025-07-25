@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Increase anthropic models maxTokens to 8196
+- Support thinking/reasoning on models that support it.
 
 ## 0.9.0
 

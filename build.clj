@@ -45,6 +45,7 @@
   OPTS can be a map of
   :jvm-opts A vector of options ot pass to the JVM."
   [opts]
+  (io/delete-file "eca")
   (println "Generating bin...")
   (let [jvm-opts (concat (:jvm-opts opts []) ["-server"])]
     ((requiring-resolve 'deps-bin.impl.bin/build-bin)

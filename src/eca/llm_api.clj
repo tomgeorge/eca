@@ -87,6 +87,7 @@
                 (mapv tool->llm-tool tools))
         web-search (:web-search model-config)
         max-output-tokens (:max-output-tokens model-config)
+        reason-tokens (:reason-tokens model-config)
         custom-providers (:customProviders config)
         custom-models (set (mapcat (fn [[k v]]
                                      (map #(str (name k) "/" %) (:models v)))
@@ -105,6 +106,7 @@
         :instructions instructions
         :user-prompt user-prompt
         :max-output-tokens max-output-tokens
+        :reason-tokens reason-tokens
         :past-messages past-messages
         :tools tools
         :web-search web-search
@@ -120,6 +122,7 @@
         :instructions instructions
         :user-prompt user-prompt
         :max-output-tokens max-output-tokens
+        :reason-tokens reason-tokens
         :past-messages past-messages
         :tools tools
         :web-search web-search
@@ -152,6 +155,7 @@
           :instructions instructions
           :user-prompt user-prompt
           :max-output-tokens max-output-tokens
+          :reason-tokens reason-tokens
           :past-messages past-messages
           :web-search web-search
           :tools tools

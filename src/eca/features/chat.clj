@@ -218,16 +218,20 @@
                                               :reason :user
                                               :id id})
                               {:new-messages (get-in @db* [:chats chat-id :messages])}))))
-      :on-reason (fn [{:keys [status]}]
+      :on-reason (fn [{:keys [status id text]}]
                    (assert-chat-not-stopped! chat-ctx)
-                   (let [msg (case status
-                               :started "Reasoning"
-                               :finished "Waiting model"
-                               nil)]
-                     (send-content! chat-ctx :system
-                                    {:type :progress
-                                     :state :running
-                                     :text msg})))
+                   (case status
+                     :started (send-content! chat-ctx :assistant
+                                             {:type :reasonStarted
+                                              :id id})
+                     :thinking (send-content! chat-ctx :assistant
+                                              {:type :reasonText
+                                               :id id
+                                               :text text})
+                     :finished (send-content! chat-ctx :assistant
+                                              {:type :reasonFinished
+                                               :id id})
+                     nil))
       :on-error (fn [{:keys [message exception]}]
                   (send-content! chat-ctx :system
                                  {:type :text

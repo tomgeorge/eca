@@ -27,11 +27,13 @@
             "claude-sonnet-4-0" {:tools true
                                  :web-search true
                                  :max-output-tokens 8196
+                                 :reason-tokens 2048
                                  :input-token-cost (/ 3.0 one-million)
                                  :output-token-cost (/ 15.0 one-million)}
             "claude-opus-4-0" {:tools true
                                :web-search true
                                :max-output-tokens 8196
+                               :reason-tokens 2048
                                :input-token-cost (/ 15.0 one-million)
                                :output-token-cost (/ 75.0 one-million)}
             "claude-3-5-haiku-latest" {:tools true

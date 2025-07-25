@@ -4,7 +4,7 @@
    [clojure.java.io :as io]
    [eca.llm-util :as llm-util]
    [eca.logger :as logger]
-   [eca.shared :as shared]
+   [eca.shared :as shared :refer [assoc-some]]
    [hato.client :as http]))
 
 (set! *warn-on-reflection* true)
@@ -26,7 +26,8 @@
                       :cache_control {:type "ephemeral"}})))
 
 (defn ^:private base-request! [{:keys [rid body api-url api-key content-block* on-error on-response]}]
-  (let [url (str api-url messages-path)]
+  (let [url (str api-url messages-path)
+        reason-id (str (random-uuid))]
     (llm-util/log-request logger-tag rid url body)
     (http/post
      url
@@ -46,7 +47,7 @@
            (with-open [rdr (io/reader body)]
              (doseq [[event data] (llm-util/event-data-seq rdr)]
                (llm-util/log-response logger-tag rid event data)
-               (on-response event data content-block*))))
+               (on-response event data content-block* reason-id))))
          (catch Exception e
            (on-error {:exception e}))))
      (fn [e]
@@ -77,24 +78,32 @@
 
 (defn completion!
   [{:keys [model user-prompt temperature instructions max-output-tokens
-           api-url api-key past-messages tools web-search]
+           api-url api-key reason-tokens past-messages tools web-search]
     :or {temperature 1.0}}
-   {:keys [on-message-received on-error on-prepare-tool-call on-tool-called]}]
+   {:keys [on-message-received on-error on-reason on-prepare-tool-call on-tool-called]}]
   (let [messages (conj (past-messages->messages past-messages)
                        {:role "user" :content [{:type :text
                                                 :text user-prompt}]})
-        body {:model model
-              :messages (add-cache-to-last-message messages)
-              :max_tokens max-output-tokens
-              :temperature temperature
-              ;; TODO support :thinking
-              :stream true
-              :tools (->tools tools web-search)
-              :system [{:type "text" :text instructions :cache_control {:type "ephemeral"}}]}
+        body (assoc-some
+              {:model model
+               :messages (add-cache-to-last-message messages)
+               :max_tokens max-output-tokens
+               :temperature temperature
+               :stream true
+               :tools (->tools tools web-search)
+               :system [{:type "text" :text instructions :cache_control {:type "ephemeral"}}]}
+              :thinking (when (and reason-tokens (> reason-tokens 0))
+                          {:type "enabled"
+                           :budget_tokens reason-tokens}))
+
         on-response-fn
-        (fn handle-response [event data content-block*]
+        (fn handle-response [event data content-block* reason-id]
           (case event
             "content_block_start" (case (-> data :content_block :type)
+                                    "thinking" (do
+                                                 (on-reason {:status :started
+                                                             :id reason-id})
+                                                 (swap! content-block* assoc (:index data) (:content_block data)))
                                     "tool_use" (do
                                                  (on-prepare-tool-call {:name (-> data :content_block :name)
                                                                         :id (-> data :content_block :id)
@@ -102,6 +111,12 @@
                                                  (swap! content-block* assoc (:index data) (:content_block data)))
 
                                     nil)
+            "content_block_stop" (when-let [content-block (get @content-block* (:index data))]
+                                   (case (:type content-block)
+                                     "thinking" (on-reason {:status :finished
+                                                            :id reason-id})
+                                     nil)
+                                   (swap! content-block* dissoc (:index data)))
             "content_block_delta" (case (-> data :delta :type)
                                     "text_delta" (on-message-received {:type :text
                                                                        :text (-> data :delta :text)})
@@ -117,6 +132,9 @@
                                                                                        :title (-> data :delta :citation :title)
                                                                                        :url (-> data :delta :citation :url)})
                                                         nil)
+                                    "thinking_delta" (on-reason {:status :thinking
+                                                                 :id reason-id
+                                                                 :text (-> data :delta :thinking)})
                                     (logger/warn "Unkown response delta type" (-> data :delta :type)))
             "message_delta" (case (-> data :delta :stop_reason)
                               "tool_use" (doseq [content-block (vals @content-block*)]

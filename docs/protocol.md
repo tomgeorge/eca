@@ -377,6 +377,9 @@ type ChatContent =
     | ProgressContent 
     | UsageContent
     | FileChangeContent
+    | ReasonStartedContent 
+    | ReasonTextContent 
+    | ReasonFinishedContent 
     | ToolCallPrepareContent
     | ToolCallRunContent
     | ToolCalledContent;
@@ -390,6 +393,50 @@ interface TextContent {
      * The text content
      */
     text: string;
+}
+
+/**
+ * A reason started from the LLM
+ *
+ */
+interface ReasonStartedContent {
+    type: 'reasonStarted';
+    
+    /**
+     * The id of this reason
+     */
+    id: string; 
+}
+
+/**
+ * A reason text from the LLM
+ *
+ */
+interface ReasonTextContent {
+    type: 'reasonText';
+    
+    /**
+     * The id of a started reason
+     */
+    id: string;
+    
+    /**
+     * The text content of the reasoning
+     */
+    text: string;
+}
+
+/**
+ * A reason finished from the LLM
+ *
+ */
+interface ReasonFinishedContent {
+    type: 'reasonFinished';
+    
+    /**
+     * The id of this reason
+     */
+    id: string; 
 }
 
 /**

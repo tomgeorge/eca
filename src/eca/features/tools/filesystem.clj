@@ -219,8 +219,8 @@
                  :required ["path"]}
     :handler #'read-file}
    "eca_write_file"
-   {:description (str "Create a new file or completely overwrite an existing file with new content. " +
-                      "Use with caution as it will overwrite existing files without warning. " +
+   {:description (str "Create a new file or completely overwrite an existing file with new content. "
+                      "Use with caution as it will overwrite existing files without warning. "
                       "Handles text content with proper encoding. "
                       "**Only works within the directories: $workspaceRoots.**")
     :parameters {:type "object"

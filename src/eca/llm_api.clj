@@ -149,6 +149,7 @@
           :instructions instructions
           :user-prompt user-prompt
           :past-messages past-messages
+          :web-search web-search
           :tools tools
           :api-url url
           :api-key key}

@@ -78,7 +78,7 @@
 (defn completion!
   [{:keys [model user-prompt temperature instructions max-tokens
            api-url api-key past-messages tools web-search]
-    :or {max-tokens 4096
+    :or {max-tokens 8192
          temperature 1.0}}
    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called]}]
   (let [messages (conj (past-messages->messages past-messages)

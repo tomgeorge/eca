@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Increase anthropic models maxTokens to 8196
+
 ## 0.9.0
 
 - Include eca as a  server with tools.

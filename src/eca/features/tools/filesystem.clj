@@ -30,18 +30,20 @@
           ""
           (fs/list-dir @path))))))
 
+(def ^:private read-file-max-lines 2000)
+
 (defn ^:private read-file [arguments {:keys [db]}]
   (or (tools.util/invalid-arguments arguments (concat (path-validations db)
                                                       [["path" fs/readable? "File $path is not readable"]]))
-      (let [head (get arguments "head")
-            tail (get arguments "tail")
+      (let [line-offset (get arguments "line_offset")
+            limit (or (get arguments "limit") read-file-max-lines)
             content (cond-> (slurp (fs/file (fs/canonicalize (get arguments "path"))))
-                      head (->> (string/split-lines)
-                                (take head)
-                                (string/join "\n"))
-                      tail (->> (string/split-lines)
-                                (take-last tail)
-                                (string/join "\n")))]
+                      line-offset (->> (string/split-lines)
+                                       (drop line-offset)
+                                       (string/join "\n"))
+                      limit (->> (string/split-lines)
+                                 (take limit)
+                                 (string/join "\n")))]
         (tools.util/single-text-content content))))
 
 (defn ^:private write-file [arguments {:keys [db]}]
@@ -205,17 +207,16 @@
    {:description (str "Read the complete contents of a file from the file system. "
                       "Handles various text encodings and provides detailed error messages "
                       "if the file cannot be read. Use this tool when you need to examine "
-                      "the contents of a single file. Use the 'head' parameter to read only "
-                      "the first N lines of a file, or the 'tail' parameter to read only "
-                      "the last N lines of a file."
+                      "the contents of a single file. Optionally use the 'line_offset' and/or 'limit' "
+                      "parameters to read specific contents of the file when you know the lines."
                       "**Only works within the directories: $workspaceRoots.**")
     :parameters {:type "object"
                  :properties {"path" {:type "string"
                                       :description "The absolute path to the file to read."}
-                              "head" {:type "integer"
-                                      :description "If provided, returns only the first N lines of the file"}
-                              "tail" {:type "integer"
-                                      :description "If provided, returns only the last N lines of the file"}}
+                              "line_offset" {:type "integer"
+                                             :description "Line to start reading from (default: 0)"}
+                              "limit" {:type "integer"
+                                       :description (str "Maximum lines to read (default: " read-file-max-lines ")")}}
                  :required ["path"]}
     :handler #'read-file}
    "eca_write_file"

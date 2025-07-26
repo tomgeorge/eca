@@ -15,3 +15,18 @@
            (when h/windows? (shared/uri->filename "file:/c:/Users/FirstName%20LastName/c.clj"))))
     (is (= (when h/windows? "C:\\c.clj")
            (when h/windows? (shared/uri->filename "file:///c:/c.clj"))))))
+
+(deftest assoc-some-test
+  (testing "single association"
+    (is (= {:a 1} (shared/assoc-some {} :a 1)))
+    (is (= {} (shared/assoc-some {} :a nil))))
+  (testing "multiple associations"
+    (is (= {:a 1 :b 2}
+           (shared/assoc-some {} :a 1 :b 2)))
+    (is (= {:a 1}
+           (shared/assoc-some {} :a 1 :b nil)))
+    (is (= {}
+           (shared/assoc-some {} :a nil :b nil))))
+  (testing "throws on uneven kvs"
+    (is (thrown? IllegalArgumentException
+                 (shared/assoc-some {} :a 1 :b)))))

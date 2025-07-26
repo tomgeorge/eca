@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Improve `eca_read_file` tool to have better and more assertive descriptions/parameters.
+
 ## 0.10.0
 
 - Increase anthropic models maxTokens to 8196

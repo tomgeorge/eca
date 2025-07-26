@@ -76,31 +76,41 @@
            ((get-in f.tools.filesystem/definitions ["eca_read_file" :handler])
             {"path" (h/file-path "/foo/qux")}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
-  (testing "heading a file"
+  (testing "with line_offset"
     (is (match?
          {:contents [{:type :text
                       :error false
-                      :content "fooo\nbar"}]}
-         (with-redefs [slurp (constantly "fooo\nbar\nbaz")
+                      :content "line3\nline4\nline5"}]}
+         (with-redefs [slurp (constantly "line1\nline2\nline3\nline4\nline5")
                        fs/exists? (constantly true)
                        fs/readable? (constantly true)
                        f.tools.filesystem/allowed-path? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["eca_read_file" :handler])
-            {"path" (h/file-path "/foo/qux")
-             "head" 2}
+            {"path" (h/file-path "/foo/qux") "line_offset" 2}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
-  (testing "tailling a file"
+  (testing "with limit"
     (is (match?
          {:contents [{:type :text
                       :error false
-                      :content "bar\nbaz"}]}
-         (with-redefs [slurp (constantly "fooo\nbar\nbaz")
+                      :content "line1\nline2"}]}
+         (with-redefs [slurp (constantly "line1\nline2\nline3\nline4\nline5")
                        fs/exists? (constantly true)
                        fs/readable? (constantly true)
                        f.tools.filesystem/allowed-path? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["eca_read_file" :handler])
-            {"path" (h/file-path "/foo/qux")
-             "tail" 2}
+            {"path" (h/file-path "/foo/qux") "limit" 2}
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
+  (testing "with line_offset and limit"
+    (is (match?
+         {:contents [{:type :text
+                      :error false
+                      :content "line3\nline4"}]}
+         (with-redefs [slurp (constantly "line1\nline2\nline3\nline4\nline5")
+                       fs/exists? (constantly true)
+                       fs/readable? (constantly true)
+                       f.tools.filesystem/allowed-path? (constantly true)]
+           ((get-in f.tools.filesystem/definitions ["eca_read_file" :handler])
+            {"path" (h/file-path "/foo/qux") "line_offset" 2 "limit" 2}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}}))))))
 
 (deftest write-file-test
@@ -119,53 +129,53 @@
 (deftest search-files-test
   (testing "invalid pattern"
     (is (match?
-          {:contents [{:type :text
-                       :error true
-                       :content "Invalid glob pattern ' '"}]}
-          (with-redefs [fs/exists? (constantly true)]
-            ((get-in f.tools.filesystem/definitions ["eca_search_files" :handler])
-             {"path" (h/file-path "/project/foo")
-              "pattern" " "}
-             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
+         {:contents [{:type :text
+                      :error true
+                      :content "Invalid glob pattern ' '"}]}
+         (with-redefs [fs/exists? (constantly true)]
+           ((get-in f.tools.filesystem/definitions ["eca_search_files" :handler])
+            {"path" (h/file-path "/project/foo")
+             "pattern" " "}
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "no matches"
     (is (match?
-          {:contents [{:type :text
-                       :error false
-                       :content "No matches found"}]}
-          (with-redefs [fs/exists? (constantly true)
-                        fs/glob (constantly [])]
-            ((get-in f.tools.filesystem/definitions ["eca_search_files" :handler])
-             {"path" (h/file-path "/project/foo")
-              "pattern" "foo"}
-             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
+         {:contents [{:type :text
+                      :error false
+                      :content "No matches found"}]}
+         (with-redefs [fs/exists? (constantly true)
+                       fs/glob (constantly [])]
+           ((get-in f.tools.filesystem/definitions ["eca_search_files" :handler])
+            {"path" (h/file-path "/project/foo")
+             "pattern" "foo"}
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "matches with wildcard"
     (is (match?
-          {:contents [{:type :text
-                       :error false
-                       :content (str (h/file-path "/project/foo/bar/baz.txt") "\n"
-                                     (h/file-path "/project/foo/qux.txt") "\n"
-                                     (h/file-path "/project/foo/qux.clj"))}]}
-          (with-redefs [fs/exists? (constantly true)
-                        fs/glob (constantly [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
-                                             (fs/path (h/file-path "/project/foo/qux.txt"))
-                                             (fs/path (h/file-path "/project/foo/qux.clj"))])]
-            ((get-in f.tools.filesystem/definitions ["eca_search_files" :handler])
-             {"path" (h/file-path "/project/foo")
-              "pattern" "**"}
-             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
+         {:contents [{:type :text
+                      :error false
+                      :content (str (h/file-path "/project/foo/bar/baz.txt") "\n"
+                                    (h/file-path "/project/foo/qux.txt") "\n"
+                                    (h/file-path "/project/foo/qux.clj"))}]}
+         (with-redefs [fs/exists? (constantly true)
+                       fs/glob (constantly [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
+                                            (fs/path (h/file-path "/project/foo/qux.txt"))
+                                            (fs/path (h/file-path "/project/foo/qux.clj"))])]
+           ((get-in f.tools.filesystem/definitions ["eca_search_files" :handler])
+            {"path" (h/file-path "/project/foo")
+             "pattern" "**"}
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "matches without wildcard"
     (is (match?
-          {:contents [{:type :text
-                       :error false
-                       :content (str (h/file-path "/project/foo/bar/baz.txt") "\n"
-                                     (h/file-path "/project/foo/qux.txt"))}]}
-          (with-redefs [fs/exists? (constantly true)
-                        fs/glob (constantly [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
-                                             (fs/path (h/file-path "/project/foo/qux.txt"))])]
-            ((get-in f.tools.filesystem/definitions ["eca_search_files" :handler])
-             {"path" (h/file-path "/project/foo")
-              "pattern" ".txt"}
-             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}}))))))
+         {:contents [{:type :text
+                      :error false
+                      :content (str (h/file-path "/project/foo/bar/baz.txt") "\n"
+                                    (h/file-path "/project/foo/qux.txt"))}]}
+         (with-redefs [fs/exists? (constantly true)
+                       fs/glob (constantly [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
+                                            (fs/path (h/file-path "/project/foo/qux.txt"))])]
+           ((get-in f.tools.filesystem/definitions ["eca_search_files" :handler])
+            {"path" (h/file-path "/project/foo")
+             "pattern" ".txt"}
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}}))))))
 
 (deftest grep-test
   (testing "invalid pattern"

@@ -70,7 +70,7 @@
               :temperature temperature
               :tools tools
               :stream true
-              :max_completion_tokens max-output-tokens}
+              :max_output_tokens max-output-tokens}
         mcp-call-by-item-id* (atom {})
         on-response-fn
         (fn handle-response [event data reason-id]

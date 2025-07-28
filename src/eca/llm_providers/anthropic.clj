@@ -67,6 +67,11 @@
              :content [{:type "tool_result"
                         :tool_use_id (:id content)
                         :content (llm-util/stringfy-tool-result content)}]}
+            "reason"
+            {:role "assistant"
+             :content [{:type "thinking"
+                        :signature (:external-id content)
+                        :thinking (:text content)}]}
             msg))
         past-messages))
 
@@ -111,12 +116,6 @@
                                                  (swap! content-block* assoc (:index data) (:content_block data)))
 
                                     nil)
-            "content_block_stop" (when-let [content-block (get @content-block* (:index data))]
-                                   (case (:type content-block)
-                                     "thinking" (on-reason {:status :finished
-                                                            :id reason-id})
-                                     nil)
-                                   (swap! content-block* dissoc (:index data)))
             "content_block_delta" (case (-> data :delta :type)
                                     "text_delta" (on-message-received {:type :text
                                                                        :text (-> data :delta :text)})
@@ -135,7 +134,10 @@
                                     "thinking_delta" (on-reason {:status :thinking
                                                                  :id reason-id
                                                                  :text (-> data :delta :thinking)})
-                                    (logger/warn "Unkown response delta type" (-> data :delta :type)))
+                                    "signature_delta" (on-reason {:status :finished
+                                                                  :external-id (-> data :delta :signature)
+                                                                  :id reason-id})
+                                    nil)
             "message_delta" (case (-> data :delta :stop_reason)
                               "tool_use" (doseq [content-block (vals @content-block*)]
                                            (when (= "tool_use" (:type content-block))
@@ -154,10 +156,12 @@
                                                  :content-block* (atom nil)
                                                  :on-error on-error
                                                  :on-response handle-response}))))
-                              "end_turn" (on-message-received {:type :finish
-                                                               :usage {:input-tokens (-> data :usage :input_tokens)
-                                                                       :output-tokens (-> data :usage :output_tokens)}
-                                                               :finish-reason (-> data :delta :stop_reason)})
+                              "end_turn" (do
+                                           (reset! content-block* {})
+                                           (on-message-received {:type :finish
+                                                                 :usage {:input-tokens (-> data :usage :input_tokens)
+                                                                         :output-tokens (-> data :usage :output_tokens)}
+                                                                 :finish-reason (-> data :delta :stop_reason)}))
                               "max_tokens" (on-message-received {:type :limit-reached
                                                                  :tokens (:usage data)})
                               nil)

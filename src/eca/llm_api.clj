@@ -76,6 +76,9 @@
         on-message-received-wrapper (fn [& args]
                                       (apply emit-first-message-fn args)
                                       (apply on-message-received args))
+        on-reason-wrapper (fn [& args]
+                            (apply emit-first-message-fn args)
+                            (apply on-reason args))
         on-prepare-tool-call-wrapper (fn [& args]
                                        (apply emit-first-message-fn args)
                                        (apply on-prepare-tool-call args))
@@ -96,7 +99,7 @@
                    :on-error on-error-wrapper
                    :on-prepare-tool-call on-prepare-tool-call-wrapper
                    :on-tool-called on-tool-called
-                   :on-reason on-reason}]
+                   :on-reason on-reason-wrapper}]
     (cond
       (contains? #{"o4-mini"
                    "o3"

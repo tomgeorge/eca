@@ -101,6 +101,7 @@
         user-prompt message
         all-tools (f.tools/all-tools @db* config)
         received-msgs* (atom "")
+        received-thinking* (atom "")
         tool-call-args-by-id* (atom {})
         add-to-history! (fn [msg]
                           (swap! db* update-in [:chats chat-id :messages] (fnil conj []) msg))
@@ -218,19 +219,24 @@
                                               :reason :user
                                               :id id})
                               {:new-messages (get-in @db* [:chats chat-id :messages])}))))
-      :on-reason (fn [{:keys [status id text]}]
+      :on-reason (fn [{:keys [status id text external-id]}]
                    (assert-chat-not-stopped! chat-ctx)
                    (case status
                      :started (send-content! chat-ctx :assistant
                                              {:type :reasonStarted
                                               :id id})
-                     :thinking (send-content! chat-ctx :assistant
-                                              {:type :reasonText
-                                               :id id
-                                               :text text})
-                     :finished (send-content! chat-ctx :assistant
-                                              {:type :reasonFinished
-                                               :id id})
+                     :thinking (do
+                                 (swap! received-thinking* str text)
+                                 (send-content! chat-ctx :assistant
+                                                {:type :reasonText
+                                                 :id id
+                                                 :text text}))
+                     :finished (do
+                                 (add-to-history! {:role "reason" :content {:external-id external-id
+                                                                            :text @received-thinking*}})
+                                 (send-content! chat-ctx :assistant
+                                                {:type :reasonFinished
+                                                 :id id}))
                      nil))
       :on-error (fn [{:keys [message exception]}]
                   (send-content! chat-ctx :system

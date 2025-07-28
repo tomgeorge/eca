@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.10.3
+
 - Fix openai `max_output_tokens` message.
 
 ## 0.10.2

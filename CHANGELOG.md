@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.10.2
+
 - Fix usage metrics for anthropic models. 
 
 ## 0.10.1

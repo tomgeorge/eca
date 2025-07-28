@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.10.1
+
 - Improve `eca_read_file` tool to have better and more assertive descriptions/parameters.
 
 ## 0.10.0

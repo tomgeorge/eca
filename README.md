@@ -3,6 +3,7 @@
 [![GitHub Release](https://img.shields.io/github/v/release/editor-code-assistant/eca?display_name=release&style=flat-square)](https://github.com/editor-code-assistant/eca/releases/latest)
 <a href="https://github.com/editor-code-assistant/eca/stargazers"><img alt="GitHub Stars" title="Total number of GitHub stars the ECA project has received"
 src="https://img.shields.io/github/stars/editor-code-assistant/eca?style=flat-square&logo=github&color=f1c40f&labelColor=555555"/></a>
+![Downloads](https://img.shields.io/github/downloads/editor-code-assistant/eca/total.svg?style=flat-square)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg?style=flat-square)](./LICENSE)
 
 # ECA (Editor Code Assistant)

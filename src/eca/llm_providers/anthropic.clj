@@ -160,6 +160,8 @@
                                            (reset! content-block* {})
                                            (on-message-received {:type :finish
                                                                  :usage {:input-tokens (-> data :usage :input_tokens)
+                                                                         :input-cache-creation-tokens (-> data :usage :cache_creation_input_tokens)
+                                                                         :input-cache-read-tokens (-> data :usage :cache_read_input_tokens)
                                                                          :output-tokens (-> data :usage :output_tokens)}
                                                                  :finish-reason (-> data :delta :stop_reason)}))
                               "max_tokens" (on-message-received {:type :limit-reached

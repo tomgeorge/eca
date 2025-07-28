@@ -65,7 +65,7 @@
                 web-search (conj {:type "web_search_preview"}))
         body {:model model
               :input input
-              :user (str (System/getProperty "user.name") "@ECA")
+              :prompt_cache_key (str (System/getProperty "user.name") "@ECA")
               :instructions instructions
               :temperature temperature
               :tools tools

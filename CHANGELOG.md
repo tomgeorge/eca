@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix usage metrics for anthropic models. 
+
 ## 0.10.1
 
 - Improve `eca_read_file` tool to have better and more assertive descriptions/parameters.

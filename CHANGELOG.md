@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix openai `max_output_tokens` message.
+
 ## 0.10.2
 
 - Fix usage metrics for anthropic models. 

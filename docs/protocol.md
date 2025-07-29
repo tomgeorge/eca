@@ -289,6 +289,14 @@ interface FileContext {
      * Path to the file
      */
     path: string;
+    
+    /**
+     * Range of lines to retrive from file, if nil consider whole file.
+     */
+    linesRange?: {
+        start: number;
+        end: number;
+    }
 }
 
 /**

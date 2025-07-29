@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add support for file contexts with line ranges.
+
 ## 0.10.3
 
 - Fix openai `max_output_tokens` message.

@@ -31,9 +31,11 @@
    ""
    "<contexts>"
    (reduce
-    (fn [context-str {:keys [type path content]}]
+    (fn [context-str {:keys [type path content partial]}]
       (str context-str (case type
-                         :file (format "<file path=\"%s\">%s</file>\n" path content)
+                         :file (if partial
+                                 (format "<file partial=true path=\"%s\">...\n%s\n...</file>\n" path content)
+                                 (format "<file path=\"%s\">%s</file>\n" path content))
                          :repoMap (format "<repoMap description=\"Workspaces structure in a tree view, spaces represent file hierarchy\" >%s</repoMap>" @repo-map*)
                          "")))
     ""

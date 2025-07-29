@@ -18,18 +18,19 @@
 (def ^:private logger-tag "[CHAT]")
 
 (defn ^:private raw-contexts->refined [contexts]
-  (mapcat (fn [{:keys [type path]}]
+  (mapcat (fn [{:keys [type path lines-range]}]
             (case type
               "file" [{:type :file
                        :path path
-                       :content (llm-api/refine-file-context path)}]
+                       :partial (boolean lines-range)
+                       :content (llm-api/refine-file-context path lines-range)}]
               "directory" (->> (fs/glob path "**")
                                (remove fs/directory?)
                                (map (fn [path]
                                       (let [filename (str (fs/canonicalize path))]
                                         {:type :file
                                          :path filename
-                                         :content (llm-api/refine-file-context filename)}))))
+                                         :content (llm-api/refine-file-context filename nil)}))))
               "repoMap" [{:type :repoMap}]))
           contexts))
 

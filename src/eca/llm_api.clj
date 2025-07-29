@@ -15,9 +15,15 @@
   (llm-providers.ollama/list-models {:host (:host (:ollama config))
                                      :port (:port (:ollama config))}))
 
-(defn refine-file-context [path]
-  ;; TODO ask LLM for the most relevant parts of the path
-  (slurp path))
+;; TODO ask LLM for the most relevant parts of the path
+(defn refine-file-context [path lines-range]
+  (let [content (slurp path)]
+    (if lines-range
+      (let [lines (string/split-lines content)
+            start (dec (:start lines-range))
+            end (min (count lines) (:end lines-range))]
+        (string/join "\n" (subvec lines start end)))
+      content)))
 
 (defn ^:private anthropic-api-key [config]
   (or (:anthropicApiKey config)

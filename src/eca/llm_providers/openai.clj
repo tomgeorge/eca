@@ -42,7 +42,7 @@
        (on-error {:exception e})))))
 
 (defn ^:private past-messages->input [past-messages]
-  (mapv (fn [{:keys [role content] :as msg}]
+  (keep (fn [{:keys [role content] :as msg}]
           (case role
             "tool_call" {:type "function_call"
                          :name (:name content)
@@ -52,6 +52,7 @@
             {:type "function_call_output"
              :call_id (:id content)
              :output (llm-util/stringfy-tool-result content)}
+            "reason" nil
             msg))
         past-messages))
 

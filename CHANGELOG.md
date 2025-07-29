@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.11.0
+
 - Add support for file contexts with line ranges.
 
 ## 0.10.3

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix error field on tool call outputs.
+
 ## 0.11.1
 
 - Fix reasoning for openai o models.

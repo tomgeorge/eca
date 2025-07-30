@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.11.2
+
 - Fix error field on tool call outputs.
 
 ## 0.11.1

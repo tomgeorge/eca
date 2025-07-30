@@ -31,4 +31,14 @@
   (testing "final options"
     (is (string? (:exit-message (#'main/parse ["--help"]))))
     (is (string? (:exit-message (#'main/parse ["-h"]))))
-    (is (string? (:exit-message (#'main/parse ["--version"]))))))
+    (is (string? (:exit-message (#'main/parse ["--version"])))))
+  (testing "options + commands"
+    (is (match?
+         {:action "server"
+          :options {:log-level "debug"}}
+         (#'main/parse ["--log-level" "debug" "server"]))))
+  (testing "commands + options"
+    (is (match?
+         {:action "server"
+          :options {:log-level "debug"}}
+         (#'main/parse ["server" "--log-level" "debug"])))))

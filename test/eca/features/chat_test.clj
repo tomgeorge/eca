@@ -218,15 +218,16 @@ for allowed directories and then list files"
               (on-message-received {:type :text :text "/foo/bar"})
               (on-message-received {:type :finish}))
             :call-tool-mock
-            (constantly {:contents [{:type :text :error false :content "Allowed directories: /foo/bar"}]})})]
+            (constantly {:error false
+                         :contents [{:type :text :content "Allowed directories: /foo/bar"}]})})]
       (is (match?
            {chat-id {:id chat-id
                      :messages [{:role "user" :content "List the files you are allowed to see"}
                                 {:role "assistant" :content "Ok, working on it"}
                                 {:role "tool_call" :content {:id "call-1" :name "list_allowed_directories" :arguments {}}}
                                 {:role "tool_call_output" :content {:id "call-1" :name "list_allowed_directories" :arguments {}
-                                                                    :output {:contents [{:content "Allowed directories: /foo/bar"
-                                                                                         :error false
+                                                                    :output {:error false
+                                                                             :contents [{:content "Allowed directories: /foo/bar"
                                                                                          :type :text}]}}}
                                 {:role "assistant" :content "I can see: \n/foo/bar"}]}}
            (:chats (h/db))))
@@ -239,7 +240,7 @@ for allowed directories and then list files"
              {:role :assistant :content {:type :text :text " working on it"}}
              {:role :assistant :content {:type :toolCallPrepare :id "call-1" :name "list_allowed_directories" :arguments-text "" :manual-approval false}}
              {:role :assistant :content {:type :toolCallRun :id "call-1" :name "list_allowed_directories" :arguments {} :manual-approval false}}
-             {:role :assistant :content {:type :toolCalled :id "call-1" :name "list_allowed_directories" :arguments {} :outputs [{:content "Allowed directories: /foo/bar" :error false :type :text}]}}
+             {:role :assistant :content {:type :toolCalled :id "call-1" :name "list_allowed_directories" :arguments {} :outputs [{:content "Allowed directories: /foo/bar" :type :text}]}}
              {:role :assistant :content {:type :text :text "I can see: \n"}}
              {:role :assistant :content {:type :text :text "/foo/bar"}}
              {:role :system :content {:state :finished :type :progress}}]}

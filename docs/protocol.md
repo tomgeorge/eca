@@ -577,6 +577,11 @@ interface ToolCalledContent {
     arguments: string[];
     
     /**
+     * Whether it was a error
+     */
+    error: boolean;
+    
+    /**
      * the result of the tool call.
      */
     outputs: [{
@@ -588,12 +593,7 @@ interface ToolCalledContent {
         /**
          * The content of this output
          */
-        content: string;
-        
-        /**
-         * Whether it was a error
-         */
-        error: boolean;
+        content: string; 
     }];
 }
 

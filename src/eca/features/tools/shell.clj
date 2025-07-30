@@ -38,18 +38,16 @@
           (logger/debug logger-tag "Command executed:" result)
           (if (zero? (:exit result))
             (tools.util/single-text-content (:out result))
-            {:contents (remove nil?
+            {:error true
+             :contents (remove nil?
                                (concat [{:type :text
-                                         :content (str "Exit code " (:exit result))
-                                         :error true}]
+                                         :content (str "Exit code " (:exit result))}]
                                        (when-not (string/blank? err)
                                          [{:type :text
-                                           :content (str "Stderr:\n" err)
-                                           :error true}])
+                                           :content (str "Stderr:\n" err)}])
                                        (when-not (string/blank? out)
                                          [{:type :text
-                                           :content (str "Stdout:\n" out)
-                                           :error true}])))})))))
+                                           :content (str "Stdout:\n" out)}])))})))))
 
 (def definitions
   {"eca_shell_command"

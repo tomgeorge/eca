@@ -10,8 +10,8 @@
 (deftest shell-command-test
   (testing "inexistent working_directory"
     (is (match?
-         {:contents [{:type :text
-                      :error true
+         {:error true
+          :contents [{:type :text
                       :content (format "working directory %s does not exist" (h/file-path "/baz"))}]}
          (with-redefs [fs/exists? (constantly false)]
            ((get-in f.tools.shell/definitions ["eca_shell_command" :handler])
@@ -20,11 +20,10 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "command exited with non-zero exit code"
     (is (match?
-         {:contents [{:type :text
-                      :error true
+         {:error true
+          :contents [{:type :text
                       :content "Exit code 1"}
                      {:type :text
-                      :error true
                       :content "Stderr:\nSome error"}]}
          (with-redefs [fs/exists? (constantly true)
                        shell/sh (constantly {:exit 1 :err "Some error"})]
@@ -33,8 +32,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "command succeeds"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content "Some text"}]}
          (with-redefs [fs/exists? (constantly true)
                        shell/sh (constantly {:exit 0 :out "Some text" :err "Other text"})]
@@ -43,8 +42,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "command succeeds with different working directory"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content "Some text"}]}
          (with-redefs [fs/exists? (constantly true)
                        shell/sh (constantly {:exit 0 :out "Some text" :err "Other text"})]
@@ -54,8 +53,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "command does not fails if not in excluded config"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content "Some text"}]}
          (with-redefs [fs/exists? (constantly true)
                        shell/sh (constantly {:exit 0 :out "Some text" :err "Other text"})]
@@ -66,8 +65,8 @@
                                             :excludeCommands ["ls" "cd"]}}}})))))
   (testing "command fails if in excluded config"
     (is (match?
-         {:contents [{:type :text
-                      :error true
+         {:error true
+          :contents [{:type :text
                       :content "Cannot run command 'rm' because it is excluded by eca config."}]}
          (with-redefs [fs/exists? (constantly true)]
            ((get-in f.tools.shell/definitions ["eca_shell_command" :handler])

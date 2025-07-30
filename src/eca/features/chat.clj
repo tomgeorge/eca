@@ -213,17 +213,18 @@
                             ;; Otherwise auto approve
                             (deliver approved?* true))
                           (if @approved?*
-                            (let [output (f.tools/call-tool! name arguments @db* config)]
+                            (let [result (f.tools/call-tool! name arguments @db* config)]
                               (add-to-history! {:role "tool_call" :content tool-call})
-                              (add-to-history! {:role "tool_call_output" :content (assoc tool-call :output output)})
+                              (add-to-history! {:role "tool_call_output" :content (assoc tool-call :output result)})
                               (swap! tool-call-args-by-id* dissoc id)
                               (send-content! chat-ctx :assistant
                                              {:type :toolCalled
                                               :origin (tool-name->origin name all-tools)
                                               :name name
                                               :arguments arguments
+                                              :error (:error result)
                                               :id id
-                                              :outputs (:contents output)})
+                                              :outputs (:contents result)})
                               {:new-messages (get-in @db* [:chats chat-id :messages])})
                             (do
                               (add-to-history! {:role "tool_call" :content tool-call})

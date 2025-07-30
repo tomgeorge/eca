@@ -14,6 +14,10 @@
     McpSchema$CallToolRequest
     McpSchema$ClientCapabilities
     McpSchema$Content
+    McpSchema$GetPromptRequest
+    McpSchema$Prompt
+    McpSchema$PromptArgument
+    McpSchema$PromptMessage
     McpSchema$Root
     McpSchema$TextContent
     McpSchema$Tool
@@ -72,6 +76,26 @@
    :tools (get-in db [:mcp-clients mcp-name :tools])
    :status status})
 
+(defn ^:private list-server-tools [^ObjectMapper obj-mapper ^McpSyncClient client]
+  (mapv (fn [^McpSchema$Tool tool-client]
+          {:name (.name tool-client)
+           :description (.description tool-client)
+           ;; We convert to json to then read so we have a clojure map
+           ;; TODO avoid this converting to clojure map directly
+           :parameters (json/parse-string (.writeValueAsString obj-mapper (.inputSchema tool-client)) true)})
+        (.tools (.listTools client))))
+
+(defn ^:private list-server-prompts [^McpSyncClient client]
+  (mapv (fn [^McpSchema$Prompt prompt-client]
+          {:name (.name prompt-client)
+           :description (.description prompt-client)
+           :arguments (mapv (fn [^McpSchema$PromptArgument content]
+                              {:name (.name content)
+                               :description (.description content)
+                               :required (.required content)})
+                            (.arguments prompt-client))})
+        (.prompts (.listPrompts client))))
+
 (defn initialize-servers-async! [{:keys [on-server-updated]} db* config]
   (let [workspaces (:workspace-folders @db*)
         db @db*
@@ -89,14 +113,8 @@
                 (doseq [{:keys [name uri]} workspaces]
                   (.addRoot client (McpSchema$Root. uri name)))
                 (.initialize client)
-                (let [tools (mapv (fn [^McpSchema$Tool tool-client]
-                                    {:name (.name tool-client)
-                                     :description (.description tool-client)
-                                     ;; We convert to json to then read so we have a clojure map
-                                     ;; TODO avoid this converting to clojure map directly
-                                     :parameters (json/parse-string (.writeValueAsString obj-mapper (.inputSchema tool-client)) true)})
-                                  (.tools (.listTools client)))]
-                  (swap! db* assoc-in [:mcp-clients name :tools] tools))
+                (swap! db* assoc-in [:mcp-clients name :tools] (list-server-tools obj-mapper client))
+                (swap! db* assoc-in [:mcp-clients name :prompts] (list-server-prompts client))
                 (on-server-updated (->server name server-config :running @db*)))
               (catch Exception e
                 (logger/warn logger-tag (format "Could not initialize MCP server %s. Error: %s" name (.getMessage e)))
@@ -118,20 +136,43 @@
       (let [result (.callTool ^McpSyncClient mcp-client
                               (McpSchema$CallToolRequest. name arguments))]
         (logger/debug logger-tag "ToolCall result: " result)
-        {:contents (map (fn [content]
+        {:error (.isError result)
+         :contents (map (fn [content]
                           (case (.type ^McpSchema$Content content)
                             "text" {:type :text
-                                    :error (.isError result)
                                     :content (.text ^McpSchema$TextContent content)}
                             nil))
                         (.content result))})
       (catch Exception e
-        {:contents [{:type :text
-                     :error true
+        {:error true
+         :contents [{:type :text
                      :content (.getMessage e)}]}))))
+
+(defn get-prompt! [^String name ^Map arguments db]
+  (let [mcp-client (->> (vals (:mcp-clients db))
+                        (keep (fn [{:keys [client prompts]}]
+                                (when (some #(= name (:name %)) prompts)
+                                  client)))
+                        first)
+        prompt (.getPrompt ^McpSyncClient mcp-client (McpSchema$GetPromptRequest. name arguments))]
+    {:description (.description prompt)
+     :messages (mapv (fn [^McpSchema$PromptMessage message]
+                       {:role (.role message)
+                        :content (.content message)})
+                     (.messages prompt))}))
 
 (defn shutdown! [db*]
   (doseq [[_name {:keys [_client]}] (:mcp-clients @db*)]
     ;; TODO NoClassDefFound being thrown for some reason
     #_(.closeGracefully ^McpSyncClient client))
   (swap! db* assoc :mcp-clients {}))
+
+(comment
+  (def db* (atom user/*db*))
+  (user/with-workspace-root "/home/greg/dev/eca/eca"
+    (initialize-servers-async! {:on-server-updated println}
+                               db*
+                               {:mcpTimeoutSeconds 10
+                                :mcpServers {"fetch" {:command "docker" :args ["run" "-i" "--rm" "mcp/fetch"]}}}))
+  (:prompts (second (first (:mcp-clients @db*))))
+  (get-prompt! "fetch" {"url" "https://eca.dev"} @db*))

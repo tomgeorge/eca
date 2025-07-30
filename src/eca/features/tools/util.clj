@@ -5,9 +5,9 @@
    [eca.shared :as shared]))
 
 (defn single-text-content [text & [error]]
-  {:contents [{:type :text
-               :content text
-               :error (boolean error)}]})
+  {:error (boolean error)
+   :contents [{:type :text
+               :content text}]})
 
 (defn workspace-roots-strs [db]
   (->> (:workspace-folders db)

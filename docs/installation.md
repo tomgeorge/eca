@@ -8,6 +8,11 @@ Stable release:
 bash <(curl -s https://raw.githubusercontent.com/editor-code-assistant/eca/master/install)
 ```
 
+Or if facing issues with command above:
+```bash
+curl -s https://raw.githubusercontent.com/editor-code-assistant/eca/master/install | sudo bash
+```
+
 nightly build:
 
 ```bash

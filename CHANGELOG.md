@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Improve welcome message.
+
 ## 0.12.0
 
 - Fix openai api key read from config.

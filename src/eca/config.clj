@@ -28,7 +28,7 @@
    :ollama {:host "http://localhost"
             :port 11434
             :useTools true}
-   :chat {:welcomeMessage "Welcome to ECA! What you have in mind?\n\n"}
+   :chat {:welcomeMessage "Welcome to ECA!\n\nType '/' for commands\n\n"}
    :customProviders {}
    :index {:ignoreFiles [{:type :gitignore}]}})
 

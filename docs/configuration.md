@@ -121,6 +121,8 @@ It's possible to configure ECA to be aware of custom LLM providers if they follo
 }
 ```
 
+With that, ECA will include in the known models something like: `my-company/gpt-4.1`, `my-company/deepseek-r1`.
+
 ## All configs
 
 ### Schema

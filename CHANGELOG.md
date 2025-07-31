@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix openai api key read from config.
+
 ## 0.11.2
 
 - Fix error field on tool call outputs.

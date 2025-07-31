@@ -34,7 +34,7 @@
       llm-providers.anthropic/base-url))
 
 (defn ^:private openai-api-key [config]
-  (or (:openaiapikey config)
+  (or (:openaiApiKey config)
       (config/get-env "OPENAI_API_KEY")))
 
 (defn ^:private openai-api-url []

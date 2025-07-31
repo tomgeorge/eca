@@ -34,5 +34,5 @@
                                                :arguments {}
                                                :output {:contents [{:type :text
                                                                     :error false
-                                                                    :content "Allowed directories: /foo/bar"}]}}}
+                                                                    :text "Allowed directories: /foo/bar"}]}}}
            {:role "assistant" :content "I see /foo/bar"}])))))

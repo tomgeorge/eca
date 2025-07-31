@@ -71,7 +71,7 @@
          :type "function"))
 
 (defn complete!
-  [{:keys [model model-config instructions user-messages config on-first-response-received
+  [{:keys [model model-config instructions reason? user-messages config on-first-response-received
            on-message-received on-error on-prepare-tool-call on-tool-called on-reason
            past-messages tools]}]
   (let [first-response-received* (atom false)
@@ -116,6 +116,7 @@
         :user-messages user-messages
         :max-output-tokens max-output-tokens
         :reason-tokens reason-tokens
+        :reason? reason?
         :past-messages past-messages
         :tools tools
         :web-search web-search
@@ -132,6 +133,7 @@
         :user-messages user-messages
         :max-output-tokens max-output-tokens
         :reason-tokens reason-tokens
+        :reason? reason?
         :past-messages past-messages
         :tools tools
         :web-search web-search
@@ -143,6 +145,7 @@
       (llm-providers.ollama/completion!
        {:host (-> config :ollama :host)
         :port (-> config :ollama :port)
+        :reason? reason?
         :model (string/replace-first model config/ollama-model-prefix "")
         :instructions instructions
         :user-messages user-messages
@@ -165,6 +168,7 @@
           :user-messages user-messages
           :max-output-tokens max-output-tokens
           :reason-tokens reason-tokens
+          :reason? reason?
           :past-messages past-messages
           :web-search web-search
           :tools tools

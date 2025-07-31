@@ -131,6 +131,7 @@
 
 (defn ^:private prompt-messages!
   [user-messages
+   reason?
    {:keys [db* config chat-id contexts behavior model] :as chat-ctx}]
   (when (seq contexts)
     (send-content! chat-ctx :system {:type :progress
@@ -161,6 +162,7 @@
       :past-messages past-messages
       :config config
       :tools all-tools
+      :reason? reason?
       :on-first-response-received (fn [& _]
                                     (assert-chat-not-stopped! chat-ctx)
                                     (doseq [message user-messages]
@@ -289,7 +291,7 @@
                    {}
                    arguments)
         {:keys [messages]} (f.mcp/get-prompt! prompt args-vals @db*)]
-    (prompt-messages! messages chat-ctx)))
+    (prompt-messages! messages false chat-ctx)))
 
 (defn ^:private handle-command! [{:keys [command]} {:keys [chat-id db*] :as chat-ctx}]
   (case command
@@ -336,7 +338,7 @@
     (case (:type decision)
       :mcp-prompt (send-mcp-prompt! decision chat-ctx)
       :eca-command (handle-command! decision chat-ctx)
-      :prompt-message (prompt-messages! [{:role "user" :content message}] chat-ctx))
+      :prompt-message (prompt-messages! [{:role "user" :content message}] true chat-ctx))
     {:chat-id chat-id
      :model chosen-model
      :status :success}))

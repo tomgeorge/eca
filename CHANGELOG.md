@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix tool calls
+
 ## 0.12.1
 
 - Improve welcome message.

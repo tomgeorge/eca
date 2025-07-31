@@ -51,7 +51,7 @@
 
 (defn stringfy-tool-result [result]
   (reduce
-   #(str %1 (:content %2) "\n")
+   #(str %1 (:text %2) "\n")
    ""
    (-> result :output :contents)))
 

@@ -146,7 +146,7 @@
                  (catch Exception e
                    {:error true
                     :contents [{:type :text
-                                :content (.getMessage e)}]}))]
+                                :text (.getMessage e)}]}))]
     (logger/debug logger-tag "ToolCall result: " result)
     result))
 

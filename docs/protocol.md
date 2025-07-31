@@ -770,6 +770,11 @@ interface ChatCommand {
     description: string;
     
     /**
+     * The type of this command
+     */
+    type: 'mcp-prompt' | 'native';
+    
+    /**
      * The arguments of the command.
      */
     arguments: [{

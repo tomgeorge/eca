@@ -385,9 +385,11 @@
    db*]
   (let [mcp-prompts (->> (f.mcp/all-prompts @db*)
                          (mapv #(-> %
-                                    (assoc :name (str (:server %) ":" (:name %)))
+                                    (assoc :name (str (:server %) ":" (:name %))
+                                           :type :mcpPrompt)
                                     (dissoc :server))))
         eca-commands [{:name "costs"
+                       :type :native
                        :description "Show the total costs of the current chat session."
                        :arguments []}]
         commands (concat mcp-prompts

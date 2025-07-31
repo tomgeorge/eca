@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.12.2
+
 - Fix tool calls
 
 ## 0.12.1

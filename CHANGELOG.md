@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix MCP prompts for anthropic models.
+
 ## 0.12.2
 
 - Fix tool calls

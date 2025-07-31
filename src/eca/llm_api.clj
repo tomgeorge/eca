@@ -71,7 +71,7 @@
          :type "function"))
 
 (defn complete!
-  [{:keys [model model-config instructions user-prompt config on-first-response-received
+  [{:keys [model model-config instructions user-messages config on-first-response-received
            on-message-received on-error on-prepare-tool-call on-tool-called on-reason
            past-messages tools]}]
   (let [first-response-received* (atom false)
@@ -113,7 +113,7 @@
       (llm-providers.openai/completion!
        {:model model
         :instructions instructions
-        :user-prompt user-prompt
+        :user-messages user-messages
         :max-output-tokens max-output-tokens
         :reason-tokens reason-tokens
         :past-messages past-messages
@@ -129,7 +129,7 @@
       (llm-providers.anthropic/completion!
        {:model model
         :instructions instructions
-        :user-prompt user-prompt
+        :user-messages user-messages
         :max-output-tokens max-output-tokens
         :reason-tokens reason-tokens
         :past-messages past-messages
@@ -145,7 +145,7 @@
         :port (-> config :ollama :port)
         :model (string/replace-first model config/ollama-model-prefix "")
         :instructions instructions
-        :user-prompt user-prompt
+        :user-messages user-messages
         :past-messages past-messages
         :tools tools}
        callbacks)
@@ -162,7 +162,7 @@
         (provider-fn
          {:model model
           :instructions instructions
-          :user-prompt user-prompt
+          :user-messages user-messages
           :max-output-tokens max-output-tokens
           :reason-tokens reason-tokens
           :past-messages past-messages

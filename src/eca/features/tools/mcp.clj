@@ -76,6 +76,12 @@
    :tools (get-in db [:mcp-clients mcp-name :tools])
    :status status})
 
+(defn ^:private ->content [^McpSchema$Content content-client]
+  (case (.type content-client)
+    "text" {:type :text
+            :text (.text ^McpSchema$TextContent content-client)}
+    nil))
+
 (defn ^:private list-server-tools [^ObjectMapper obj-mapper ^McpSyncClient client]
   (mapv (fn [^McpSchema$Tool tool-client]
           {:name (.name tool-client)
@@ -131,22 +137,24 @@
                         (keep (fn [{:keys [client tools]}]
                                 (when (some #(= name (:name %)) tools)
                                   client)))
-                        first)]
-    (try
-      (let [result (.callTool ^McpSyncClient mcp-client
-                              (McpSchema$CallToolRequest. name arguments))]
-        (logger/debug logger-tag "ToolCall result: " result)
-        {:error (.isError result)
-         :contents (map (fn [content]
-                          (case (.type ^McpSchema$Content content)
-                            "text" {:type :text
-                                    :content (.text ^McpSchema$TextContent content)}
-                            nil))
-                        (.content result))})
-      (catch Exception e
-        {:error true
-         :contents [{:type :text
-                     :content (.getMessage e)}]}))))
+                        first)
+        result (try
+                 (let [result (.callTool ^McpSyncClient mcp-client
+                                         (McpSchema$CallToolRequest. name arguments))]
+                   {:error (.isError result)
+                    :contents (mapv ->content (.content result))})
+                 (catch Exception e
+                   {:error true
+                    :contents [{:type :text
+                                :content (.getMessage e)}]}))]
+    (logger/debug logger-tag "ToolCall result: " result)
+    result))
+
+(defn all-prompts [db]
+  (into []
+        (mapcat (fn [[server-name {:keys [prompts]}]]
+                  (mapv #(assoc % :server (name server-name)) prompts)))
+        (:mcp-clients db)))
 
 (defn get-prompt! [^String name ^Map arguments db]
   (let [mcp-client (->> (vals (:mcp-clients db))
@@ -154,25 +162,17 @@
                                 (when (some #(= name (:name %)) prompts)
                                   client)))
                         first)
-        prompt (.getPrompt ^McpSyncClient mcp-client (McpSchema$GetPromptRequest. name arguments))]
-    {:description (.description prompt)
-     :messages (mapv (fn [^McpSchema$PromptMessage message]
-                       {:role (.role message)
-                        :content (.content message)})
-                     (.messages prompt))}))
+        prompt (.getPrompt ^McpSyncClient mcp-client (McpSchema$GetPromptRequest. name arguments))
+        result {:description (.description prompt)
+                :messages (mapv (fn [^McpSchema$PromptMessage message]
+                                  {:role (string/lower-case (str (.role message)))
+                                   :content [(->content (.content message))]})
+                                (.messages prompt))}]
+    (logger/debug logger-tag "Prompt result:" result)
+    result))
 
 (defn shutdown! [db*]
   (doseq [[_name {:keys [_client]}] (:mcp-clients @db*)]
     ;; TODO NoClassDefFound being thrown for some reason
     #_(.closeGracefully ^McpSyncClient client))
   (swap! db* assoc :mcp-clients {}))
-
-(comment
-  (def db* (atom user/*db*))
-  (user/with-workspace-root "/home/greg/dev/eca/eca"
-    (initialize-servers-async! {:on-server-updated println}
-                               db*
-                               {:mcpTimeoutSeconds 10
-                                :mcpServers {"fetch" {:command "docker" :args ["run" "-i" "--rm" "mcp/fetch"]}}}))
-  (:prompts (second (first (:mcp-clients @db*))))
-  (get-prompt! "fetch" {"url" "https://eca.dev"} @db*))

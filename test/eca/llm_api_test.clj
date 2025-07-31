@@ -37,7 +37,7 @@
   (testing "OpenAI API key present in config"
     (with-redefs [config/get-env (constantly nil)]
       (let [db {:models {}}
-            config {:openaiapikey "yes!"}]
+            config {:openaiApiKey "yes!"}]
         (is (= "o4-mini" (llm-api/default-model db config))))))
 
   (testing "OpenAI API key present in ENV"

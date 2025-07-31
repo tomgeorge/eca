@@ -626,50 +626,6 @@ interface ToolCallRejected {
 type ToolCallOrigin = 'mcp' | 'native';
 ```
 
-### Chat Query Context (↩️)
-
-A request sent from client to server, querying for the available context to user add to prompt calls.
-
-_Request:_ 
-
-* method: `chat/queryContext`
-* params: `ChatQueryParams` defined as follows:
-
-```typescript
-interface ChatQueryContextParams {
-    /**
-     * The chat session identifier.
-     */
-    chatId?: string;
-
-    /**
-     * The query to filter results, blank string returns all available contexts.
-     */
-    query: string;
-    
-    /**
-     * The already considered contexts.
-     */
-    contexts: ChatContext[];
-}
-```
-
-_Response:_
-
-```typescript
-interface ChatQueryContextResponse {
-    /**
-     * The chat session identifier.
-     */
-    chatId?: string;
-
-    /**
-     * The returned available contexts.
-     */
-    contexts: ChatContext[];
-}
-```
-
 ### Chat approve tool call (➡️)
 
 A client notification for server to approve a waiting tool call.
@@ -715,6 +671,112 @@ interface ChatToolCallRejectParams {
      * The tool call identifier to reject.
      */
     toolCallId: string; 
+}
+```
+
+### Chat Query Context (↩️)
+
+A request sent from client to server, querying for all the available contexts for user add to prompt calls.
+
+_Request:_ 
+
+* method: `chat/queryContext`
+* params: `ChatQueryContextParams` defined as follows:
+
+```typescript
+interface ChatQueryContextParams {
+    /**
+     * The chat session identifier.
+     */
+    chatId?: string;
+
+    /**
+     * The query to filter results, blank string returns all available contexts.
+     */
+    query: string;
+    
+    /**
+     * The already considered contexts.
+     */
+    contexts: ChatContext[];
+}
+```
+
+_Response:_
+
+```typescript
+interface ChatQueryContextResponse {
+    /**
+     * The chat session identifier.
+     */
+    chatId?: string;
+
+    /**
+     * The returned available contexts.
+     */
+    contexts: ChatContext[];
+}
+```
+
+### Chat Query Commands (↩️)
+
+A request sent from client to server, querying for all the available commands for user to call.
+Commands are multiple possible actions like MCP prompts, doctor, costs. Usually the 
+UX follows `/<command>` to spawn a command.
+
+_Request:_ 
+
+* method: `chat/queryCommands`
+* params: `ChatQueryCommandsParams` defined as follows:
+
+```typescript
+interface ChatQueryCommandsParams {
+    /**
+     * The chat session identifier.
+     */
+    chatId?: string;
+
+    /**
+     * The query to filter results, blank string returns all available commands.
+     */
+    query: string;
+}
+```
+
+_Response:_
+
+```typescript
+interface ChatQueryCommandsResponse {
+    /**
+     * The chat session identifier.
+     */
+    chatId?: string;
+
+    /**
+     * The returned available Commands.
+     */
+    commands: ChatCommand[];
+}
+
+interface ChatCommand {
+    /**
+     * The name of the command.
+     */
+    name: string;
+
+    /**
+     * The description of the command.
+     */
+    description: string;
+    
+    /**
+     * The arguments of the command.
+     */
+    arguments: [{
+       name: string;
+       description?: string;
+       required: boolean; 
+    }];
 }
 ```
 

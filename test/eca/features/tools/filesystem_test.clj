@@ -14,8 +14,8 @@
 (deftest list-directory-test
   (testing "Invalid path"
     (is (match?
-         {:contents [{:type :text
-                      :error true
+         {:error true
+          :contents [{:type :text
                       :content (str (h/file-path "/foo/qux") " is not a valid path")}]}
          (with-redefs [fs/canonicalize (constantly (h/file-path "/foo/qux"))
                        fs/exists? (constantly false)]
@@ -24,8 +24,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "Unallowed dir"
     (is (match?
-         {:contents [{:type :text
-                      :error true
+         {:error true
+          :contents [{:type :text
                       :content (format "Access denied - path %s outside allowed directories: %s"
                                        (h/file-path "/foo/qux")
                                        (h/file-path "/foo/bar/baz"))}]}
@@ -36,8 +36,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "allowed dir"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content (format (str "[FILE] %s\n"
                                             "[DIR] %s\n")
                                        (h/file-path "/foo/bar/baz/some.clj")
@@ -55,8 +55,8 @@
 (deftest read-file-test
   (testing "Not readable path"
     (is (match?
-         {:contents [{:type :text
-                      :error true
+         {:error true
+          :contents [{:type :text
                       :content (format "File %s is not readable" (h/file-path "/foo/qux"))}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly false)
@@ -66,8 +66,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "Readable path"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content "fooo"}]}
          (with-redefs [slurp (constantly "fooo")
                        fs/exists? (constantly true)
@@ -78,8 +78,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "with line_offset"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content "line3\nline4\nline5"}]}
          (with-redefs [slurp (constantly "line1\nline2\nline3\nline4\nline5")
                        fs/exists? (constantly true)
@@ -90,8 +90,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "with limit"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content "line1\nline2"}]}
          (with-redefs [slurp (constantly "line1\nline2\nline3\nline4\nline5")
                        fs/exists? (constantly true)
@@ -102,8 +102,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "with line_offset and limit"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content "line3\nline4"}]}
          (with-redefs [slurp (constantly "line1\nline2\nline3\nline4\nline5")
                        fs/exists? (constantly true)
@@ -116,8 +116,8 @@
 (deftest write-file-test
   (testing "Not allowed path"
     (is (match?
-         {:contents [{:type :text
-                      :error true
+         {:error true
+          :contents [{:type :text
                       :content (format "Access denied - path %s outside allowed directories: %s"
                                        (h/file-path "/foo/qux/new_file.clj")
                                        (h/file-path "/foo/bar"))}]}
@@ -129,8 +129,8 @@
 (deftest search-files-test
   (testing "invalid pattern"
     (is (match?
-         {:contents [{:type :text
-                      :error true
+         {:error true
+          :contents [{:type :text
                       :content "Invalid glob pattern ' '"}]}
          (with-redefs [fs/exists? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["eca_search_files" :handler])
@@ -139,8 +139,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "no matches"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content "No matches found"}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/glob (constantly [])]
@@ -150,8 +150,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "matches with wildcard"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content (str (h/file-path "/project/foo/bar/baz.txt") "\n"
                                     (h/file-path "/project/foo/qux.txt") "\n"
                                     (h/file-path "/project/foo/qux.clj"))}]}
@@ -165,8 +165,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "matches without wildcard"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content (str (h/file-path "/project/foo/bar/baz.txt") "\n"
                                     (h/file-path "/project/foo/qux.txt"))}]}
          (with-redefs [fs/exists? (constantly true)
@@ -180,8 +180,8 @@
 (deftest grep-test
   (testing "invalid pattern"
     (is (match?
-         {:contents [{:type :text
-                      :error true
+         {:error true
+          :contents [{:type :text
                       :content "Invalid content regex pattern ' '"}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)]
@@ -191,8 +191,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "invalid include"
     (is (match?
-         {:contents [{:type :text
-                      :error true
+         {:error true
+          :contents [{:type :text
                       :content "Invalid file pattern ' '"}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)]
@@ -203,8 +203,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "no files found"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content "No files found for given pattern"}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)
@@ -216,8 +216,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "ripgrep search"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content "/project/foo/bla.txt\n/project/foo/qux.txt"}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)
@@ -229,8 +229,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "grep search"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content "/project/foo/bla.txt\n/project/foo/qux.txt"}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)
@@ -242,8 +242,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "java grep search"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content (h/file-path "/project/foo/bla.txt")}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)
@@ -262,8 +262,8 @@
 (deftest replace-in-file-test
   (testing "Not readable path"
     (is (match?
-         {:contents [{:type :text
-                      :error true
+         {:error true
+          :contents [{:type :text
                       :content (format "File %s is not readable" (h/file-path "/foo/qux"))}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly false)
@@ -275,8 +275,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "original content not found"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content (format "Original content not found in %s" (h/file-path "/project/foo/my-file.txt"))}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)
@@ -290,8 +290,8 @@
   (testing "original content found and replaced first"
     (let [file-content* (atom {})]
       (is (match?
-           {:contents [{:type :text
-                        :error false
+           {:error false
+            :contents [{:type :text
                         :content (format "Successfully replaced content in %s." (h/file-path "/project/foo/my-file.txt"))}]}
            (with-redefs [fs/exists? (constantly true)
                          fs/readable? (constantly true)
@@ -309,8 +309,8 @@
   (testing "original content found and replaced all"
     (let [file-content* (atom {})]
       (is (match?
-           {:contents [{:type :text
-                        :error false
+           {:error false
+            :contents [{:type :text
                         :content (format "Successfully replaced content in %s." (h/file-path "/project/foo/my-file.txt"))}]}
            (with-redefs [fs/exists? (constantly true)
                          fs/readable? (constantly true)
@@ -330,8 +330,8 @@
 (deftest move-file-test
   (testing "Not readable source path"
     (is (match?
-         {:contents [{:type :text
-                      :error true
+         {:error true
+          :contents [{:type :text
                       :content (format "%s is not a valid path" (h/file-path "/foo/qux"))}]}
          (with-redefs [fs/exists? (constantly false)
                        f.tools.filesystem/allowed-path? (constantly true)]
@@ -340,8 +340,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "Destination already exists"
     (is (match?
-         {:contents [{:type :text
-                      :error true
+         {:error true
+          :contents [{:type :text
                       :content (format "Path %s already exists" (h/file-path "/foo/bar/other_file.clj"))}]}
          (with-redefs [fs/exists? (constantly true)
                        f.tools.filesystem/allowed-path? (constantly true)]
@@ -351,8 +351,8 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar") :name "foo"}]}})))))
   (testing "Move successfully"
     (is (match?
-         {:contents [{:type :text
-                      :error false
+         {:error false
+          :contents [{:type :text
                       :content (format "Successfully moved %s to %s"
                                        (h/file-path "/foo/bar/some_file.clj")
                                        (h/file-path "/foo/bar/other_file.clj"))}]}

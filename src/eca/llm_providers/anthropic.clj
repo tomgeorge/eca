@@ -2,6 +2,7 @@
   (:require
    [cheshire.core :as json]
    [clojure.java.io :as io]
+   [clojure.string :as string]
    [eca.llm-util :as llm-util]
    [eca.logger :as logger]
    [eca.shared :as shared :refer [assoc-some]]
@@ -53,7 +54,7 @@
      (fn [e]
        (on-error {:exception e})))))
 
-(defn ^:private past-messages->messages [past-messages]
+(defn ^:private normalize-messages [past-messages]
   (mapv (fn [{:keys [role content] :as msg}]
           (case role
             "tool_call" {:role "assistant"
@@ -72,23 +73,34 @@
              :content [{:type "thinking"
                         :signature (:external-id content)
                         :thinking (:text content)}]}
-            msg))
+            (update msg :content (fn [c]
+                                   (if (string? c)
+                                     (string/trim c)
+                                     (mapv #(if (= "text" (name (:type %)))
+                                              (update % :text string/trim)
+                                              %)
+                                           c))))))
         past-messages))
 
 (defn ^:private add-cache-to-last-message [messages]
   ;; TODO add cache_control to last non thinking message
   (shared/update-last
    (vec messages)
-   #(assoc-in % [:content 0 :cache_control] {:type "ephemeral"})))
+   (fn [message]
+     (let [content (get-in message [:content])]
+       (if (string? content)
+         (assoc-in message [:content] [{:type :text
+                                        :text content
+                                        :cache_control {:type "ephemeral"}}])
+         (assoc-in message [:content 0 :cache_control] {:type "ephemeral"}))))))
 
 (defn completion!
-  [{:keys [model user-prompt temperature instructions max-output-tokens
+  [{:keys [model user-messages temperature instructions max-output-tokens
            api-url api-key reason-tokens past-messages tools web-search]
     :or {temperature 1.0}}
    {:keys [on-message-received on-error on-reason on-prepare-tool-call on-tool-called]}]
-  (let [messages (conj (past-messages->messages past-messages)
-                       {:role "user" :content [{:type :text
-                                                :text user-prompt}]})
+  (let [messages (concat (normalize-messages past-messages)
+                         (normalize-messages user-messages))
         body (assoc-some
               {:model model
                :messages (add-cache-to-last-message messages)
@@ -146,7 +158,7 @@
                                                    {:keys [new-messages]} (on-tool-called {:id (:id content-block)
                                                                                            :name function-name
                                                                                            :arguments (json/parse-string function-args)})
-                                                   messages (-> (past-messages->messages new-messages)
+                                                   messages (-> (normalize-messages new-messages)
                                                                 add-cache-to-last-message)]
                                                (base-request!
                                                 {:rid (llm-util/gen-rid)

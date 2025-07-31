@@ -39,4 +39,4 @@
                  "assoc-some expects even number of arguments after map/vector, found odd number")))
        ret))))
 
-(defn multi-str [& strings] (string/join "\n" strings))
+(defn multi-str [& strings] (string/join "\n" (remove nil? strings)))

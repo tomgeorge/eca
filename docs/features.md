@@ -42,6 +42,10 @@ Here are the current supported contexts types:
 - `directory`: a directory in the workspace, server will read all file contexts and pass to LLM.
 - `repoMap`: a summary view of workspaces files and folders, server will calculate this and pass to LLM. Currently, the repo-map includes only the file paths in git.
 
+### Commands
+
+Eca supports commands that usually arer triggered via `/` in the chat, completing in the chat will show the known commands which include ECA commands and MCP prompts.
+
 ##  Completion
 
 Soon

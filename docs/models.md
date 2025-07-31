@@ -2,11 +2,11 @@
 
 ## Built-in providers and capabilities
 
-| model     | MCP / tools | thinking/reasioning | prompt caching | web_search |
-|-----------|-------------|---------------------|----------------|------------|
-| OpenAI    | √           | X                   | X              | √          |
-| Anthropic | √           | X                   | √              | √          |
-| Ollama    | √           | X                   | X              | X          |
+| model     | MCP / tools | MCP prompts | thinking/reasioning | prompt caching | web_search |
+|-----------|-------------|-------------|---------------------|----------------|------------|
+| OpenAI    | √           | √           | X                   | X              | √          |
+| Anthropic | √           | √           | X                   | √              | √          |
+| Ollama    | √           | √           | X                   | X              | X          |
 
 ### OpenAI
 

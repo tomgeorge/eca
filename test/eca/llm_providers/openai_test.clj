@@ -8,18 +8,19 @@
   (testing "no previous history"
     (is (match?
          []
-         (#'llm-providers.openai/past-messages->input []))))
+         (#'llm-providers.openai/normalize-messages []))))
+
   (testing "With basic text history"
     (is (match?
-         [{:role "user" :content "Count with me: 1"}
+         [{:role "user" :content [{:type "input_text" :text "Count with me: 1"}]}
           {:role "assistant" :content "2"}]
-         (#'llm-providers.openai/past-messages->input
-          [{:role "user" :content "Count with me: 1"}
+         (#'llm-providers.openai/normalize-messages
+          [{:role "user" :content [{:type :text :text "Count with me: 1"}]}
            {:role "assistant" :content "2"}]))))
   (testing "With tool_call history"
     (is (match?
-         [{:role "user" :content "List the files you are allowed"}
-          {:role "assistant" :content "Ok!"}
+         [{:role "user" :content [{:type "input_text" :text "List the files you are allowed"}]}
+          {:role "assistant" :content [{:type "output_text" :text "Ok!"}]}
           {:type "function_call"
            :call_id "call-1"
            :name "list_allowed_directories"
@@ -27,10 +28,10 @@
           {:type "function_call_output"
            :call_id "call-1"
            :output "Allowed directories: /foo/bar\n"}
-          {:role "assistant" :content "I see /foo/bar"}]
-         (#'llm-providers.openai/past-messages->input
-          [{:role "user" :content "List the files you are allowed"}
-           {:role "assistant" :content "Ok!"}
+          {:role "assistant" :content [{:type "output_text" :text "I see /foo/bar"}]}]
+         (#'llm-providers.openai/normalize-messages
+          [{:role "user" :content [{:type :text :text "List the files you are allowed"}]}
+           {:role "assistant" :content [{:type :text :text "Ok!"}]}
            {:role "tool_call" :content {:id "call-1" :name "list_allowed_directories" :arguments {}}}
            {:role "tool_call_output" :content {:id "call-1"
                                                :name "list_allowed_directories"
@@ -38,4 +39,4 @@
                                                :output {:contents [{:type :text
                                                                     :error false
                                                                     :content "Allowed directories: /foo/bar"}]}}}
-           {:role "assistant" :content "I see /foo/bar"}])))))
+           {:role "assistant" :content [{:type :text :text "I see /foo/bar"}]}])))))

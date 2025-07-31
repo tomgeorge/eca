@@ -64,22 +64,20 @@
            :function (select-keys tool [:name :description :parameters])})
         tools))
 
-(defn ^:private past-messages->messages [past-messages context]
-  (concat
-   [{:role "system" :content context}]
-   (mapv (fn [{:keys [role content] :as msg}]
-           (case role
-             "tool_call" {:role "assistant" :tool-calls [{:type "function"
-                                                          :function content}]}
-             "tool_call_output" {:role "tool" :content (llm-util/stringfy-tool-result content)}
-             msg))
-         past-messages)))
+(defn ^:private normalize-messages [past-messages]
+  (mapv (fn [{:keys [role content] :as msg}]
+          (case role
+            "tool_call" {:role "assistant" :tool-calls [{:type "function"
+                                                         :function content}]}
+            "tool_call_output" {:role "tool" :content (llm-util/stringfy-tool-result content)}
+            msg))
+        past-messages))
 
-(defn completion! [{:keys [model user-prompt instructions host port past-messages tools]}
+(defn completion! [{:keys [model user-messages instructions host port past-messages tools]}
                    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called]}]
   (let [messages (concat
-                  (past-messages->messages past-messages instructions)
-                  [{:role "user" :content user-prompt}])
+                  (normalize-messages (concat [{:role "system" :content instructions}] past-messages))
+                  (normalize-messages user-messages))
         body {:model model
               :messages messages
               :think false
@@ -106,7 +104,7 @@
                                  (base-completion-request!
                                   {:rid (llm-util/gen-rid)
                                    :url url
-                                   :body (assoc body :messages (past-messages->messages new-messages instructions))
+                                   :body (assoc body :messages (normalize-messages new-messages))
                                    :on-error on-error
                                    :on-response handle-response}))
                                (on-message-received {:type :finish

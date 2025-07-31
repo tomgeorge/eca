@@ -47,6 +47,9 @@
 (defmethod lsp.server/receive-request "chat/queryContext" [_ components params]
   (handlers/chat-query-context (with-config components) params))
 
+(defmethod lsp.server/receive-request "chat/queryCommands" [_ components params]
+  (handlers/chat-query-commands (with-config components) params))
+
 (defmethod lsp.server/receive-notification "chat/toolCallApprove" [_ components params]
   (handlers/chat-tool-call-approve (with-config components) params))
 

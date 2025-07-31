@@ -8,12 +8,12 @@
   (testing "no previous history"
     (is (match?
          []
-         (#'llm-providers.anthropic/past-messages->messages []))))
+         (#'llm-providers.anthropic/normalize-messages []))))
   (testing "With basic text history"
     (is (match?
          [{:role "user" :content "Count with me: 1"}
           {:role "assistant" :content "2"}]
-         (#'llm-providers.anthropic/past-messages->messages
+         (#'llm-providers.anthropic/normalize-messages
           [{:role "user" :content "Count with me: 1"}
            {:role "assistant" :content "2"}]))))
   (testing "With tool_call history"
@@ -28,7 +28,7 @@
                                    :tool_use_id "call-1"
                                    :content "Allowed directories: /foo/bar\n"}]}
           {:role "assistant" :content "I see /foo/bar"}]
-         (#'llm-providers.anthropic/past-messages->messages
+         (#'llm-providers.anthropic/normalize-messages
           [{:role "user" :content "List the files you are allowed"}
            {:role "assistant" :content "Ok!"}
            {:role "tool_call" :content {:id "call-1" :name "list_allowed_directories" :arguments {}}}
@@ -44,13 +44,25 @@
   (is (match?
        []
        (#'llm-providers.anthropic/add-cache-to-last-message [])))
-  (is (match?
-       [{:role "user" :content [{:type :text :text "Hey" :cache_control {:type "ephemeral"}}]}]
-       (#'llm-providers.anthropic/add-cache-to-last-message
-        [{:role "user" :content [{:type :text :text "Hey"}]}])))
-  (is (match?
-       [{:role "user" :content [{:type :text :text "Hey"}]}
-        {:role "user" :content [{:type :text :text "Ho" :cache_control {:type "ephemeral"}}]}]
-       (#'llm-providers.anthropic/add-cache-to-last-message
-        [{:role "user" :content [{:type :text :text "Hey"}]}
-         {:role "user" :content [{:type :text :text "Ho"}]}]))))
+  (testing "when message content is a vector"
+    (is (match?
+         [{:role "user" :content [{:type :text :text "Hey" :cache_control {:type "ephemeral"}}]}]
+         (#'llm-providers.anthropic/add-cache-to-last-message
+          [{:role "user" :content [{:type :text :text "Hey"}]}])))
+    (is (match?
+         [{:role "user" :content [{:type :text :text "Hey"}]}
+          {:role "user" :content [{:type :text :text "Ho" :cache_control {:type "ephemeral"}}]}]
+         (#'llm-providers.anthropic/add-cache-to-last-message
+          [{:role "user" :content [{:type :text :text "Hey"}]}
+           {:role "user" :content [{:type :text :text "Ho"}]}]))))
+  (testing "when message content is string"
+    (is (match?
+         [{:role "user" :content [{:type :text :text "Hey" :cache_control {:type "ephemeral"}}]}]
+         (#'llm-providers.anthropic/add-cache-to-last-message
+          [{:role "user" :content "Hey"}])))
+    (is (match?
+         [{:role "user" :content "Hey"}
+          {:role "user" :content [{:type :text :text "Ho" :cache_control {:type "ephemeral"}}]}]
+         (#'llm-providers.anthropic/add-cache-to-last-message
+          [{:role "user" :content "Hey"}
+           {:role "user" :content "Ho"}])))))

@@ -41,7 +41,7 @@
      (fn [e]
        (on-error {:exception e})))))
 
-(defn ^:private past-messages->input [past-messages]
+(defn ^:private normalize-messages [past-messages]
   (keep (fn [{:keys [role content] :as msg}]
           (case role
             "tool_call" {:type "function_call"
@@ -53,20 +53,29 @@
              :call_id (:id content)
              :output (llm-util/stringfy-tool-result content)}
             "reason" nil
-            msg))
+            (update msg :content (fn [c]
+                                   (if (string? c)
+                                     c
+                                     (mapv #(if (= "text" (name (:type %)))
+                                              (assoc % :type (if (= "user" role)
+                                                               "input_text"
+                                                               "output_text"))
+                                              %) c))))))
         past-messages))
 
-(defn completion! [{:keys [model user-prompt instructions temperature api-key api-url
+(defn completion! [{:keys [model user-messages instructions temperature api-key api-url
                            max-output-tokens past-messages tools web-search]
                     :or {temperature 1.0}}
                    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called on-reason]}]
-  (let [input (conj (past-messages->input past-messages)
-                    {:role "user" :content user-prompt})
+  (let [input (concat (normalize-messages past-messages)
+                      (normalize-messages user-messages))
         tools (cond-> tools
                 web-search (conj {:type "web_search_preview"}))
         body {:model model
               :input input
               :prompt_cache_key (str (System/getProperty "user.name") "@ECA")
+              ;; TODO support parallel
+              :parallel_tool_calls false
               :instructions instructions
               :temperature temperature
               :tools tools
@@ -93,7 +102,7 @@
                                     {:keys [new-messages]} (on-tool-called {:id (-> data :item :call_id)
                                                                             :name function-name
                                                                             :arguments (json/parse-string function-args)})
-                                    input (past-messages->input new-messages)]
+                                    input (normalize-messages new-messages)]
                                 (base-completion-request!
                                  {:rid (llm-util/gen-rid)
                                   :body (assoc body :input input)

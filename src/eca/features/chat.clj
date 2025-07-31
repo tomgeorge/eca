@@ -8,10 +8,11 @@
    [eca.features.prompt :as f.prompt]
    [eca.features.rules :as f.rules]
    [eca.features.tools :as f.tools]
+   [eca.features.tools.mcp :as f.mcp]
    [eca.llm-api :as llm-api]
    [eca.logger :as logger]
    [eca.messenger :as messenger]
-   [eca.shared :as shared :refer [assoc-some]]))
+   [eca.shared :as shared :refer [assoc-some multi-str]]))
 
 (set! *warn-on-reflection* true)
 
@@ -91,10 +92,10 @@
     (when input-cache-read-tokens
       (swap! db* update-in [:chats chat-id :total-input-cache-read-tokens] (fnil + 0) input-cache-read-tokens))
     (let [db @db*
+          message-input-cache-tokens (or input-cache-creation-tokens 0)
           total-input-tokens (get-in db [:chats chat-id :total-input-tokens] 0)
           total-input-cache-creation-tokens (get-in db [:chats chat-id :total-input-cache-creation-tokens] nil)
           total-input-cache-read-tokens (get-in db [:chats chat-id :total-input-cache-read-tokens] nil)
-          message-input-cache-tokens (or input-cache-creation-tokens 0)
           total-input-cache-tokens (or total-input-cache-creation-tokens 0)
           total-output-tokens (get-in db [:chats chat-id :total-output-tokens] 0)]
       (send-content! chat-ctx :system
@@ -105,56 +106,65 @@
                                  :message-cost (tokens->cost input-tokens input-cache-creation-tokens input-cache-read-tokens output-tokens model db)
                                  :session-cost (tokens->cost total-input-tokens total-input-cache-creation-tokens total-input-cache-read-tokens total-output-tokens model db))))))
 
-(defn prompt
-  [{:keys [message model behavior contexts chat-id request-id]}
-   db*
-   messenger
-   config]
-  (let [chat-id (or chat-id
-                    (let [new-id (str (random-uuid))]
-                      (swap! db* assoc-in [:chats new-id] {:id new-id})
-                      new-id))
-        chat-ctx {:chat-id chat-id
-                  :request-id request-id
-                  :db* db*
-                  :messenger messenger}
-        _ (swap! db* assoc-in [:chats chat-id :current-request-id] request-id)
-        _ (swap! db* assoc-in [:chats chat-id :status] :running)
-        _ (send-content! chat-ctx :user {:type :text
-                                         :text (str message "\n")})
-        _ (when (seq contexts)
-            (send-content! chat-ctx :system {:type :progress
-                                             :state :running
-                                             :text "Parsing given context"}))
-        db @db*
+(defn ^:private message->decision [message]
+  (let [slash? (string/starts-with? message "/")
+        mcp-prompt? (string/includes? (first (string/split message #" ")) ":")]
+    (cond
+      (and slash? mcp-prompt?)
+      (let [message (subs message 1)
+            parts (string/split message #" ")
+            [server] (string/split message #":")]
+        {:type :mcp-prompt
+         :server server
+         :prompt (second (string/split (first parts) #":"))
+         :args (if (seq parts)
+                 (vec (rest parts))
+                 [])})
+
+      slash?
+      {:type :eca-command
+       :command (subs message 1)}
+
+      :else
+      {:type :prompt-message
+       :message message})))
+
+(defn ^:private prompt-messages!
+  [user-messages
+   {:keys [db* config chat-id contexts behavior model] :as chat-ctx}]
+  (when (seq contexts)
+    (send-content! chat-ctx :system {:type :progress
+                                     :state :running
+                                     :text "Parsing given context"}))
+  (let [db @db*
+        manual-approval? (get-in config [:toolCall :manualApproval] false)
         rules (f.rules/all config (:workspace-folders db))
         refined-contexts (raw-contexts->refined contexts)
-        manual-approval? (get-in config [:toolCall :manualApproval] false)
         repo-map* (delay (f.index/repo-map db {:as-string? true}))
         instructions (f.prompt/build-instructions refined-contexts rules repo-map* (or behavior (:chat-default-behavior db)))
-        chosen-model (or model (default-model db config))
         past-messages (get-in db [:chats chat-id :messages] [])
-        user-prompt message
         all-tools (f.tools/all-tools @db* config)
         received-msgs* (atom "")
         received-thinking* (atom "")
         tool-call-args-by-id* (atom {})
         add-to-history! (fn [msg]
                           (swap! db* update-in [:chats chat-id :messages] (fnil conj []) msg))]
+
     (send-content! chat-ctx :system {:type :progress
                                      :state :running
                                      :text "Waiting model"})
     (llm-api/complete!
-     {:model chosen-model
-      :model-config (get-in db [:models chosen-model])
-      :user-prompt user-prompt
+     {:model model
+      :model-config (get-in db [:models model])
+      :user-messages user-messages
       :instructions instructions
       :past-messages past-messages
       :config config
       :tools all-tools
       :on-first-response-received (fn [& _]
                                     (assert-chat-not-stopped! chat-ctx)
-                                    (add-to-history! {:role "user" :content user-prompt})
+                                    (doseq [message user-messages]
+                                      (add-to-history! message))
                                     (send-content! chat-ctx :system {:type :progress
                                                                      :state :running
                                                                      :text "Generating"}))
@@ -176,7 +186,7 @@
                                                 (finish-chat-prompt! :idle chat-ctx))
                                :finish (do
                                          (add-to-history! {:role "assistant" :content @received-msgs*})
-                                         (when-let [usage (usage-msg->usage (:usage msg) chosen-model chat-ctx)]
+                                         (when-let [usage (usage-msg->usage (:usage msg) model chat-ctx)]
                                            (send-content! chat-ctx :system
                                                           (merge usage
                                                                  {:type :usage})))
@@ -210,7 +220,7 @@
                                            {:type :progress
                                             :state :running
                                             :text "Waiting for tool call approval"})
-                            ;; Otherwise auto approve
+                             ;; Otherwise auto approve
                             (deliver approved?* true))
                           (if @approved?*
                             (let [result (f.tools/call-tool! name arguments @db* config)]
@@ -267,7 +277,66 @@
                   (send-content! chat-ctx :system
                                  {:type :text
                                   :text (or message (ex-message exception))})
-                  (finish-chat-prompt! :idle chat-ctx))})
+                  (finish-chat-prompt! :idle chat-ctx))})))
+
+(defn ^:private send-mcp-prompt! [{:keys [prompt args]} {:keys [db*] :as chat-ctx}]
+  (let [{:keys [arguments]} (first (filter #(= prompt (:name %)) (f.mcp/all-prompts @db*)))
+        i (atom -1)
+        args-vals (reduce
+                   (fn [a {:keys [name]}]
+                     (swap! i inc)
+                     (assoc a name (nth args @i)))
+                   {}
+                   arguments)
+        {:keys [messages]} (f.mcp/get-prompt! prompt args-vals @db*)]
+    (prompt-messages! messages chat-ctx)))
+
+(defn ^:private handle-command! [{:keys [command]} {:keys [chat-id db*] :as chat-ctx}]
+  (case command
+    "costs" (let [db @db*
+                  total-input-tokens (get-in db [:chats chat-id :total-input-tokens] 0)
+                  total-input-cache-creation-tokens (get-in db [:chats chat-id :total-input-cache-creation-tokens] nil)
+                  total-input-cache-read-tokens (get-in db [:chats chat-id :total-input-cache-read-tokens] nil)
+                  total-output-tokens (get-in db [:chats chat-id :total-output-tokens] 0)
+                  text (multi-str (str "Total input tokens: " total-input-tokens)
+                                  (when total-input-cache-creation-tokens
+                                    (str "Total input cache creation tokens: " total-input-cache-creation-tokens))
+                                  (when total-input-cache-read-tokens
+                                    (str "Total input cache read tokens: " total-input-cache-read-tokens))
+                                  (str "Total output tokens: " total-output-tokens))]
+              (send-content! chat-ctx :system {:type :text
+                                               :text text}))
+    (send-content! chat-ctx :system {:type :text
+                                     :text (str "Unknown command: " command)}))
+  (finish-chat-prompt! :idle chat-ctx))
+
+(defn prompt
+  [{:keys [message model behavior contexts chat-id request-id]}
+   db*
+   messenger
+   config]
+  (let [chat-id (or chat-id
+                    (let [new-id (str (random-uuid))]
+                      (swap! db* assoc-in [:chats new-id] {:id new-id})
+                      new-id))
+        chosen-model (or model (default-model @db* config))
+        chat-ctx {:chat-id chat-id
+                  :request-id request-id
+                  :contexts contexts
+                  :behavior behavior
+                  :model chosen-model
+                  :db* db*
+                  :config config
+                  :messenger messenger}
+        decision (message->decision message)]
+    (swap! db* assoc-in [:chats chat-id :current-request-id] request-id)
+    (swap! db* assoc-in [:chats chat-id :status] :running)
+    (send-content! chat-ctx :user {:type :text
+                                   :text (str message "\n")})
+    (case (:type decision)
+      :mcp-prompt (send-mcp-prompt! decision chat-ctx)
+      :eca-command (handle-command! decision chat-ctx)
+      :prompt-message (prompt-messages! [{:role "user" :content message}] chat-ctx))
     {:chat-id chat-id
      :model chosen-model
      :status :success}))
@@ -308,6 +377,27 @@
     {:chat-id chat-id
      :contexts (set/difference (set all-contexts)
                                (set contexts))}))
+
+(defn query-commands
+  [{:keys [query chat-id]}
+   db*]
+  (let [mcp-prompts (->> (f.mcp/all-prompts @db*)
+                         (mapv #(-> %
+                                    (assoc :name (str (:server %) ":" (:name %)))
+                                    (dissoc :server))))
+        eca-commands [{:name "costs"
+                       :description "Show the total costs of the current chat session."
+                       :arguments []}]
+        commands (concat mcp-prompts
+                         eca-commands)
+        commands (if (string/blank? query)
+                   commands
+                   (filter #(or (string/includes? (:name %) query)
+                                (string/includes? (:description %) query))
+                           commands))]
+    {:chat-id chat-id
+     :commands commands}))
+
 (defn prompt-stop
   [{:keys [chat-id]} db* messenger]
   (when (identical? :running (get-in @db* [:chats chat-id :status]))

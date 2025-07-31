@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add chat command type.
+
 ## 0.12.3
 
 - Fix MCP prompts for anthropic models.

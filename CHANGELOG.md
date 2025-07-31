@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.12.0
+
 - Fix openai api key read from config.
 - Support commands via `/`.
 - Support MCP prompts via commands.

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.12.4
+
 - Add chat command type.
 
 ## 0.12.3

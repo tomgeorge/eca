@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.12.5
+
 - Improve tool call result marking as error when not expected output.
 - Fix cases when tool calls output nothing.
 

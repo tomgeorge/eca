@@ -293,7 +293,7 @@
         {:keys [messages]} (f.mcp/get-prompt! prompt args-vals @db*)]
     (prompt-messages! messages false chat-ctx)))
 
-(defn ^:private handle-command! [{:keys [command]} {:keys [chat-id db*] :as chat-ctx}]
+(defn ^:private handle-command! [{:keys [command]} {:keys [chat-id db* model] :as chat-ctx}]
   (case command
     "costs" (let [db @db*
                   total-input-tokens (get-in db [:chats chat-id :total-input-tokens] 0)
@@ -305,7 +305,8 @@
                                     (str "Total input cache creation tokens: " total-input-cache-creation-tokens))
                                   (when total-input-cache-read-tokens
                                     (str "Total input cache read tokens: " total-input-cache-read-tokens))
-                                  (str "Total output tokens: " total-output-tokens))]
+                                  (str "Total output tokens: " total-output-tokens)
+                                  (str "Total cost: $" (tokens->cost total-input-tokens total-input-cache-creation-tokens total-input-cache-read-tokens total-output-tokens model db)))]
               (send-content! chat-ctx :system {:type :text
                                                :text text}))
     (send-content! chat-ctx :system {:type :text

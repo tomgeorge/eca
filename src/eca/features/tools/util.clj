@@ -7,7 +7,7 @@
 (defn single-text-content [text & [error]]
   {:error (boolean error)
    :contents [{:type :text
-               :content text}]})
+               :text text}]})
 
 (defn workspace-roots-strs [db]
   (->> (:workspace-folders db)

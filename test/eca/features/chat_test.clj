@@ -3,6 +3,7 @@
    [clojure.test :refer [deftest is testing]]
    [eca.features.chat :as f.chat]
    [eca.features.tools :as f.tools]
+   [eca.features.tools.mcp :as f.mcp]
    [eca.llm-api :as llm-api]
    [eca.test-helper :as h]
    [matcher-combinators.matchers :as m]
@@ -245,3 +246,23 @@ for allowed directories and then list files"
              {:role :assistant :content {:type :text :text "/foo/bar"}}
              {:role :system :content {:state :finished :type :progress}}]}
            (h/messages))))))
+
+(deftest send-mcp-prompt-test
+  (testing "Argument mapping for send-mcp-prompt! should map arg values to prompt argument names"
+    (let [test-arguments [{:name "foo"} {:name "bar"}]
+          prompt-args (atom nil)
+          test-chat-ctx {:db* (atom {})}
+          invoked? (atom nil)]
+      (with-redefs [f.mcp/all-prompts (fn [_]
+                                        [{:name "awesome-prompt" :arguments test-arguments}])
+                    f.mcp/get-prompt! (fn [_ args-map _]
+                                        (reset! prompt-args args-map)
+                                        {:messages [{:role :user :content "test"}]})
+                    f.chat/prompt-messages! (fn [messages _reason? ctx] (reset! invoked? [messages ctx]))]
+        (#'f.chat/send-mcp-prompt! {:prompt "awesome-prompt" :args [42 "yo"]} test-chat-ctx)
+        (is (match?
+             @prompt-args
+             {"foo" 42 "bar" "yo"}))
+        (is (match?
+             @invoked?
+             [[{:role :user :content "test"}] test-chat-ctx]))))))

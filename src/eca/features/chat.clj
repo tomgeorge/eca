@@ -281,15 +281,11 @@
                                   :text (or message (ex-message exception))})
                   (finish-chat-prompt! :idle chat-ctx))})))
 
-(defn ^:private send-mcp-prompt! [{:keys [prompt args]} {:keys [db*] :as chat-ctx}]
+(defn ^:private send-mcp-prompt!
+  [{:keys [prompt args]}
+   {:keys [db*] :as chat-ctx}]
   (let [{:keys [arguments]} (first (filter #(= prompt (:name %)) (f.mcp/all-prompts @db*)))
-        i (atom -1)
-        args-vals (reduce
-                   (fn [a {:keys [name]}]
-                     (swap! i inc)
-                     (assoc a name (nth args @i)))
-                   {}
-                   arguments)
+        args-vals (zipmap (map :name arguments) args)
         {:keys [messages]} (f.mcp/get-prompt! prompt args-vals @db*)]
     (prompt-messages! messages false chat-ctx)))
 

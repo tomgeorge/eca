@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix web-search support for custom providers.
+
 ## 0.12.5
 
 - Improve tool call result marking as error when not expected output.

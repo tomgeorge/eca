@@ -20,6 +20,7 @@
                  (assoc m
                         (str (name provider) "/" model)
                         {:tools true
+                         :web-search true
                          :custom-provider? true
                          :default-model? (= model default-model)}))
                models

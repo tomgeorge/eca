@@ -111,9 +111,9 @@
         mcp-prompt? (string/includes? (first (string/split message #" ")) ":")]
     (cond
       (and slash? mcp-prompt?)
-      (let [message (subs message 1)
-            parts (string/split message #" ")
-            [server] (string/split message #":")]
+      (let [command (subs message 1)
+            parts (string/split command #" ")
+            [server] (string/split command #":")]
         {:type :mcp-prompt
          :server server
          :prompt (second (string/split (first parts) #":"))
@@ -317,7 +317,8 @@
    db*
    messenger
    config]
-  (let [chat-id (or chat-id
+  (let [message (string/trim message)
+        chat-id (or chat-id
                     (let [new-id (str (random-uuid))]
                       (swap! db* assoc-in [:chats new-id] {:id new-id})
                       new-id))

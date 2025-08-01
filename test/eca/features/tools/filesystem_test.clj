@@ -139,7 +139,7 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "no matches"
     (is (match?
-         {:error false
+         {:error true
           :contents [{:type :text
                       :content "No matches found"}]}
          (with-redefs [fs/exists? (constantly true)
@@ -203,7 +203,7 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
   (testing "no files found"
     (is (match?
-         {:error false
+         {:error true
           :contents [{:type :text
                       :content "No files found for given pattern"}]}
          (with-redefs [fs/exists? (constantly true)
@@ -275,7 +275,7 @@
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "original content not found"
     (is (match?
-         {:error false
+         {:error true
           :contents [{:type :text
                       :content (format "Original content not found in %s" (h/file-path "/project/foo/my-file.txt"))}]}
          (with-redefs [fs/exists? (constantly true)

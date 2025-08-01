@@ -67,9 +67,9 @@
                                             pattern)))
                    []
                    (:workspace-folders db))]
-        (tools.util/single-text-content (if (seq paths)
-                                          (string/join "\n" paths)
-                                          "No matches found")))))
+        (if (seq paths)
+          (tools.util/single-text-content (string/join "\n" paths))
+          (tools.util/single-text-content "No matches found" :error)))))
 
 (defn ^:private run-ripgrep [path pattern include]
   (let [cmd (cond-> ["rg" "--files-with-matches" "--no-heading"]
@@ -159,9 +159,9 @@
                    (run-java-grep path pattern include))
                  (take max-results))]
         ;; TODO sort by modification time.
-        (tools.util/single-text-content (if (seq paths)
-                                          (string/join "\n" paths)
-                                          "No files found for given pattern")))))
+        (if (seq paths)
+          (tools.util/single-text-content (string/join "\n" paths))
+          (tools.util/single-text-content "No files found for given pattern" :error)))))
 
 (defn ^:private replace-in-file [arguments {:keys [db]}]
   (or (tools.util/invalid-arguments arguments (concat (path-validations db)
@@ -171,14 +171,13 @@
             new-content (get arguments "new_content")
             all? (boolean (get arguments "all_occurrences"))
             content (slurp path)]
-        (tools.util/single-text-content
-         (if (string/includes? content original-content)
-           (let [content (if all?
-                           (string/replace content original-content new-content)
-                           (string/replace-first content original-content new-content))]
-             (spit path content)
-             (format "Successfully replaced content in %s." path))
-           (format "Original content not found in %s" path))))))
+        (if (string/includes? content original-content)
+          (let [content (if all?
+                          (string/replace content original-content new-content)
+                          (string/replace-first content original-content new-content))]
+            (spit path content)
+            (tools.util/single-text-content (format "Successfully replaced content in %s." path)))
+          (tools.util/single-text-content (format "Original content not found in %s" path) :error)))))
 
 (defn ^:private move-file [arguments {:keys [db]}]
   (let [workspace-dirs (tools.util/workspace-roots-strs db)]

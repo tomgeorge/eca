@@ -383,7 +383,8 @@
 (defn query-commands
   [{:keys [query chat-id]}
    db*]
-  (let [mcp-prompts (->> (f.mcp/all-prompts @db*)
+  (let [query (string/lower-case query)
+        mcp-prompts (->> (f.mcp/all-prompts @db*)
                          (mapv #(-> %
                                     (assoc :name (str (:server %) ":" (:name %))
                                            :type :mcpPrompt)
@@ -396,8 +397,8 @@
                          eca-commands)
         commands (if (string/blank? query)
                    commands
-                   (filter #(or (string/includes? (:name %) query)
-                                (string/includes? (:description %) query))
+                   (filter #(or (string/includes? (string/lower-case (:name %)) query)
+                                (string/includes? (string/lower-case (:description %)) query))
                            commands))]
     {:chat-id chat-id
      :commands commands}))

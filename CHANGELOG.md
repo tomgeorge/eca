@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Improve tool call result marking as error when not expected output.
+
 ## 0.12.4
 
 - Add chat command type.

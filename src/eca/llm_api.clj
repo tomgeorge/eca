@@ -12,8 +12,17 @@
 (def ^:private logger-tag "[LLM-API]")
 
 (defn extra-models [config]
-  (llm-providers.ollama/list-models {:host (:host (:ollama config))
-                                     :port (:port (:ollama config))}))
+  (let [ollama-host (:host (:ollama config))
+        ollama-port (:port (:ollama config))]
+    (mapv
+     (fn [{:keys [model] :as ollama-model}]
+       (let [capabilities (llm-providers.ollama/model-capabilities {:host ollama-host :port ollama-port :model model})]
+         (assoc ollama-model
+                :tools (and (get-in config [:ollama :useTools] true)
+                            (boolean (some #(= % "tools") capabilities)))
+                :reason? (and (get-in config [:ollama :think] true)
+                              (boolean (some #(= % "thinking") capabilities))))))
+     (llm-providers.ollama/list-models {:host ollama-host :port ollama-port}))))
 
 ;; TODO ask LLM for the most relevant parts of the path
 (defn refine-file-context [path lines-range]
@@ -116,7 +125,7 @@
         :user-messages user-messages
         :max-output-tokens max-output-tokens
         :reason-tokens reason-tokens
-        :reason? reason?
+        :reason? (and reason? (:reason? model-config))
         :past-messages past-messages
         :tools tools
         :web-search web-search
@@ -133,7 +142,7 @@
         :user-messages user-messages
         :max-output-tokens max-output-tokens
         :reason-tokens reason-tokens
-        :reason? reason?
+        :reason? (and reason? (:reason? model-config))
         :past-messages past-messages
         :tools tools
         :web-search web-search
@@ -145,7 +154,7 @@
       (llm-providers.ollama/completion!
        {:host (-> config :ollama :host)
         :port (-> config :ollama :port)
-        :reason? (and reason? (:think model-config))
+        :reason? (and reason? (:reason? model-config))
         :model (string/replace-first model config/ollama-model-prefix "")
         :instructions instructions
         :user-messages user-messages
@@ -168,7 +177,7 @@
           :user-messages user-messages
           :max-output-tokens max-output-tokens
           :reason-tokens reason-tokens
-          :reason? reason?
+          :reason? (and reason? (:reason? model-config))
           :past-messages past-messages
           :web-search web-search
           :tools tools

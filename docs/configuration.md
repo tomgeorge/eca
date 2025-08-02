@@ -193,7 +193,7 @@ interface Config {
   "ollama" : {
     "host" : "http://localhost",
     "port" : 11434,
-    "useTools": false,
+    "useTools": true,
     "think": true
   },
   "chat" : {

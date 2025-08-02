@@ -28,15 +28,14 @@
             {}
             custom-providers)))
   (when-let [ollama-models (seq (llm-api/extra-models config))]
-    (swap! db* update :models merge
-           (reduce
-            (fn [models {:keys [model]}]
-              (assoc models
-                     (str config/ollama-model-prefix model)
-                     {:tools (get-in config [:ollama :useTools] false)
-                      :think (get-in config [:ollama :think] false)}))
-            {}
-            ollama-models))))
+    (let [models (reduce
+                  (fn [models {:keys [model] :as ollama-model}]
+                    (assoc models
+                           (str config/ollama-model-prefix model)
+                           (select-keys ollama-model [:tools :reason?])))
+                  {}
+                  ollama-models)]
+      (swap! db* update :models merge models))))
 
 (defn initialize [{:keys [db* config]} params]
   (logger/logging-task
@@ -81,8 +80,8 @@
 
 (defn chat-tool-call-approve [{:keys [db*]} params]
   (logger/logging-task
-      :eca/chat-tool-call-approve
-      (f.chat/tool-call-approve params db*)))
+   :eca/chat-tool-call-approve
+   (f.chat/tool-call-approve params db*)))
 
 (defn chat-tool-call-reject [{:keys [db*]} params]
   (logger/logging-task

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Improve ollama model listing getting capabilities, avoiding change ollama config for different models.
+
 ## 0.13.0
 
 - Support reasoning for ollama models that support think.

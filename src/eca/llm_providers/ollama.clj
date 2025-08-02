@@ -12,6 +12,7 @@
 
 (def ^:private chat-url "%s/api/chat")
 (def ^:private list-models-url "%s/api/tags")
+(def ^:private show-model-url "%s/api/show")
 
 (defn ^:private base-url [host port]
   (or (System/getenv "OLLAMA_API_BASE")
@@ -33,6 +34,25 @@
           [])))
     (catch Exception e
       (logger/warn logger-tag "Error listing running models:" (ex-message e))
+      [])))
+
+(defn model-capabilities [{:keys [host port model]}]
+  (try
+    (let [rid (llm-util/gen-rid)
+          {:keys [status body]} (http/post
+                                 (format show-model-url (base-url host port))
+                                 {:throw-exceptions? false
+                                  :body (json/generate-string {:model model})
+                                  :as :json})]
+      (if (= 200 status)
+        (do
+          (llm-util/log-response logger-tag rid "api/show" body)
+          (:capabilities body))
+        (do
+          (logger/warn logger-tag "Unknown status code:" status)
+          [])))
+    (catch Exception e
+      (logger/warn logger-tag "Error getting model:" (ex-message e))
       [])))
 
 (defn ^:private base-completion-request! [{:keys [rid url body on-error on-response]}]

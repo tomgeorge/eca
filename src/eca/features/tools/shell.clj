@@ -41,13 +41,13 @@
             {:error true
              :contents (remove nil?
                                (concat [{:type :text
-                                         :content (str "Exit code " (:exit result))}]
+                                         :text (str "Exit code " (:exit result))}]
                                        (when-not (string/blank? err)
                                          [{:type :text
-                                           :content (str "Stderr:\n" err)}])
+                                           :text (str "Stderr:\n" err)}])
                                        (when-not (string/blank? out)
                                          [{:type :text
-                                           :content (str "Stdout:\n" out)}])))})))))
+                                           :text (str "Stdout:\n" out)}])))})))))
 
 (def definitions
   {"eca_shell_command"

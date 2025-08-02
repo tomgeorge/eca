@@ -12,7 +12,7 @@
     (is (match?
          {:error true
           :contents [{:type :text
-                      :content (format "working directory %s does not exist" (h/file-path "/baz"))}]}
+                      :text (format "working directory %s does not exist" (h/file-path "/baz"))}]}
          (with-redefs [fs/exists? (constantly false)]
            ((get-in f.tools.shell/definitions ["eca_shell_command" :handler])
             {"command" "ls -lh"
@@ -22,9 +22,9 @@
     (is (match?
          {:error true
           :contents [{:type :text
-                      :content "Exit code 1"}
+                      :text "Exit code 1"}
                      {:type :text
-                      :content "Stderr:\nSome error"}]}
+                      :text "Stderr:\nSome error"}]}
          (with-redefs [fs/exists? (constantly true)
                        shell/sh (constantly {:exit 1 :err "Some error"})]
            ((get-in f.tools.shell/definitions ["eca_shell_command" :handler])
@@ -34,7 +34,7 @@
     (is (match?
          {:error false
           :contents [{:type :text
-                      :content "Some text"}]}
+                      :text "Some text"}]}
          (with-redefs [fs/exists? (constantly true)
                        shell/sh (constantly {:exit 0 :out "Some text" :err "Other text"})]
            ((get-in f.tools.shell/definitions ["eca_shell_command" :handler])
@@ -44,7 +44,7 @@
     (is (match?
          {:error false
           :contents [{:type :text
-                      :content "Some text"}]}
+                      :text "Some text"}]}
          (with-redefs [fs/exists? (constantly true)
                        shell/sh (constantly {:exit 0 :out "Some text" :err "Other text"})]
            ((get-in f.tools.shell/definitions ["eca_shell_command" :handler])
@@ -55,7 +55,7 @@
     (is (match?
          {:error false
           :contents [{:type :text
-                      :content "Some text"}]}
+                      :text "Some text"}]}
          (with-redefs [fs/exists? (constantly true)
                        shell/sh (constantly {:exit 0 :out "Some text" :err "Other text"})]
            ((get-in f.tools.shell/definitions ["eca_shell_command" :handler])
@@ -67,7 +67,7 @@
     (is (match?
          {:error true
           :contents [{:type :text
-                      :content "Cannot run command 'rm' because it is excluded by eca config."}]}
+                      :text "Cannot run command 'rm' because it is excluded by eca config."}]}
          (with-redefs [fs/exists? (constantly true)]
            ((get-in f.tools.shell/definitions ["eca_shell_command" :handler])
             {"command" "rm -r /project/foo/src"}

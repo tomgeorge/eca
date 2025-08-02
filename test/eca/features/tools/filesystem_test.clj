@@ -16,7 +16,7 @@
     (is (match?
          {:error true
           :contents [{:type :text
-                      :content (str (h/file-path "/foo/qux") " is not a valid path")}]}
+                      :text (str (h/file-path "/foo/qux") " is not a valid path")}]}
          (with-redefs [fs/canonicalize (constantly (h/file-path "/foo/qux"))
                        fs/exists? (constantly false)]
            ((get-in f.tools.filesystem/definitions ["eca_list_directory" :handler])
@@ -26,7 +26,7 @@
     (is (match?
          {:error true
           :contents [{:type :text
-                      :content (format "Access denied - path %s outside allowed directories: %s"
+                      :text (format "Access denied - path %s outside allowed directories: %s"
                                        (h/file-path "/foo/qux")
                                        (h/file-path "/foo/bar/baz"))}]}
          (with-redefs [fs/canonicalize (constantly (h/file-path "/foo/qux"))
@@ -38,7 +38,7 @@
     (is (match?
          {:error false
           :contents [{:type :text
-                      :content (format (str "[FILE] %s\n"
+                      :text (format (str "[FILE] %s\n"
                                             "[DIR] %s\n")
                                        (h/file-path "/foo/bar/baz/some.clj")
                                        (h/file-path "/foo/bar/baz/qux"))}]}
@@ -57,7 +57,7 @@
     (is (match?
          {:error true
           :contents [{:type :text
-                      :content (format "File %s is not readable" (h/file-path "/foo/qux"))}]}
+                      :text (format "File %s is not readable" (h/file-path "/foo/qux"))}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly false)
                        f.tools.filesystem/allowed-path? (constantly true)]
@@ -68,7 +68,7 @@
     (is (match?
          {:error false
           :contents [{:type :text
-                      :content "fooo"}]}
+                      :text "fooo"}]}
          (with-redefs [slurp (constantly "fooo")
                        fs/exists? (constantly true)
                        fs/readable? (constantly true)
@@ -80,7 +80,7 @@
     (is (match?
          {:error false
           :contents [{:type :text
-                      :content "line3\nline4\nline5"}]}
+                      :text "line3\nline4\nline5"}]}
          (with-redefs [slurp (constantly "line1\nline2\nline3\nline4\nline5")
                        fs/exists? (constantly true)
                        fs/readable? (constantly true)
@@ -92,7 +92,7 @@
     (is (match?
          {:error false
           :contents [{:type :text
-                      :content "line1\nline2"}]}
+                      :text "line1\nline2"}]}
          (with-redefs [slurp (constantly "line1\nline2\nline3\nline4\nline5")
                        fs/exists? (constantly true)
                        fs/readable? (constantly true)
@@ -104,7 +104,7 @@
     (is (match?
          {:error false
           :contents [{:type :text
-                      :content "line3\nline4"}]}
+                      :text "line3\nline4"}]}
          (with-redefs [slurp (constantly "line1\nline2\nline3\nline4\nline5")
                        fs/exists? (constantly true)
                        fs/readable? (constantly true)
@@ -118,7 +118,7 @@
     (is (match?
          {:error true
           :contents [{:type :text
-                      :content (format "Access denied - path %s outside allowed directories: %s"
+                      :text (format "Access denied - path %s outside allowed directories: %s"
                                        (h/file-path "/foo/qux/new_file.clj")
                                        (h/file-path "/foo/bar"))}]}
          (with-redefs [f.tools.filesystem/allowed-path? (constantly false)]
@@ -131,7 +131,7 @@
     (is (match?
          {:error true
           :contents [{:type :text
-                      :content "Invalid glob pattern ' '"}]}
+                      :text "Invalid glob pattern ' '"}]}
          (with-redefs [fs/exists? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["eca_search_files" :handler])
             {"path" (h/file-path "/project/foo")
@@ -141,7 +141,7 @@
     (is (match?
          {:error true
           :contents [{:type :text
-                      :content "No matches found"}]}
+                      :text "No matches found"}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/glob (constantly [])]
            ((get-in f.tools.filesystem/definitions ["eca_search_files" :handler])
@@ -152,7 +152,7 @@
     (is (match?
          {:error false
           :contents [{:type :text
-                      :content (str (h/file-path "/project/foo/bar/baz.txt") "\n"
+                      :text (str (h/file-path "/project/foo/bar/baz.txt") "\n"
                                     (h/file-path "/project/foo/qux.txt") "\n"
                                     (h/file-path "/project/foo/qux.clj"))}]}
          (with-redefs [fs/exists? (constantly true)
@@ -167,7 +167,7 @@
     (is (match?
          {:error false
           :contents [{:type :text
-                      :content (str (h/file-path "/project/foo/bar/baz.txt") "\n"
+                      :text (str (h/file-path "/project/foo/bar/baz.txt") "\n"
                                     (h/file-path "/project/foo/qux.txt"))}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/glob (constantly [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
@@ -182,7 +182,7 @@
     (is (match?
          {:error true
           :contents [{:type :text
-                      :content "Invalid content regex pattern ' '"}]}
+                      :text "Invalid content regex pattern ' '"}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["eca_grep" :handler])
@@ -193,7 +193,7 @@
     (is (match?
          {:error true
           :contents [{:type :text
-                      :content "Invalid file pattern ' '"}]}
+                      :text "Invalid file pattern ' '"}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["eca_grep" :handler])
@@ -205,7 +205,7 @@
     (is (match?
          {:error true
           :contents [{:type :text
-                      :content "No files found for given pattern"}]}
+                      :text "No files found for given pattern"}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)
                        tools.util/command-available? (fn [command & _args] (= "rg" command))
@@ -218,7 +218,7 @@
     (is (match?
          {:error false
           :contents [{:type :text
-                      :content "/project/foo/bla.txt\n/project/foo/qux.txt"}]}
+                      :text "/project/foo/bla.txt\n/project/foo/qux.txt"}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)
                        tools.util/command-available? (fn [command & _args] (= "rg" command))
@@ -231,7 +231,7 @@
     (is (match?
          {:error false
           :contents [{:type :text
-                      :content "/project/foo/bla.txt\n/project/foo/qux.txt"}]}
+                      :text "/project/foo/bla.txt\n/project/foo/qux.txt"}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)
                        tools.util/command-available? (fn [command & _args] (= "grep" command))
@@ -244,7 +244,7 @@
     (is (match?
          {:error false
           :contents [{:type :text
-                      :content (h/file-path "/project/foo/bla.txt")}]}
+                      :text (h/file-path "/project/foo/bla.txt")}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)
                        tools.util/command-available? (constantly false)
@@ -264,7 +264,7 @@
     (is (match?
          {:error true
           :contents [{:type :text
-                      :content (format "File %s is not readable" (h/file-path "/foo/qux"))}]}
+                      :text (format "File %s is not readable" (h/file-path "/foo/qux"))}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly false)
                        f.tools.filesystem/allowed-path? (constantly true)]
@@ -277,7 +277,7 @@
     (is (match?
          {:error true
           :contents [{:type :text
-                      :content (format "Original content not found in %s" (h/file-path "/project/foo/my-file.txt"))}]}
+                      :text (format "Original content not found in %s" (h/file-path "/project/foo/my-file.txt"))}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)
                        f.tools.filesystem/allowed-path? (constantly true)
@@ -292,7 +292,7 @@
       (is (match?
            {:error false
             :contents [{:type :text
-                        :content (format "Successfully replaced content in %s." (h/file-path "/project/foo/my-file.txt"))}]}
+                        :text (format "Successfully replaced content in %s." (h/file-path "/project/foo/my-file.txt"))}]}
            (with-redefs [fs/exists? (constantly true)
                          fs/readable? (constantly true)
                          f.tools.filesystem/allowed-path? (constantly true)
@@ -311,7 +311,7 @@
       (is (match?
            {:error false
             :contents [{:type :text
-                        :content (format "Successfully replaced content in %s." (h/file-path "/project/foo/my-file.txt"))}]}
+                        :text (format "Successfully replaced content in %s." (h/file-path "/project/foo/my-file.txt"))}]}
            (with-redefs [fs/exists? (constantly true)
                          fs/readable? (constantly true)
                          f.tools.filesystem/allowed-path? (constantly true)
@@ -332,7 +332,7 @@
     (is (match?
          {:error true
           :contents [{:type :text
-                      :content (format "%s is not a valid path" (h/file-path "/foo/qux"))}]}
+                      :text (format "%s is not a valid path" (h/file-path "/foo/qux"))}]}
          (with-redefs [fs/exists? (constantly false)
                        f.tools.filesystem/allowed-path? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["eca_move_file" :handler])
@@ -342,7 +342,7 @@
     (is (match?
          {:error true
           :contents [{:type :text
-                      :content (format "Path %s already exists" (h/file-path "/foo/bar/other_file.clj"))}]}
+                      :text (format "Path %s already exists" (h/file-path "/foo/bar/other_file.clj"))}]}
          (with-redefs [fs/exists? (constantly true)
                        f.tools.filesystem/allowed-path? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["eca_move_file" :handler])
@@ -353,7 +353,7 @@
     (is (match?
          {:error false
           :contents [{:type :text
-                      :content (format "Successfully moved %s to %s"
+                      :text (format "Successfully moved %s to %s"
                                        (h/file-path "/foo/bar/some_file.clj")
                                        (h/file-path "/foo/bar/other_file.clj"))}]}
          (with-redefs [fs/exists? (fn [path] (not (string/includes? path "other_file.clj")))

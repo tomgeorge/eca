@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.14.0
+
 - Support enable/disable tool servers.
 - Bump mcp java sdk to 0.11.0.
 

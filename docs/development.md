@@ -14,6 +14,7 @@ When supporting a new editor, it's important to keep UX consistency across edito
 
 This step-by-step feature implementation help track progress and next steps:
 
+```markdown
 - [ ] Create the plugin/extension repo (editor-code-assistant/eca-<editor> would be ideal), ask maintainers for permission.
 - Server
   - Manage ECA server process.
@@ -42,5 +43,6 @@ This step-by-step feature implementation help track progress and next steps:
   - [ ] Open MCP details window
   - [ ] Receive MCP server updates and update chat and mcp-details ux.
 - [ ] Basic plugin/extension documentation
+```
 
 Create a issue to help track the effort copying and pasting these check box to help track progress.

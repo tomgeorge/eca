@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fix web-search support for custom providers.
+- fix output of eca_shell_command.
 
 ## 0.12.5
 

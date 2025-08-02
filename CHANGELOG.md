@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.12.7
+
 - Fix ollama tool calls.
 
 ## 0.12.6

@@ -41,9 +41,9 @@ Together these files implement the request flow:
    
 With this map you can usually answer:
 
-• _“Where does request X enter the system?”_ – look in `handlers.clj`.
-• _“How is tool Y executed?”_ – see `src/eca/features/tools/<y>.clj`.
-• _“How do we talk to provider Z?”_ – adapter under `llm_providers/`.
+- _"Where does request X enter the system?"_ – look in `handlers.clj`.
+- _"How is tool Y executed?"_ – see `src/eca/features/tools/<y>.clj`.
+- _"How do we talk to provider Z?"_ – adapter under `llm_providers/`.
 
 ### Tests
 

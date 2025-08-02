@@ -9,7 +9,5 @@
 
          test make/unit-test
 
-         run-file make/run-file
-
          tag make/tag
          get-last-changelog-entry make/get-last-changelog-entry}}

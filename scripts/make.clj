@@ -82,17 +82,6 @@
                 (extract-text-between (str "## " version) "## ")
                 string/trim)))
 
-(defn run-file
-  "Starts the server process and send the content of given path as stdin"
-  [& [path]]
-  (-> (p/process {:cmd ["clojure" "-M:dev" "-m" "eca.main" "server"]
-                  :in (slurp path)
-                  :out :string
-                  :err :string})
-      p/check
-      :err
-      println))
-
 (defn unit-test []
   (println :running-unit-tests...)
   (clj! ["-M:test"])

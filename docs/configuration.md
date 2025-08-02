@@ -160,6 +160,7 @@ interface Config {
         host: string;
         port: string;
         useTools: boolean;
+        think: boolean;
     };
     chat?: {
         welcomeMessage: string;
@@ -192,7 +193,8 @@ interface Config {
   "ollama" : {
     "host" : "http://localhost",
     "port" : 11434,
-    "useTools": false
+    "useTools": false,
+    "think": true
   },
   "chat" : {
     "welcomeMessage" : "Welcome to ECA! What you have in mind?\n\n"

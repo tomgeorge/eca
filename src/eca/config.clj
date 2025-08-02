@@ -27,7 +27,8 @@
    :mcpServers {}
    :ollama {:host "http://localhost"
             :port 11434
-            :useTools true}
+            :useTools true
+            :think true}
    :chat {:welcomeMessage "Welcome to ECA!\n\nType '/' for commands\n\n"}
    :customProviders {}
    :index {:ignoreFiles [{:type :gitignore}]}})

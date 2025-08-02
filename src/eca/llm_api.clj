@@ -145,7 +145,7 @@
       (llm-providers.ollama/completion!
        {:host (-> config :ollama :host)
         :port (-> config :ollama :port)
-        :reason? reason?
+        :reason? (and reason? (:think model-config))
         :model (string/replace-first model config/ollama-model-prefix "")
         :instructions instructions
         :user-messages user-messages

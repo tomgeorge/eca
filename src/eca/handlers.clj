@@ -33,7 +33,8 @@
             (fn [models {:keys [model]}]
               (assoc models
                      (str config/ollama-model-prefix model)
-                     {:tools (get-in config [:ollama :useTools] false)}))
+                     {:tools (get-in config [:ollama :useTools] false)
+                      :think (get-in config [:ollama :think] false)}))
             {}
             ollama-models))))
 

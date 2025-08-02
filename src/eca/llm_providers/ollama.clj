@@ -37,26 +37,28 @@
 
 (defn ^:private base-completion-request! [{:keys [rid url body on-error on-response]}]
   (llm-util/log-request logger-tag rid url body)
-  (http/post
-   url
-   {:body (json/generate-string body)
-    :throw-exceptions? false
-    :async? true
-    :as :stream}
-   (fn [{:keys [status body]}]
-     (try
-       (if (not= 200 status)
-         (let [body-str (slurp body)]
-           (logger/warn logger-tag "Unexpected response status: %s body: %s" status body-str)
-           (on-error {:message (format "Ollama response status: %s body: %s" status body-str)}))
-         (with-open [rdr (io/reader body)]
-           (doseq [[event data] (llm-util/event-data-seq rdr)]
-             (llm-util/log-response logger-tag rid event data)
-             (on-response rid event data))))
-       (catch Exception e
-         (on-error {:exception e}))))
-   (fn [e]
-     (on-error {:exception e}))))
+  (let [reason-id (str (random-uuid))
+        reasoning?* (atom false)]
+    (http/post
+     url
+     {:body (json/generate-string body)
+      :throw-exceptions? false
+      :async? true
+      :as :stream}
+     (fn [{:keys [status body]}]
+       (try
+         (if (not= 200 status)
+           (let [body-str (slurp body)]
+             (logger/warn logger-tag "Unexpected response status: %s body: %s" status body-str)
+             (on-error {:message (format "Ollama response status: %s body: %s" status body-str)}))
+           (with-open [rdr (io/reader body)]
+             (doseq [[event data] (llm-util/event-data-seq rdr)]
+               (llm-util/log-response logger-tag rid event data)
+               (on-response rid event data reasoning?* reason-id))))
+         (catch Exception e
+           (on-error {:exception e}))))
+     (fn [e]
+       (on-error {:exception e})))))
 
 (defn ^:private ->tools [tools]
   (mapv (fn [tool]
@@ -70,22 +72,24 @@
             "tool_call" {:role "assistant" :tool-calls [{:type "function"
                                                          :function content}]}
             "tool_call_output" {:role "tool" :content (llm-util/stringfy-tool-result content)}
+            "reason" {:role "assistant" :content (:text content)}
             msg))
         past-messages))
 
-(defn completion! [{:keys [model user-messages instructions host port past-messages tools]}
-                   {:keys [on-message-received on-error on-prepare-tool-call on-tool-called]}]
+(defn completion! [{:keys [model user-messages reason? instructions host port past-messages tools]}
+                   {:keys [on-message-received on-error on-prepare-tool-call on-tool-called
+                           on-reason]}]
   (let [messages (concat
                   (normalize-messages (concat [{:role "system" :content instructions}] past-messages))
                   (normalize-messages user-messages))
         body {:model model
               :messages messages
-              :think false
+              :think reason?
               :tools (->tools tools)
               :stream true}
         url (format chat-url (base-url host port))
         tool-calls* (atom {})
-        on-response-fn (fn handle-response [rid _event data]
+        on-response-fn (fn handle-response [rid _event data reasoning?* reason-id]
                          (let [{:keys [message done_reason]} data]
                            (cond
                              (seq (:tool_calls message))
@@ -111,8 +115,22 @@
                                                      :finish-reason done_reason}))
 
                              message
-                             (on-message-received {:type :text
-                                                   :text (:content message)}))))]
+                             (if (:thinking message)
+                               (do
+                                 (when-not @reasoning?*
+                                   (on-reason {:status :started
+                                               :id reason-id})
+                                   (reset! reasoning?* true))
+                                 (on-reason {:status :thinking
+                                             :id reason-id
+                                             :text (:thinking message)}))
+                               (do
+                                 (when @reasoning?*
+                                   (on-reason {:status :finished
+                                               :id reason-id})
+                                   (reset! reasoning?* false))
+                                 (on-message-received {:type :text
+                                                       :text (:content message)}))))))]
     (base-completion-request!
      {:rid (llm-util/gen-rid)
       :url url

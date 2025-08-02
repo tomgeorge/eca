@@ -4,7 +4,7 @@
    [eca.llm-providers.ollama :as llm-providers.ollama]
    [matcher-combinators.test :refer [match?]]))
 
-(deftest ->messages-with-history-test
+(deftest ->normalize-messages-test
   (testing "no previous history"
     (is (match?
          []

@@ -4,7 +4,7 @@
    [eca.llm-providers.openai :as llm-providers.openai]
    [matcher-combinators.test :refer [match?]]))
 
-(deftest ->messages-with-history-test
+(deftest ->normalize-messages-test
   (testing "no previous history"
     (is (match?
          []

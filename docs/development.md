@@ -25,10 +25,10 @@ The ECA codebase follows a pragmatic **layered layout** that separates concerns 
    ├─ `rules.clj`           | Guards that enforce user-defined project rules.
    ├─ `tools.clj`           | Registry of built-in tool descriptors (run, approve…).
    └─ `tools/`              | Implementation of side-effectful tools:
-      • `filesystem.clj` | read/write/edit helpers 
-      • `shell.clj` | runs user-approved shell commands 
-      • `mcp.clj` | Multi-Command Plan supervisor 
-      • `util.clj` | misc helpers shared by tools.
+   ──├─ `filesystem.clj`    | read/write/edit helpers 
+   ──├─ `shell.clj`         | runs user-approved shell commands 
+   ──├─ `mcp.clj`           | Multi-Command Plan supervisor 
+   ──└─ `util.clj`          | misc helpers shared by tools.
    `src/eca/messenger.clj`  | To send back to client requests/notifications over stdio.
    `src/eca/handlers.clj`   | Entrypoint for all features.
    `src/eca/server.clj`     | stdio **entry point**; wires everything together via `lsp4clj`.
@@ -36,9 +36,11 @@ The ECA codebase follows a pragmatic **layered layout** that separates concerns 
    `src/eca/nrepl.clj`      | Starts an nREPL when `:debug` flag is passed.
 
 Together these files implement the request flow: 
+
 `client/editor` → `stdin JSON-RPC` → `handlers` → `features` → `llm_api` → `llm_provider` → results streamed back.
    
 With this map you can usually answer:
+
 • _“Where does request X enter the system?”_ – look in `handlers.clj`.
 • _“How is tool Y executed?”_ – see `src/eca/features/tools/<y>.clj`.
 • _“How do we talk to provider Z?”_ – adapter under `llm_providers/`.

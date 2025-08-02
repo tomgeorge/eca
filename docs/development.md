@@ -1,5 +1,52 @@
 # ECA Development
 
+## Project structure
+
+The ECA codebase follows a pragmatic **layered layout** that separates concerns clearly so that you can jump straight to the part you need to change.
+
+### Files overview
+
+   Path                     | Responsibility
+   -------------------------|-------------------------------------------------------
+       `bb.edn`             | Babashka tasks (e.g. `bb test`, `bb debug-cli`) for local workflows and CI, the main entrypoint for most tasks.
+   `deps.edn`               | Clojure dependency coordinates and aliases used by the JVM build and the native GraalVM image.
+   `docs/`                  | Markdown documentation shown at https://eca.dev
+   `src/eca/config.clj`     | Centralized place to get ECA configs from multiple places.
+   `src/eca/logger.clj`     | Logger interface to log to stderr.
+   `src/eca/shared.clj`     | shared utility fns to whole project.
+   `src/eca/db.clj`         | Simple in-memory KV store that backs sessions/MCP, all in-memory statue lives here.
+   `src/eca/llm_api.clj`    | Public façade used by features to call an LLM.
+   `src/eca/llm_providers/` | Vendor adapters (`openai.clj`, `anthropic.clj`, `ollama.clj`).
+   `src/eca/llm_util.clj`   | Token counting, chunking, rate-limit helpers.
+   `src/eca/features/`      | **High-level capabilities exposed to the editor**
+   ├─ `chat.clj`            | Streaming chat orchestration & tool-call pipeline.
+   ├─ `prompt.clj`          | Prompt templates and variable interpolation.
+   ├─ `index.clj`           | Embedding & retrieval-augmented generation helpers.
+   ├─ `rules.clj`           | Guards that enforce user-defined project rules.
+   ├─ `tools.clj`           | Registry of built-in tool descriptors (run, approve…).
+   └─ `tools/`              | Implementation of side-effectful tools:
+      • `filesystem.clj` | read/write/edit helpers 
+      • `shell.clj` | runs user-approved shell commands 
+      • `mcp.clj` | Multi-Command Plan supervisor 
+      • `util.clj` | misc helpers shared by tools.
+   `src/eca/messenger.clj`  | To send back to client requests/notifications over stdio.
+   `src/eca/handlers.clj`   | Entrypoint for all features.
+   `src/eca/server.clj`     | stdio **entry point**; wires everything together via `lsp4clj`.
+   `src/eca/main.clj`       | The CLI interface.
+   `src/eca/nrepl.clj`      | Starts an nREPL when `:debug` flag is passed.
+
+Together these files implement the request flow: 
+`client/editor` → `stdin JSON-RPC` → `handlers` → `features` → `llm_api` → `llm_provider` → results streamed back.
+   
+With this map you can usually answer:
+• _“Where does request X enter the system?”_ – look in `handlers.clj`.
+• _“How is tool Y executed?”_ – see `src/eca/features/tools/<y>.clj`.
+• _“How do we talk to provider Z?”_ – adapter under `llm_providers/`.
+
+### Tests
+
+Run with `bb test` or run test via Clojure REPL. CI will run the same task.
+
 ## Coding 
 
 There are several ways of finding and fixing a bug or implementing a new feature:
@@ -45,4 +92,6 @@ This step-by-step feature implementation help track progress and next steps:
 - [ ] Basic plugin/extension documentation
 ```
 
-Create a issue to help track the effort copying and pasting these check box to help track progress.
+Create a issue to help track the effort copying and pasting these check box to help track progress, [example](https://github.com/editor-code-assistant/eca/issues/5).
+
+Please provide feedback of the dificulties implementing your server, especially missing docs, to make next integrations smoother!

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.13.0
+
 - Support reasoning for ollama models that support think.
 
 ## 0.12.7

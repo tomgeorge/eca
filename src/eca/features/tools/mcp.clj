@@ -102,29 +102,52 @@
                             (.arguments prompt-client))})
         (.prompts (.listPrompts client))))
 
-(defn initialize-servers-async! [{:keys [on-server-updated]} db* config]
-  (let [workspaces (:workspace-folders @db*)
-        db @db*
+(defn ^:private initialize-server! [name db* config on-server-updated]
+  (let [db @db*
+        workspaces (:workspace-folders @db*)
+        server-config (get-in config [:mcpServers (keyword name)])
         obj-mapper (ObjectMapper.)]
-    (doseq [[name server-config] (:mcpServers config)]
-      (when-not (get-in db [:mcp-clients name])
-        (if (get server-config :disabled false)
-          (on-server-updated (->server name server-config :disabled db))
-          (future
-            (try
-              (let [transport (->transport server-config workspaces)
-                    client (->client transport config)]
-                (on-server-updated (->server name server-config :starting db))
-                (swap! db* assoc-in [:mcp-clients name] {:client client})
-                (doseq [{:keys [name uri]} workspaces]
-                  (.addRoot client (McpSchema$Root. uri name)))
-                (.initialize client)
-                (swap! db* assoc-in [:mcp-clients name :tools] (list-server-tools obj-mapper client))
-                (swap! db* assoc-in [:mcp-clients name :prompts] (list-server-prompts client))
-                (on-server-updated (->server name server-config :running @db*)))
-              (catch Exception e
-                (logger/warn logger-tag (format "Could not initialize MCP server %s. Error: %s" name (.getMessage e)))
-                (on-server-updated (->server name server-config :failed db))))))))))
+    (try
+      (let [transport (->transport server-config workspaces)
+            client (->client transport config)]
+        (on-server-updated (->server name server-config :starting db))
+        (swap! db* assoc-in [:mcp-clients name] {:client client})
+        (doseq [{:keys [name uri]} workspaces]
+          (.addRoot client (McpSchema$Root. uri name)))
+        (.initialize client)
+        (swap! db* assoc-in [:mcp-clients name :tools] (list-server-tools obj-mapper client))
+        (swap! db* assoc-in [:mcp-clients name :prompts] (list-server-prompts client))
+        (on-server-updated (->server name server-config :running @db*)))
+      (catch Exception e
+        (logger/warn logger-tag (format "Could not initialize MCP server %s. Error: %s" name (.getMessage e)))
+        (on-server-updated (->server name server-config :failed db))))))
+
+(defn initialize-servers-async! [{:keys [on-server-updated]} db* config]
+  (let [db @db*]
+    (doseq [[name-kwd server-config] (:mcpServers config)]
+      (let [name (name name-kwd)]
+        (when-not (get-in db [:mcp-clients name])
+          (if (get server-config :disabled false)
+            (on-server-updated (->server name server-config :disabled db))
+            (future
+              (initialize-server! name db* config on-server-updated))))))))
+
+(defn stop-server! [name db* config {:keys [on-server-updated]}]
+  (when-let [{:keys [client]} (get-in @db* [:mcp-clients name])]
+    (let [server-config (get-in config [:mcpServers (keyword name)])]
+      (on-server-updated (->server name server-config :stopping @db*))
+      (.closeGracefully ^McpSyncClient client)
+      (swap! db* update :mcp-clients dissoc name)
+      (on-server-updated (->server name server-config :stopped @db*))
+      (logger/info logger-tag (format "Stopped MCP server %s" name)))))
+
+(defn start-server! [name db* config {:keys [on-server-updated]}]
+  (when-let [server-config (get-in config [:mcpServers (keyword name)])]
+    (if (get server-config :disabled false)
+      (logger/warn logger-tag (format "MCP server %s is disabled and cannot be started" name))
+      (do
+        (initialize-server! name db* config on-server-updated)
+        (logger/info logger-tag (format "Started MCP server %s" name))))))
 
 (defn all-tools [db]
   (into []

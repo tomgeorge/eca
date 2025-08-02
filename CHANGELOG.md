@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Support enable/disable tool servers.
+- Bump mcp java sdk to 0.11.0.
+
 ## 0.13.1
 
 - Improve ollama model listing getting capabilities, avoiding change ollama config for different models.

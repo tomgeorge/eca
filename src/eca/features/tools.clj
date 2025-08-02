@@ -69,3 +69,29 @@
                                                                         (update :tools #(mapv with-tool-status %)))))}
      db*
      config)))
+
+(defn stop-server! [name db* messenger config]
+  (let [disabled-tools (set (get-in config [:disabledTools] []))
+        with-tool-status (fn [tool]
+                           (assoc-some tool :disabled (contains? disabled-tools (:name tool))))]
+    (f.mcp/stop-server!
+     name
+     db*
+     config
+     {:on-server-updated (fn [server]
+                           (messenger/tool-server-updated messenger (-> server
+                                                                        (assoc :type :mcp)
+                                                                        (update :tools #(mapv with-tool-status %)))))})))
+
+(defn start-server! [name db* messenger config]
+  (let [disabled-tools (set (get-in config [:disabledTools] []))
+        with-tool-status (fn [tool]
+                           (assoc-some tool :disabled (contains? disabled-tools (:name tool))))]
+    (f.mcp/start-server!
+     name
+     db*
+     config
+     {:on-server-updated (fn [server]
+                           (messenger/tool-server-updated messenger (-> server
+                                                                        (assoc :type :mcp)
+                                                                        (update :tools #(mapv with-tool-status %)))))})))

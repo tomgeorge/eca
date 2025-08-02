@@ -98,3 +98,13 @@
    :eca/chat-delete
    (f.chat/delete-chat params db*)
    {}))
+
+(defn mcp-stop-server [{:keys [db* messenger config]} params]
+  (logger/logging-task
+   :eca/mcp-stop-server
+   (f.tools/stop-server! (:name params) db* messenger config)))
+
+(defn mcp-start-server [{:keys [db* messenger config]} params]
+  (logger/logging-task
+   :eca/mcp-start-server
+   (f.tools/start-server! (:name params) db* messenger config)))

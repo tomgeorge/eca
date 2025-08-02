@@ -845,13 +845,10 @@ A server notification about a tool status update like a MCP or native tool.
 This is useful for clients present to user the list of configured tools/MCPs,
 their status and available tools and actions.
 
-_Request:_ 
+_Notification:_ 
 
 * method: `tool/serverUpdated`
 * params: `ToolServerUpdatedParams` defined as follows:
-
-_Response:_
-
 
 ```typescript
 type ToolServerUpdatedParams = EcaServerUpdatedParams | MCPServerUpdatedParams;
@@ -918,6 +915,44 @@ interface ServerTool {
      * Whther this tool is disabled.
      */
     disabled?: boolean;
+}
+```
+
+### Stop MCP server (➡️)
+
+A client notification for server to stop a MCP server, stopping the process.
+Updates its status via `tool/serverUpdated` notification.
+
+_Notification:_
+
+* method: `mcp/stopServer`
+* params: `MCPStopServerParams` defined as follows:
+
+```typescript
+interface MCPStopServerParams {
+    /**
+     * The MCP server name.
+     */
+    name: string;
+}
+```
+
+### Start MCP server (➡️)
+
+A client notification for server to start a stopped MCP server, starting the process again.
+Updates its status via `tool/serverUpdated` notification.
+
+_Notification:_
+
+* method: `mcp/startServer`
+* params: `MCPStartServerParams` defined as follows:
+
+```typescript
+interface MCPStartServerParams {
+    /**
+     * The server name.
+     */
+    name: string;
 }
 ```
 

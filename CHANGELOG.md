@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix native image build.
+
 ## 0.14.0
 
 - Support enable/disable tool servers.

@@ -41,30 +41,30 @@
        (on-error {:exception e})))))
 
 (defn ^:private normalize-messages [past-messages]
-  (keep (fn [{:keys [role content] :as msg}]
-          (case role
-            "tool_call" {:type "function_call"
-                         :name (:name content)
-                         :call_id (:id content)
-                         :arguments (json/generate-string (:arguments content))}
-            "tool_call_output"
-            {:type "function_call_output"
-             :call_id (:id content)
-             :output (llm-util/stringfy-tool-result content)}
-            "reason" nil
-            (update msg :content (fn [c]
-                                   (if (string? c)
-                                     c
-                                     (mapv #(if (= "text" (name (:type %)))
-                                              (assoc % :type (if (= "user" role)
-                                                               "input_text"
-                                                               "output_text"))
-                                              %) c))))))
-        past-messages))
+  (keep-indexed (fn [i {:keys [role content] :as msg}]
+                  (case role
+                    "tool_call" {:type "function_call"
+                                 :name (:name content)
+                                 :call_id (:id content)
+                                 :arguments (json/generate-string (:arguments content))}
+                    "tool_call_output"
+                    {:type "function_call_output"
+                     :call_id (:id content)
+                     :output (llm-util/stringfy-tool-result content)}
+                    ;; TODO include reason blocks
+                    "reason" nil
+                    (update msg :content (fn [c]
+                                           (if (string? c)
+                                             c
+                                             (mapv #(if (= "text" (name (:type %)))
+                                                      (assoc % :type (if (= "user" role)
+                                                                       "input_text"
+                                                                       "output_text"))
+                                                      %) c))))))
+                past-messages))
 
-(defn completion! [{:keys [model user-messages instructions temperature api-key api-url
-                           max-output-tokens past-messages tools web-search]
-                    :or {temperature 1.0}}
+(defn completion! [{:keys [model user-messages instructions reason? temperature api-key api-url
+                           max-output-tokens past-messages tools web-search]}
                    {:keys [on-message-received on-error on-prepare-tool-call on-tool-called on-reason]}]
   (let [input (concat (normalize-messages past-messages)
                       (normalize-messages user-messages))
@@ -76,8 +76,12 @@
               ;; TODO support parallel
               :parallel_tool_calls false
               :instructions instructions
+              ;; TODO allow user specify custom temperature (default 1.0)
               :temperature temperature
               :tools tools
+              :reasoning (when reason?
+                           {:effort "medium"
+                            :summary "detailed"})
               :stream true
               :max_output_tokens max-output-tokens}
         mcp-call-by-item-id* (atom {})
@@ -111,7 +115,8 @@
                                   :on-response handle-response})
                                 (swap! mcp-call-by-item-id* dissoc (-> data :item :id)))
               "reasoning" (on-reason {:status :finished
-                                      :id (-> data :item :id)})
+                                      :id (-> data :item :id)
+                                      :external-id (-> data :item :id)})
               nil)
 
             ;; URL mentioned
@@ -124,6 +129,11 @@
               nil)
 
             ;; reasoning / tools
+            "response.reasoning_summary_text.delta"
+            (on-reason {:status :thinking
+                        :id (:item_id data)
+                        :text (:delta data)})
+
             "response.output_item.added"
             (case (-> data :item :type)
               "reasoning" (on-reason {:status :started

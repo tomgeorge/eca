@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.14.3
+
 - Fix reason-id on openai models afecting chat thoughts messages.
 - Support openai o models reason text when available.
 

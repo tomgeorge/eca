@@ -53,9 +53,7 @@ Install the plugin for your editor and ECA server will be downloaded and started
 
 ## How it works
 
-Editors spawn the server via `eca server` and communicate via stdin/stdout. Logs are printed to stderr, use `--verbose` to log client<->server communication or `--log-level debug`  to log more info like LLM responses.
-
-Supported editors already download latest server on start and require no extra configuration
+Editors spawn the server via `eca server` and communicate via stdin/stdout, similar to LSPs. Supported editors already download latest server on start and require no extra configuration.
 
 ## Roadmap
 
@@ -63,7 +61,7 @@ Check the planned work [here](https://github.com/orgs/editor-code-assistant/proj
 
 ## Troubleshooting
 
-You can start eca with `--log-level debug` which should log helpful information in stderr buffer like what is being sent to LLMs.
+You can start eca with `--log-level debug` or `--verbose` which should log helpful information to stderr buffer like what is being sent to LLMs or what ECA is responding to editors.
 
 ## Contributing
 

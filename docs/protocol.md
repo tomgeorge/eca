@@ -403,11 +403,20 @@ interface TextContent {
 }
 
 /**
- * Progress messages from the LLM. 
+ * Progress messages about the chat. 
+ * Usually to mark what eca is doing/waiting or tell it finished processing messages.
  */
 interface ProgressContent {
     type: 'progress';
-    state: 'running|finished';
+
+    /**
+     * The state of this progress.
+     */
+    state: 'running' | 'finished';
+
+    /*
+     * Extra text to show in chat about current state of this chat.
+     */
     text: string;
 }
 

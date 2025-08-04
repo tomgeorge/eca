@@ -403,6 +403,15 @@ interface TextContent {
 }
 
 /**
+ * Progress messages from the LLM. 
+ */
+interface ProgressContent {
+    type: 'progress';
+    state: 'running|finished';
+    text: string;
+}
+
+/**
  * A reason started from the LLM
  *
  */

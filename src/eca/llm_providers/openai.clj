@@ -15,8 +15,7 @@
 (def base-url "https://api.openai.com")
 
 (defn ^:private base-completion-request! [{:keys [rid body api-url api-key on-error on-response]}]
-  (let [url (str api-url responses-path)
-        reason-id (str (random-uuid))]
+  (let [url (str api-url responses-path)]
     (llm-util/log-request logger-tag rid url body)
     (http/post
      url
@@ -35,7 +34,7 @@
            (with-open [rdr (io/reader body)]
              (doseq [[event data] (llm-util/event-data-seq rdr)]
                (llm-util/log-response logger-tag rid event data)
-               (on-response event data reason-id))))
+               (on-response event data))))
          (catch Exception e
            (on-error {:exception e}))))
      (fn [e]
@@ -83,7 +82,7 @@
               :max_output_tokens max-output-tokens}
         mcp-call-by-item-id* (atom {})
         on-response-fn
-        (fn handle-response [event data reason-id]
+        (fn handle-response [event data]
           (case event
             ;; text
             "response.output_text.delta"
@@ -112,7 +111,7 @@
                                   :on-response handle-response})
                                 (swap! mcp-call-by-item-id* dissoc (-> data :item :id)))
               "reasoning" (on-reason {:status :finished
-                                      :id reason-id})
+                                      :id (-> data :item :id)})
               nil)
 
             ;; URL mentioned
@@ -128,7 +127,7 @@
             "response.output_item.added"
             (case (-> data :item :type)
               "reasoning" (on-reason {:status :started
-                                      :id reason-id})
+                                      :id (-> data :item :id)})
               "function_call" (let [call-id (-> data :item :call_id)
                                     item-id (-> data :item :id)
                                     name (-> data :item :name)]

@@ -38,13 +38,13 @@ Provides access to run shell commands, useful to run build tools, tests, and oth
 User can include contexts to the chat, which can help LLM generate output with better quality.
 Here are the current supported contexts types:
 
-- `file`: a file in the workspace, server will pass its content to LLM.
+- `file`: a file in the workspace, server will pass its content to LLM (Supports optional line range).
 - `directory`: a directory in the workspace, server will read all file contexts and pass to LLM.
 - `repoMap`: a summary view of workspaces files and folders, server will calculate this and pass to LLM. Currently, the repo-map includes only the file paths in git.
 
 ### Commands
 
-Eca supports commands that usually arer triggered via `/` in the chat, completing in the chat will show the known commands which include ECA commands and MCP prompts.
+Eca supports commands that usually arer triggered via `/` in the chat, completing in the chat will show the known commands which include ECA commands, MCP prompts and resources.
 
 ##  Completion
 

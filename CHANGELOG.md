@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix reason-id on openai models afecting chat thoughts messages.
+
 ## 0.14.2
 
 - Fix MCPs not starting because of graal reflection issue.

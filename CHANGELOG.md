@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.14.2
+
 - Fix MCPs not starting because of graal reflection issue.
 
 ## 0.14.1

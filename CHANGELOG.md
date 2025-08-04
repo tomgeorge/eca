@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix MCPs not starting because of graal reflection issue.
+
 ## 0.14.1
 
 - Fix native image build.

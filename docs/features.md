@@ -44,7 +44,12 @@ Here are the current supported contexts types:
 
 ### Commands
 
-Eca supports commands that usually arer triggered via `/` in the chat, completing in the chat will show the known commands which include ECA commands, MCP prompts and resources.
+Eca supports commands that usually are triggered via shash (`/`) in the chat, completing in the chat will show the known commands which include ECA commands, MCP prompts and resources.
+
+The built-in commands are:
+
+`/costs`: shows costs about current session.
+`/repo-map-show`: shows the current repoMap context of the session.
 
 ##  Completion
 

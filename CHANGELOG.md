@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix mcp tool calls.
+
 ## 0.15.0
 
 - Support MCP resources as a new context.

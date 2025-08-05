@@ -31,6 +31,8 @@
 
 (set! *warn-on-reflection* true)
 
+;; TODO create tests for this ns
+
 (def ^:private logger-tag "[MCP]")
 
 (def ^:private env-var-regex
@@ -130,13 +132,6 @@
       (logger/debug logger-tag "Could not list resources:" (.getMessage e))
       [])))
 
-(defn ^:private mcp-client-from-db [pred db]
-  (->> (vals (:mcp-clients db))
-       (keep (fn [{:keys [client resources]}]
-               (when (some pred resources)
-                 client)))
-       first))
-
 (defn ^:private initialize-server! [name db* config on-server-updated]
   (let [db @db*
         workspaces (:workspace-folders @db*)
@@ -192,7 +187,11 @@
         (:mcp-clients db)))
 
 (defn call-tool! [^String name ^Map arguments db]
-  (let [mcp-client (mcp-client-from-db #(= name (:name %)) db)
+  (let [mcp-client (->> (vals (:mcp-clients db))
+                        (keep (fn [{:keys [client tools]}]
+                                (when (some #(= name (:name %)) tools)
+                                  client)))
+                        first)
         result (try
                  (let [result (.callTool ^McpSyncClient mcp-client
                                          (McpSchema$CallToolRequest. name arguments))]
@@ -218,7 +217,11 @@
         (:mcp-clients db)))
 
 (defn get-prompt! [^String name ^Map arguments db]
-  (let [mcp-client (mcp-client-from-db #(= name (:name %)) db)
+  (let [mcp-client (->> (vals (:mcp-clients db))
+                        (keep (fn [{:keys [client prompts]}]
+                                (when (some #(= name (:name %)) prompts)
+                                  client)))
+                        first)
         prompt (.getPrompt ^McpSyncClient mcp-client (McpSchema$GetPromptRequest. name arguments))
         result {:description (.description prompt)
                 :messages (mapv (fn [^McpSchema$PromptMessage message]
@@ -229,7 +232,11 @@
     result))
 
 (defn get-resource! [^String uri db]
-  (let [mcp-client (mcp-client-from-db #(= uri (:uri %)) db)
+  (let [mcp-client (->> (vals (:mcp-clients db))
+                        (keep (fn [{:keys [client resources]}]
+                                (when (some #(= uri (:uri %)) resources)
+                                  client)))
+                        first)
         resource (.readResource ^McpSyncClient mcp-client (McpSchema$ReadResourceRequest. uri))
         result {:contents (mapv ->resource-content (.contents resource))}]
     (logger/debug logger-tag "Resource result:" result)

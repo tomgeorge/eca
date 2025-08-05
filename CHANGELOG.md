@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.15.2
+
 - Improve `eca_edit_file` tool for better usage from LLM.
 
 ## 0.15.1

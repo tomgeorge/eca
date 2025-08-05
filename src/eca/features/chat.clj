@@ -247,8 +247,8 @@
                                               :details details)))
                             (do
                               (add-to-history! {:role "tool_call" :content tool-call})
-                              (add-to-history! {:role "tool_call_output" :content (assoc tool-call :output {:contents [{:content "Tool call rejected by user"
-                                                                                                                        :error true
+                              (add-to-history! {:role "tool_call_output" :content (assoc tool-call :output {:error true
+                                                                                                            :contents [{:text "Tool call rejected by user"
                                                                                                                         :type :text}]})})
                               (send-content! chat-ctx :assistant
                                              (assoc-some

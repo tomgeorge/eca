@@ -98,6 +98,15 @@
                                                                         (update :tools #(mapv with-tool-status %)))))})))
 (defn get-tool-call-details [name arguments]
   (case name
+    "eca_write_file" (let [path (get arguments "path")
+                           content (get arguments "content")]
+                       (when (and path content)
+                         (let [{:keys [added removed diff]} (diff/diff "" content path)]
+                           {:type :fileChange
+                            :path path
+                            :linesAdded added
+                            :linesRemoved removed
+                            :diff diff})))
     "eca_edit_file" (let [path (get arguments "path")
                           original-content (get arguments "original_content")
                           new-content (get arguments "new_content")

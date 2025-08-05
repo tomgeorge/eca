@@ -18,8 +18,12 @@
     McpSchema$Prompt
     McpSchema$PromptArgument
     McpSchema$PromptMessage
+    McpSchema$ReadResourceRequest
+    McpSchema$Resource
+    McpSchema$ResourceContents
     McpSchema$Root
     McpSchema$TextContent
+    McpSchema$TextResourceContents
     McpSchema$Tool
     McpTransport]
    [java.time Duration]
@@ -74,12 +78,24 @@
    :command (:command server-config)
    :args (:args server-config)
    :tools (get-in db [:mcp-clients mcp-name :tools])
+   :prompts (get-in db [:mcp-clients mcp-name :prompts])
+   :resources (get-in db [:mcp-clients mcp-name :resources])
    :status status})
 
 (defn ^:private ->content [^McpSchema$Content content-client]
   (case (.type content-client)
     "text" {:type :text
             :text (.text ^McpSchema$TextContent content-client)}
+    nil))
+
+(defn ^:private ->resource-content [^McpSchema$ResourceContents resource-content-client]
+  (cond
+    (instance? McpSchema$TextResourceContents resource-content-client)
+    {:type :text
+     :uri (.uri resource-content-client)
+     :text (.text ^McpSchema$TextResourceContents resource-content-client)}
+
+    :else
     nil))
 
 (defn ^:private list-server-tools [^ObjectMapper obj-mapper ^McpSyncClient client]
@@ -102,6 +118,25 @@
                             (.arguments prompt-client))})
         (.prompts (.listPrompts client))))
 
+(defn ^:private list-server-resources [^McpSyncClient client]
+  (try
+    (mapv (fn [^McpSchema$Resource resource-client]
+            {:uri (.uri resource-client)
+             :name (.name resource-client)
+             :description (.description resource-client)
+             :mime-type (.mimeType resource-client)})
+          (.resources (.listResources client)))
+    (catch Exception e
+      (logger/debug logger-tag "Could not list resources:" (.getMessage e))
+      [])))
+
+(defn ^:private mcp-client-from-db [pred db]
+  (->> (vals (:mcp-clients db))
+       (keep (fn [{:keys [client resources]}]
+               (when (some pred resources)
+                 client)))
+       first))
+
 (defn ^:private initialize-server! [name db* config on-server-updated]
   (let [db @db*
         workspaces (:workspace-folders @db*)
@@ -117,6 +152,7 @@
         (.initialize client)
         (swap! db* assoc-in [:mcp-clients name :tools] (list-server-tools obj-mapper client))
         (swap! db* assoc-in [:mcp-clients name :prompts] (list-server-prompts client))
+        (swap! db* assoc-in [:mcp-clients name :resources] (list-server-resources client))
         (on-server-updated (->server name server-config :running @db*)))
       (catch Exception e
         (logger/warn logger-tag (format "Could not initialize MCP server %s. Error: %s" name (.getMessage e)))
@@ -156,11 +192,7 @@
         (:mcp-clients db)))
 
 (defn call-tool! [^String name ^Map arguments db]
-  (let [mcp-client (->> (vals (:mcp-clients db))
-                        (keep (fn [{:keys [client tools]}]
-                                (when (some #(= name (:name %)) tools)
-                                  client)))
-                        first)
+  (let [mcp-client (mcp-client-from-db #(= name (:name %)) db)
         result (try
                  (let [result (.callTool ^McpSyncClient mcp-client
                                          (McpSchema$CallToolRequest. name arguments))]
@@ -179,12 +211,14 @@
                   (mapv #(assoc % :server (name server-name)) prompts)))
         (:mcp-clients db)))
 
+(defn all-resources [db]
+  (into []
+        (mapcat (fn [[server-name {:keys [resources]}]]
+                  (mapv #(assoc % :server (name server-name)) resources)))
+        (:mcp-clients db)))
+
 (defn get-prompt! [^String name ^Map arguments db]
-  (let [mcp-client (->> (vals (:mcp-clients db))
-                        (keep (fn [{:keys [client prompts]}]
-                                (when (some #(= name (:name %)) prompts)
-                                  client)))
-                        first)
+  (let [mcp-client (mcp-client-from-db #(= name (:name %)) db)
         prompt (.getPrompt ^McpSyncClient mcp-client (McpSchema$GetPromptRequest. name arguments))
         result {:description (.description prompt)
                 :messages (mapv (fn [^McpSchema$PromptMessage message]
@@ -194,8 +228,14 @@
     (logger/debug logger-tag "Prompt result:" result)
     result))
 
+(defn get-resource! [^String uri db]
+  (let [mcp-client (mcp-client-from-db #(= uri (:uri %)) db)
+        resource (.readResource ^McpSyncClient mcp-client (McpSchema$ReadResourceRequest. uri))
+        result {:contents (mapv ->resource-content (.contents resource))}]
+    (logger/debug logger-tag "Resource result:" result)
+    result))
+
 (defn shutdown! [db*]
-  (doseq [[_name {:keys [_client]}] (:mcp-clients @db*)]
-    ;; TODO NoClassDefFound being thrown for some reason
-    #_(.closeGracefully ^McpSyncClient client))
+  (doseq [[_name {:keys [client]}] (:mcp-clients @db*)]
+    (.closeGracefully ^McpSyncClient client))
   (swap! db* assoc :mcp-clients {}))

@@ -31,12 +31,13 @@
    ""
    "<contexts>"
    (reduce
-    (fn [context-str {:keys [type path content partial]}]
+    (fn [context-str {:keys [type path content partial uri]}]
       (str context-str (case type
                          :file (if partial
                                  (format "<file partial=true path=\"%s\">...\n%s\n...</file>\n" path content)
                                  (format "<file path=\"%s\">%s</file>\n" path content))
-                         :repoMap (format "<repoMap description=\"Workspaces structure in a tree view, spaces represent file hierarchy\" >%s</repoMap>" @repo-map*)
+                         :repoMap (format "<repoMap description=\"Workspaces structure in a tree view, spaces represent file hierarchy\" >%s</repoMap>\n" @repo-map*)
+                         :mcpResource (format "<resource uri=\"%s\">%s</resource>\n" uri content)
                          "")))
     ""
     refined-contexts)

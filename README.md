@@ -28,7 +28,7 @@ _Demo using [eca-vscode](https://github.com/editor-code-assistant/eca-vscode)_
 - :gear: **Single configuration**: Configure eca making it work the same in any editor via global or local configs.
 - :loop: **Chat** interface: ask questions, review code, work together to code.
 - :coffee: **Agentic**: let LLM work as an agent with its native tools and MCPs you can configure.
-- :syringe: **Context**: support: giving more details about your code to the LLM.
+- :syringe: **Context**: support: giving more details about your code to the LLM, including MCP resources and prompts.
 - :rocket: **Multi models**: OpenAI, Anthropic, Ollama local models, and custom user config models.
 
 ## Rationale 

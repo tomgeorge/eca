@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Support MCP resources as a new context.
+
 ## 0.14.4
 
 - Fix usage miscalculation.

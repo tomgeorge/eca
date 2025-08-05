@@ -278,7 +278,7 @@ type ChatModel =
  */
 type OllamaRunningModel = string
 
-type ChatContext = FileContext | DirectoryContext | WebContext | RepoMapContext;
+type ChatContext = FileContext | DirectoryContext | WebContext | RepoMapContext | McpResourceContext;
 
 /**
  * Context related to a file in the workspace
@@ -328,7 +328,39 @@ interface WebContext {
  */
 interface RepoMapContext {
     type: 'repoMap'; 
- }
+}
+
+/***
+ * A MCP resource available from a MCP server.
+ */
+interface McpResourceContext {
+    type: 'mcpResource';
+    
+   /** 
+    * The URI of the resource like file://foo/bar.clj
+    */
+    uri: string;
+
+    /** 
+     * The name of the resource.
+     */
+    name: string;
+    
+    /** 
+     * The description of the resource.
+     */
+    description: string;
+    
+    /** 
+     * The mimeType of the resource like `text/markdown`.
+     */
+    mimeType: string;
+    
+    /** 
+     * The server name of this MCP resource.
+     */
+    server: string;
+}
 ```
 
 _Response:_

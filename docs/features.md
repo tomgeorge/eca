@@ -35,7 +35,7 @@ Provides access to run shell commands, useful to run build tools, tests, and oth
 
 ### Contexts
 
-User can include contexts to the chat, which can help LLM generate output with better quality.
+User can include contexts to the chat, including MCP resources, which can help LLM generate output with better quality.
 Here are the current supported contexts types:
 
 - `file`: a file in the workspace, server will pass its content to LLM (Supports optional line range).

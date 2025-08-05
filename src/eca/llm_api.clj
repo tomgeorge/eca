@@ -65,12 +65,12 @@
                                                                       model))
                                                                   (:models db)))]
               [:custom-provider-default-model custom-provider-default-model])
-            (when-let [ollama-model (first (filter #(string/starts-with? % config/ollama-model-prefix) (keys (:models db))))]
-              [:ollama-running ollama-model])
             (when (anthropic-api-key config)
               [:api-key-found "claude-sonnet-4-0"])
             (when (openai-api-key config)
               [:api-key-found "o4-mini"])
+            (when-let [ollama-model (first (filter #(string/starts-with? % config/ollama-model-prefix) (keys (:models db))))]
+              [:ollama-running ollama-model])
             [:default "claude-sonnet-4-0"])]
     (logger/info logger-tag (format "Default LLM model '%s' decision '%s'" model decision))
     model))

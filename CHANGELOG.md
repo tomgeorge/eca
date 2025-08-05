@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Support custom system prompts via config `systemPromptTemplate`.
+- Add support for file change diffs on `eca_edit_file` tool call.
+
 ## 0.15.3
 
 - Rename `eca_list_directory` to `eca_directory_tree` tool for better overview of project files/dirs.

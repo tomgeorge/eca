@@ -132,6 +132,7 @@ interface Config {
     openaiApiKey?: string;
     anthropicApiKey?: string;
     rules: [{path: string;}];
+    systemPromptTemplate?: string;
     nativeTools: {
         filesystem: {enabled: boolean};
          shell: {enabled: boolean;

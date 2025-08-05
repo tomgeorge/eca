@@ -14,7 +14,7 @@
                  {:name "rule2" :content "Second rule"}]
           fake-repo-map (delay "TREE")
           behavior "agent"
-          result (prompt/build-instructions refined-contexts rules fake-repo-map behavior)]
+          result (prompt/build-instructions refined-contexts rules fake-repo-map behavior {})]
       (is (string/includes? result "You are ECA"))
       (is (string/includes? result "<rules>"))
       (is (string/includes? result "<rule name=\"rule1\">First rule</rule>"))

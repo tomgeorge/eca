@@ -3,6 +3,7 @@
    eca native tools and MCP servers."
   (:require
    [clojure.string :as string]
+   [eca.diff :as diff]
    [eca.features.tools.filesystem :as f.tools.filesystem]
    [eca.features.tools.mcp :as f.mcp]
    [eca.features.tools.shell :as f.tools.shell]
@@ -95,3 +96,19 @@
                            (messenger/tool-server-updated messenger (-> server
                                                                         (assoc :type :mcp)
                                                                         (update :tools #(mapv with-tool-status %)))))})))
+(defn get-tool-call-details [name arguments]
+  (case name
+    "eca_edit_file" (let [path (get arguments "path")
+                          original-content (get arguments "original_content")
+                          new-content (get arguments "new_content")
+                          all? (get arguments "all_occurrences")]
+                      (when-let [{:keys [original-full-content
+                                         new-full-content]} (and path original-content new-content
+                                                                 (f.tools.filesystem/file-change-full-content path original-content new-content all?))]
+                        (let [{:keys [added removed diff]} (diff/diff original-full-content new-full-content path)]
+                          {:type :fileChange
+                           :path path
+                           :linesAdded added
+                           :linesRemoved removed
+                           :diff diff})))
+    nil))

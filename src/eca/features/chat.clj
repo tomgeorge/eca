@@ -34,11 +34,11 @@
                                          :content (llm-api/refine-file-context filename nil)}))))
               "repoMap" [{:type :repoMap}]
               "mcpResource" (mapv
-                              (fn [{:keys [text]}]
-                                {:type :mcpResource
-                                 :uri uri
-                                 :content text})
-                              (:contents (f.mcp/get-resource! uri db)))))
+                             (fn [{:keys [text]}]
+                               {:type :mcpResource
+                                :uri uri
+                                :content text})
+                             (:contents (f.mcp/get-resource! uri db)))))
           contexts))
 
 (defn default-model [db config]
@@ -146,7 +146,7 @@
         rules (f.rules/all config (:workspace-folders db))
         refined-contexts (raw-contexts->refined contexts db)
         repo-map* (delay (f.index/repo-map db {:as-string? true}))
-        instructions (f.prompt/build-instructions refined-contexts rules repo-map* (or behavior (:chat-default-behavior db)))
+        instructions (f.prompt/build-instructions refined-contexts rules repo-map* (or behavior (:chat-default-behavior db)) config)
         past-messages (get-in db [:chats chat-id :messages] [])
         all-tools (f.tools/all-tools @db* config)
         received-msgs* (atom "")
@@ -210,12 +210,14 @@
       :on-tool-called (fn [{:keys [id name arguments] :as tool-call}]
                         (assert-chat-not-stopped! chat-ctx)
                         (send-content! chat-ctx :assistant
-                                       {:type :toolCallRun
-                                        :name name
-                                        :origin (tool-name->origin name all-tools)
-                                        :arguments arguments
-                                        :id id
-                                        :manual-approval manual-approval?})
+                                       (assoc-some
+                                        {:type :toolCallRun
+                                         :name name
+                                         :origin (tool-name->origin name all-tools)
+                                         :arguments arguments
+                                         :id id
+                                         :manual-approval manual-approval?}
+                                        :details (f.tools/get-tool-call-details name arguments)))
                         (let [approved?* (promise)]
                           (swap! db* assoc-in [:chats chat-id :tool-calls id :approved?*] approved?*)
                           (when-not (string/blank? @received-msgs*)

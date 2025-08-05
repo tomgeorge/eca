@@ -146,19 +146,25 @@
           (tools.util/single-text-content (string/join "\n" paths))
           (tools.util/single-text-content "No files found for given pattern" :error)))))
 
+(defn file-change-full-content [path original-content new-content all?]
+  (let [original-full-content (slurp path)
+        new-full-content (if all?
+                           (string/replace original-full-content original-content new-content)
+                           (string/replace-first original-full-content original-content new-content))]
+    (when (string/includes? original-full-content original-content)
+      {:original-full-content original-full-content
+       :new-full-content new-full-content})))
+
 (defn ^:private edit-file [arguments {:keys [db]}]
   (or (tools.util/invalid-arguments arguments (concat (path-validations db)
                                                       [["path" fs/readable? "File $path is not readable"]]))
       (let [path (get arguments "path")
             original-content (get arguments "original_content")
             new-content (get arguments "new_content")
-            all? (boolean (get arguments "all_occurrences"))
-            content (slurp path)]
-        (if (string/includes? content original-content)
-          (let [content (if all?
-                          (string/replace content original-content new-content)
-                          (string/replace-first content original-content new-content))]
-            (spit path content)
+            all? (boolean (get arguments "all_occurrences"))]
+        (if-let [{:keys [new-full-content]} (file-change-full-content path original-content new-content all?)]
+          (do
+            (spit path new-full-content)
             (tools.util/single-text-content (format "Successfully replaced content in %s." path)))
           (tools.util/single-text-content (format "Original content not found in %s" path) :error)))))
 

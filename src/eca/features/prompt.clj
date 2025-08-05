@@ -8,8 +8,9 @@
 
 (def ^:private eca-prompt-template (memoize eca-prompt-template*))
 
-(defn ^:private eca-prompt [behavior]
-  (let [prompt (eca-prompt-template)]
+(defn ^:private eca-prompt [behavior config]
+  (let [prompt (or (:systemPromptTemplate config)
+                   (eca-prompt-template))]
     (reduce
      (fn [p [k v]]
        (string/replace p (str "{" (name k) "}") v))
@@ -18,9 +19,9 @@
                   "chat" "Answer questions, and provide explanations."
                   "agent" "You are an agent - please keep going until the user's query is completely resolved, before ending your turn and yielding back to the user. Only terminate your turn when you are sure that the problem is solved. Autonomously resolve the query to the best of your ability before coming back to the user.")})))
 
-(defn build-instructions [refined-contexts rules repo-map* behavior]
+(defn build-instructions [refined-contexts rules repo-map* behavior config]
   (multi-str
-   (eca-prompt behavior)
+   (eca-prompt behavior config)
    "<rules>"
    (reduce
     (fn [rule-str {:keys [name content]}]

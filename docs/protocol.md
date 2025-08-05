@@ -293,10 +293,12 @@ interface FileContext {
     /**
      * Range of lines to retrive from file, if nil consider whole file.
      */
-    linesRange?: {
-        start: number;
-        end: number;
-    }
+    linesRange?: LinesRange;
+}
+
+interface LinesRange {
+   start: number;
+   end: number;
 }
 
 /**
@@ -601,6 +603,38 @@ interface ToolCallRunContent {
      * Whether this call requires manual approval from the user.
      */
     manualApproval: boolean;
+    
+    /**
+     * Extra details about this call. 
+     * Clients may use this to present different UX for this tool call.
+     */
+    details?: TooCallRunDetails;
+}
+
+type TooCallRunDetails = FileChangeDetails;
+
+interface FileChangeDetails {
+    type: 'fileChange';
+
+     /**
+      * The file path of this file change
+      */
+     path: string;
+     
+     /**
+      * The content diff of this file change
+      */
+     diff: string;
+     
+     /**
+      * The count of lines added in this change.
+      */
+     linesAdded: number;
+     
+     /**
+      * The count of lines removed in this change.
+      */
+     linesRemoved: number;
 }
 
 /**

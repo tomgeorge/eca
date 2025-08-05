@@ -17,7 +17,7 @@
   [["path" fs/exists? "$path is not a valid path"]
    ["path" (partial allowed-path? db) (str "Access denied - path $path outside allowed directories: " (tools.util/workspace-roots-strs db))]])
 
-(defn ^:private list-directory [arguments {:keys [db]}]
+(defn ^:private directory-tree [arguments {:keys [db]}]
   (let [path (delay (fs/canonicalize (get arguments "path")))]
     (or (tools.util/invalid-arguments arguments (path-validations db))
         (tools.util/single-text-content
@@ -165,21 +165,19 @@
 
 (defn ^:private edit-file [arguments {:keys [db]}]
   (or (tools.util/invalid-arguments arguments (concat (path-validations db)
-                                                      [["path" fs/readable? "File $path is not readable"]
-                                                       ["start_line" #(and (integer? %) (pos? %)) "$start_line must be a positive integer"]
-                                                       ["end_line" #(and (integer? %) (pos? %)) "$end_line must be a positive integer"]
-                                                       ["content" #(string? %) "$content must be a string"]]))
+                                                      [["path" fs/readable? "File $path is not readable"]]))
       (let [path (get arguments "path")
-            start-line (dec (int (get arguments "start_line"))) ; convert 1-based to 0-based
-            end-line (dec (int (get arguments "end_line")))     ; inclusive, 0-based
-            new-lines (string/split-lines (get arguments "content"))
-            old-lines (vec (string/split-lines (slurp path)))
-            before (subvec old-lines 0 start-line)
-            after (subvec old-lines (inc end-line))
-            new-content-lines (vec (concat before new-lines after))
-            new-file-content (string/join "\n" new-content-lines)]
-        (spit path new-file-content)
-        (tools.util/single-text-content (format "Successfully replaced lines %d-%d in %s." (inc start-line) (inc end-line) path)))))
+            original-content (get arguments "original_content")
+            new-content (get arguments "new_content")
+            all? (boolean (get arguments "all_occurrences"))
+            content (slurp path)]
+        (if (string/includes? content original-content)
+          (let [content (if all?
+                          (string/replace content original-content new-content)
+                          (string/replace-first content original-content new-content))]
+            (spit path content)
+            (tools.util/single-text-content (format "Successfully replaced content in %s." path)))
+          (tools.util/single-text-content (format "Original content not found in %s" path) :error)))))
 
 (defn ^:private move-file [arguments {:keys [db]}]
   (let [workspace-dirs (tools.util/workspace-roots-strs db)]
@@ -193,22 +191,25 @@
           (tools.util/single-text-content (format "Successfully moved %s to %s" source destination))))))
 
 (def definitions
-  {"eca_list_directory"
-   {:description (str "Get a detailed listing of all files and directories in a specified path. "
-                      "Results clearly distinguish between files and directories with [FILE] and [DIR] "
-                      "prefixes. This tool is essential for understanding directory structure and "
-                      "finding specific files within a directory."
+  {"eca_directory_tree"
+   {:description (str "Returns a recursive tree view of files and directories starting from the specified path. "
+                      "The path parameter must be an absolute path, not a relative path. "
                       "**Only works within the directories: $workspaceRoots.**")
     :parameters {:type "object"
                  :properties {"path" {:type "string"
-                                      :description "The absolute path to the directory to list."}}
+                                      :description "The absolute path to the directory."}
+                              "max_depth" {:type "integer"
+                                           :description "Maximum depth to traverse (optional)"}
+                              "limit" {:type "integer"
+                                       :description "Maxium number of entries to show (default: 100)"}}
                  :required ["path"]}
-    :handler #'list-directory}
+    :handler #'directory-tree}
    "eca_read_file"
    {:description (str "Read the contents of a file from the file system. "
                       "Use this tool when you need to examine "
                       "the contents of a single file. Optionally use the 'line_offset' and/or 'limit' "
-                      "parameters to read specific contents of the file when you know the range."
+                      "parameters to read specific contents of the file when you know the range. "
+                      "Prefer call once this tool over multiple calls passing small offsets. "
                       "**Only works within the directories: $workspaceRoots.**")
     :parameters {:type "object"
                  :properties {"path" {:type "string"
@@ -230,19 +231,21 @@
                  :required ["path" "content"]}
     :handler #'write-file}
    "eca_edit_file"
-   {:description (str "Change the specified file replacing the lines range with the given content. "
-                      "Make sure to have the existing file content updated via your context or eca_read_file before calling this. "
-                      "This can also be used to prepend, append, or delete contents from a file.")
+   {:description  (str "Replace a specific string or content block in a file with new content. "
+                       "Finds the exact original content and replaces it with new content. "
+                       "Be extra careful to format the original-content exactly correctly, "
+                       "taking extra care with whitespace and newlines. In addition to replacing strings, "
+                       "this can also be used to prepend, append, or delete contents from a file.")
     :parameters  {:type "object"
                   :properties {"path" {:type "string"
                                        :description "The absolute file path to do the replace."}
-                               "start_line" {:type "number"
-                                             :description "The 1-based start line number"}
-                               "end_line" {:type "number"
-                                           :description "The 1-based end line number"}
-                               "content" {:type "string"
-                                          :description "The new content to be inserted"}}
-                  :required ["path" "start_line" "end_line" "content"]}
+                               "original_content" {:type "string"
+                                                   :description "The exact content to find and replace"}
+                               "new_content" {:type "string"
+                                              :description "The new content to replace the original content with"}
+                               "all_occurrences" {:type "boolean"
+                                                  :description "Whether to replace all occurences of the file or just the first one (default)"}}
+                  :required ["path" "original_content" "new_content"]}
     :handler #'edit-file}
    "eca_move_file"
    {:description (str "Move or rename files and directories. Can move files between directories "

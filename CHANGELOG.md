@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Improve `eca_edit_file` tool for better usage from LLM.
+
 ## 0.15.1
 
 - Fix mcp tool calls.

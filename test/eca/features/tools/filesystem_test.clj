@@ -259,7 +259,7 @@
              "pattern" "some-cool-content"}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}}))))))
 
-(deftest replace-in-file-test
+(deftest edit-file-test
   (testing "Not readable path"
     (is (match?
          {:error true
@@ -270,86 +270,64 @@
                        f.tools.filesystem/allowed-path? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["eca_edit_file" :handler])
             {"path" (h/file-path "/foo/qux")
-             "start_line" 2
-             "end_line" 3
-             "content" "updated"}
+             "original_content" "foo"
+             "new_content" "bar"}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
 
-  (testing "invalid line range (start_line > end_line)"
-    (is (thrown?
-         Exception
+  (testing "Original content not found"
+    (is (match?
+         {:error true
+          :contents [{:type :text
+                      :text (format "Original content not found in %s" (h/file-path "/foo/bar/my-file.txt"))}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)
                        f.tools.filesystem/allowed-path? (constantly true)
-                       slurp (constantly "a\nb\nc")] ; just for completeness
+                       slurp (constantly "line1\nline2\nline3")]
            ((get-in f.tools.filesystem/definitions ["eca_edit_file" :handler])
-            {"path" (h/file-path "/foo/qux")
-             "start_line" 3
-             "end_line" 2
-             "content" "no-op"}
-            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar") :name "bar"}]}})))))
+            {"path" (h/file-path "/foo/bar/my-file.txt")
+             "original_content" "notfound"
+             "new_content" "new"}
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar") :name "foo"}]}})))))
 
-  (testing "replace 2nd and 3rd lines in file"
+  (testing "Replace first occurrence only"
     (let [file-content* (atom {})]
       (is (match?
            {:error false
             :contents [{:type :text
-                        :text (format "Successfully replaced lines 2-3 in %s." (h/file-path "/project/foo/my-file.txt"))}]}
+                        :text (format "Successfully replaced content in %s." (h/file-path "/project/foo/my-file.txt"))}]}
            (with-redefs [fs/exists? (constantly true)
                          fs/readable? (constantly true)
                          f.tools.filesystem/allowed-path? (constantly true)
-                         slurp (constantly "line1\nold2\nold3\nline4")
+                         slurp (constantly "a b a c")
                          spit (fn [f content] (swap! file-content* assoc f content))]
              ((get-in f.tools.filesystem/definitions ["eca_edit_file" :handler])
               {"path" (h/file-path "/project/foo/my-file.txt")
-               "start_line" 2
-               "end_line" 3
-               "content" "new2\nnew3"}
+               "original_content" "a"
+               "new_content" "X"}
               {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}}))))
       (is (match?
-           {(h/file-path "/project/foo/my-file.txt") "line1\nnew2\nnew3\nline4"}
+           {(h/file-path "/project/foo/my-file.txt") "X b a c"}
            @file-content*))))
 
-  (testing "replace first line only in file"
+  (testing "Replace all occurrences"
     (let [file-content* (atom {})]
       (is (match?
            {:error false
             :contents [{:type :text
-                        :text (format "Successfully replaced lines 1-1 in %s." (h/file-path "/project/foo/my-file.txt"))}]}
+                        :text (format "Successfully replaced content in %s." (h/file-path "/project/foo/my-file.txt"))}]}
            (with-redefs [fs/exists? (constantly true)
                          fs/readable? (constantly true)
                          f.tools.filesystem/allowed-path? (constantly true)
-                         slurp (constantly "orig1\nkeep2\nkeep3")
+                         slurp (constantly "foo bar foo baz foo")
                          spit (fn [f content] (swap! file-content* assoc f content))]
              ((get-in f.tools.filesystem/definitions ["eca_edit_file" :handler])
               {"path" (h/file-path "/project/foo/my-file.txt")
-               "start_line" 1
-               "end_line" 1
-               "content" "updated1"}
+               "original_content" "foo"
+               "new_content" "Z"
+               "all_occurrences" true}
               {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}}))))
       (is (match?
-           {(h/file-path "/project/foo/my-file.txt") "updated1\nkeep2\nkeep3"}
-           @file-content*))))
-
-  (testing "replace last line in file"
-    (let [file-content* (atom {})]
-      (is (match?
-           {:error false
-            :contents [{:type :text
-                        :text (format "Successfully replaced lines 4-4 in %s." (h/file-path "/project/foo/my-file.txt"))}]}
-           (with-redefs [fs/exists? (constantly true)
-                         fs/readable? (constantly true)
-                         f.tools.filesystem/allowed-path? (constantly true)
-                         slurp (constantly "keep1\nkeep2\nkeep3\nlast")
-                         spit (fn [f content] (swap! file-content* assoc f content))]
-             ((get-in f.tools.filesystem/definitions ["eca_edit_file" :handler])
-              {"path" (h/file-path "/project/foo/my-file.txt")
-               "start_line" 4
-               "end_line" 4
-               "content" "newlast"}
-              {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}}))))
-      (is (match?
-           {(h/file-path "/project/foo/my-file.txt") "keep1\nkeep2\nkeep3\nnewlast"}
+           {(h/file-path "/project/foo/my-file.txt") "Z bar Z baz Z"}
            @file-content*)))))
 
 (deftest move-file-test

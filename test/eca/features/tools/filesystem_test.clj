@@ -11,7 +11,7 @@
   (:import
    [java.io ByteArrayInputStream]))
 
-(deftest list-directory-test
+(deftest directory-tree-test
   (testing "Invalid path"
     (is (match?
          {:error true
@@ -19,7 +19,7 @@
                       :text (str (h/file-path "/foo/qux") " is not a valid path")}]}
          (with-redefs [fs/canonicalize (constantly (h/file-path "/foo/qux"))
                        fs/exists? (constantly false)]
-           ((get-in f.tools.filesystem/definitions ["eca_list_directory" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_directory_tree" :handler])
             {"path" (h/file-path "/foo/qux")}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "Unallowed dir"
@@ -31,7 +31,7 @@
                                     (h/file-path "/foo/bar/baz"))}]}
          (with-redefs [fs/canonicalize (constantly (h/file-path "/foo/qux"))
                        fs/exists? (constantly true)]
-           ((get-in f.tools.filesystem/definitions ["eca_list_directory" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_directory_tree" :handler])
             {"path" (h/file-path "/foo/qux")}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "allowed dir"
@@ -48,7 +48,7 @@
                                                 (fs/path (h/file-path "/foo/bar/baz/qux"))])
                        fs/directory? (fn [path] (not (string/ends-with? (str path) ".clj")))
                        fs/canonicalize (constantly (h/file-path "/foo/bar/baz"))]
-           ((get-in f.tools.filesystem/definitions ["eca_list_directory" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_directory_tree" :handler])
             {"path" (h/file-path "/foo/bar/baz")}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}}))))))
 

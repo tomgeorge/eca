@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Rename `eca_list_directory` to `eca_directory_tree` tool for better overview of project files/dirs.
+
 ## 0.15.2
 
 - Improve `eca_edit_file` tool for better usage from LLM.

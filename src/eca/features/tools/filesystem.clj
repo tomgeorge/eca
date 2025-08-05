@@ -221,13 +221,17 @@
                  :required ["path"]}
     :handler #'read-file}
    "eca_write_file"
-   {:description (str "Create a new file with new content. To edit existing files use eca_edit_file. "
+   {:description (str "Create a new file or completely overwrite an existing file with new content. "
+                      "This tool will automatically create any necessary parent directories if they don't exist. "
+                      "Use this tool when you want to create a new file from scratch or completely replace "
+                      "the entire content of an existing file. For partial edits or content replacement within "
+                      "existing files, use eca_edit_file instead. "
                       "**Only works within the directories: $workspaceRoots.**")
     :parameters {:type "object"
                  :properties {"path" {:type "string"
-                                      :description "The absolute path to the new file"}
+                                      :description "The absolute path to the file to create or overwrite"}
                               "content" {:type "string"
-                                         :description "The content of the new file"}}
+                                         :description "The complete content to write to the file"}}
                  :required ["path" "content"]}
     :handler #'write-file}
    "eca_edit_file"

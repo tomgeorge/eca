@@ -81,7 +81,7 @@
 
 (defn complete!
   [{:keys [model model-config instructions reason? user-messages config on-first-response-received
-           on-message-received on-error on-prepare-tool-call on-tool-called on-reason
+           on-message-received on-error on-prepare-tool-call on-tool-called on-reason on-usage-updated
            past-messages tools]}]
   (let [first-response-received* (atom false)
         emit-first-message-fn (fn [& args]
@@ -114,7 +114,8 @@
                    :on-error on-error-wrapper
                    :on-prepare-tool-call on-prepare-tool-call-wrapper
                    :on-tool-called on-tool-called
-                   :on-reason on-reason-wrapper}]
+                   :on-reason on-reason-wrapper
+                   :on-usage-updated on-usage-updated}]
     (cond
       (contains? #{"o4-mini"
                    "o3"

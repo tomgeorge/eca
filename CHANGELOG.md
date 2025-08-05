@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix usage miscalculation.
+
 ## 0.14.3
 
 - Fix reason-id on openai models afecting chat thoughts messages.

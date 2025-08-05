@@ -41,31 +41,31 @@
        (on-error {:exception e})))))
 
 (defn ^:private normalize-messages [past-messages]
-  (keep-indexed (fn [i {:keys [role content] :as msg}]
-                  (case role
-                    "tool_call" {:type "function_call"
-                                 :name (:name content)
-                                 :call_id (:id content)
-                                 :arguments (json/generate-string (:arguments content))}
-                    "tool_call_output"
-                    {:type "function_call_output"
-                     :call_id (:id content)
-                     :output (llm-util/stringfy-tool-result content)}
-                    ;; TODO include reason blocks
-                    "reason" nil
-                    (update msg :content (fn [c]
-                                           (if (string? c)
-                                             c
-                                             (mapv #(if (= "text" (name (:type %)))
-                                                      (assoc % :type (if (= "user" role)
-                                                                       "input_text"
-                                                                       "output_text"))
-                                                      %) c))))))
-                past-messages))
+  (keep (fn [{:keys [role content] :as msg}]
+          (case role
+            "tool_call" {:type "function_call"
+                         :name (:name content)
+                         :call_id (:id content)
+                         :arguments (json/generate-string (:arguments content))}
+            "tool_call_output"
+            {:type "function_call_output"
+             :call_id (:id content)
+             :output (llm-util/stringfy-tool-result content)}
+            ;; TODO include reason blocks
+            "reason" nil
+            (update msg :content (fn [c]
+                                   (if (string? c)
+                                     c
+                                     (mapv #(if (= "text" (name (:type %)))
+                                              (assoc % :type (if (= "user" role)
+                                                               "input_text"
+                                                               "output_text"))
+                                              %) c))))))
+        past-messages))
 
 (defn completion! [{:keys [model user-messages instructions reason? temperature api-key api-url
                            max-output-tokens past-messages tools web-search]}
-                   {:keys [on-message-received on-error on-prepare-tool-call on-tool-called on-reason]}]
+                   {:keys [on-message-received on-error on-prepare-tool-call on-tool-called on-reason on-usage-updated]}]
   (let [input (concat (normalize-messages past-messages)
                       (normalize-messages user-messages))
         tools (cond-> tools
@@ -149,11 +149,13 @@
 
             ;; done
             "response.completed"
-            (when-not (= "function_call" (-> data :response :output last :type))
-              (on-message-received {:type :finish
-                                    :usage {:input-tokens (-> data :response :usage :input_tokens)
-                                            :output-tokens (-> data :response :usage :output_tokens)}
-                                    :finish-reason (-> data :response :status)}))
+            (do
+              (on-usage-updated {:input-tokens (-> data :response :usage :input_tokens)
+                                 :output-tokens (-> data :response :usage :output_tokens)})
+              (when-not (= "function_call" (-> data :response :output last :type))
+                (on-message-received {:type :finish
+
+                                      :finish-reason (-> data :response :status)})))
             nil))]
     (base-completion-request!
      {:rid (llm-util/gen-rid)

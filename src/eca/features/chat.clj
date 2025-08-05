@@ -83,7 +83,7 @@
   [{:keys [input-tokens output-tokens
            input-cache-creation-tokens input-cache-read-tokens]}
    model
-   {:keys [chat-id db*] :as chat-ctx}]
+   {:keys [chat-id db*]}]
   (when (and output-tokens input-tokens)
     (swap! db* update-in [:chats chat-id :total-input-tokens] (fnil + 0) input-tokens)
     (swap! db* update-in [:chats chat-id :total-output-tokens] (fnil + 0) output-tokens)
@@ -98,13 +98,11 @@
           total-input-cache-read-tokens (get-in db [:chats chat-id :total-input-cache-read-tokens] nil)
           total-input-cache-tokens (or total-input-cache-creation-tokens 0)
           total-output-tokens (get-in db [:chats chat-id :total-output-tokens] 0)]
-      (send-content! chat-ctx :system
-                     (assoc-some {:type :usage
-                                  :message-output-tokens output-tokens
-                                  :message-input-tokens (+ input-tokens message-input-cache-tokens)
-                                  :session-tokens (+ total-input-tokens total-input-cache-tokens total-output-tokens)}
-                                 :message-cost (tokens->cost input-tokens input-cache-creation-tokens input-cache-read-tokens output-tokens model db)
-                                 :session-cost (tokens->cost total-input-tokens total-input-cache-creation-tokens total-input-cache-read-tokens total-output-tokens model db))))))
+      (assoc-some {:message-output-tokens output-tokens
+                   :message-input-tokens (+ input-tokens message-input-cache-tokens)
+                   :session-tokens (+ total-input-tokens total-input-cache-tokens total-output-tokens)}
+                  :message-cost (tokens->cost input-tokens input-cache-creation-tokens input-cache-read-tokens output-tokens model db)
+                  :session-cost (tokens->cost total-input-tokens total-input-cache-creation-tokens total-input-cache-read-tokens total-output-tokens model db)))))
 
 (defn ^:private message->decision [message]
   (let [slash? (string/starts-with? message "/")
@@ -170,6 +168,10 @@
                                     (send-content! chat-ctx :system {:type :progress
                                                                      :state :running
                                                                      :text "Generating"}))
+      :on-usage-updated (fn [usage]
+                          (send-content! chat-ctx :system
+                                         (merge {:type :usage}
+                                                (usage-msg->usage usage model chat-ctx))))
       :on-message-received (fn [{:keys [type] :as msg}]
                              (assert-chat-not-stopped! chat-ctx)
                              (case type
@@ -188,10 +190,6 @@
                                                 (finish-chat-prompt! :idle chat-ctx))
                                :finish (do
                                          (add-to-history! {:role "assistant" :content @received-msgs*})
-                                         (when-let [usage (usage-msg->usage (:usage msg) model chat-ctx)]
-                                           (send-content! chat-ctx :system
-                                                          (merge usage
-                                                                 {:type :usage})))
                                          (finish-chat-prompt! :idle chat-ctx))))
       :on-prepare-tool-call (fn [{:keys [id name arguments-text]}]
                               (assert-chat-not-stopped! chat-ctx)

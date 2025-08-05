@@ -43,9 +43,6 @@
      {:added (+ added changed)
       :removed (+ removed changed)
       :diff
-      (unlines (DiffUtils/generateUnifiedDiff
-                file
-                file
-                (lines original)
-                patch
-                3))})))
+      (->> (DiffUtils/generateUnifiedDiff file file (lines original) patch 3)
+           (drop 2) ;; removes file header
+           unlines)})))

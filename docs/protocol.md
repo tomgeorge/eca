@@ -574,6 +574,12 @@ interface ToolCallPrepareContent {
      * Whether this call requires manual approval from the user.
      */
     manualApproval: boolean;
+    
+    /**
+     * Extra details about this call. 
+     * Clients may use this to present different UX for this tool call.
+     */
+    details?: TooCallRunDetails;
 }
 
 /**
@@ -609,32 +615,6 @@ interface ToolCallRunContent {
      * Clients may use this to present different UX for this tool call.
      */
     details?: TooCallRunDetails;
-}
-
-type TooCallRunDetails = FileChangeDetails;
-
-interface FileChangeDetails {
-    type: 'fileChange';
-
-     /**
-      * The file path of this file change
-      */
-     path: string;
-     
-     /**
-      * The content diff of this file change
-      */
-     diff: string;
-     
-     /**
-      * The count of lines added in this change.
-      */
-     linesAdded: number;
-     
-     /**
-      * The count of lines removed in this change.
-      */
-     linesRemoved: number;
 }
 
 /**
@@ -679,6 +659,12 @@ interface ToolCalledContent {
          */
         content: string; 
     }];
+    
+    /**
+     * Extra details about this call. 
+     * Clients may use this to present different UX for this tool call.
+     */
+    details?: TooCallRunDetails;
 }
 
 interface ToolCallRejected {
@@ -705,9 +691,41 @@ interface ToolCallRejected {
      * The reason why this tool call was rejected
      */
     reason: 'user';
+    
+    /**
+     * Extra details about this call. 
+     * Clients may use this to present different UX for this tool call.
+     */
+    details?: TooCallRunDetails;
 }
 
 type ToolCallOrigin = 'mcp' | 'native';
+
+type TooCallRunDetails = FileChangeDetails;
+
+interface FileChangeDetails {
+    type: 'fileChange';
+
+     /**
+      * The file path of this file change
+      */
+     path: string;
+     
+     /**
+      * The content diff of this file change
+      */
+     diff: string;
+     
+     /**
+      * The count of lines added in this change.
+      */
+     linesAdded: number;
+     
+     /**
+      * The count of lines removed in this change.
+      */
+     linesRemoved: number;
+}
 ```
 
 ### Chat approve tool call (➡️)

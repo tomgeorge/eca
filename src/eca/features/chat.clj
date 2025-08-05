@@ -151,7 +151,7 @@
         all-tools (f.tools/all-tools @db* config)
         received-msgs* (atom "")
         received-thinking* (atom "")
-        tool-call-args-by-id* (atom {})
+        tool-call-by-id* (atom {:args {}})
         add-to-history! (fn [msg]
                           (swap! db* update-in [:chats chat-id :messages] (fnil conj []) msg))]
 
@@ -199,26 +199,27 @@
                                          (finish-chat-prompt! :idle chat-ctx))))
       :on-prepare-tool-call (fn [{:keys [id name arguments-text]}]
                               (assert-chat-not-stopped! chat-ctx)
-                              (swap! tool-call-args-by-id* update id str arguments-text)
+                              (swap! tool-call-by-id* update-in [id :args] str arguments-text)
                               (send-content! chat-ctx :assistant
                                              {:type :toolCallPrepare
                                               :name name
                                               :origin (tool-name->origin name all-tools)
-                                              :arguments-text (get @tool-call-args-by-id* id)
+                                              :arguments-text (get-in @tool-call-by-id* [id :args])
                                               :id id
                                               :manual-approval manual-approval?}))
       :on-tool-called (fn [{:keys [id name arguments] :as tool-call}]
                         (assert-chat-not-stopped! chat-ctx)
-                        (send-content! chat-ctx :assistant
-                                       (assoc-some
-                                        {:type :toolCallRun
-                                         :name name
-                                         :origin (tool-name->origin name all-tools)
-                                         :arguments arguments
-                                         :id id
-                                         :manual-approval manual-approval?}
-                                        :details (f.tools/get-tool-call-details name arguments)))
-                        (let [approved?* (promise)]
+                        (let [approved?* (promise)
+                              details (f.tools/get-tool-call-details name arguments)]
+                          (send-content! chat-ctx :assistant
+                                         (assoc-some
+                                          {:type :toolCallRun
+                                           :name name
+                                           :origin (tool-name->origin name all-tools)
+                                           :arguments arguments
+                                           :id id
+                                           :manual-approval manual-approval?}
+                                          :details details))
                           (swap! db* assoc-in [:chats chat-id :tool-calls id :approved?*] approved?*)
                           (when-not (string/blank? @received-msgs*)
                             (add-to-history! {:role "assistant" :content @received-msgs*})
@@ -234,34 +235,33 @@
                             (let [result (f.tools/call-tool! name arguments @db* config)]
                               (add-to-history! {:role "tool_call" :content tool-call})
                               (add-to-history! {:role "tool_call_output" :content (assoc tool-call :output result)})
-                              (swap! tool-call-args-by-id* dissoc id)
                               (send-content! chat-ctx :assistant
-                                             {:type :toolCalled
-                                              :origin (tool-name->origin name all-tools)
-                                              :name name
-                                              :arguments arguments
-                                              :error (:error result)
-                                              :id id
-                                              :outputs (:contents result)})
-                              {:new-messages (get-in @db* [:chats chat-id :messages])})
+                                             (assoc-some
+                                              {:type :toolCalled
+                                               :origin (tool-name->origin name all-tools)
+                                               :name name
+                                               :arguments arguments
+                                               :error (:error result)
+                                               :id id
+                                               :outputs (:contents result)}
+                                              :details details)))
                             (do
                               (add-to-history! {:role "tool_call" :content tool-call})
                               (add-to-history! {:role "tool_call_output" :content (assoc tool-call :output {:contents [{:content "Tool call rejected by user"
                                                                                                                         :error true
                                                                                                                         :type :text}]})})
-                              (swap! tool-call-args-by-id* dissoc id)
-                              (send-content! chat-ctx :system
-                                             {:type :progress
-                                              :state :running
-                                              :text "Generating"})
                               (send-content! chat-ctx :assistant
-                                             {:type :toolCallRejected
-                                              :origin (tool-name->origin name all-tools)
-                                              :name name
-                                              :arguments arguments
-                                              :reason :user
-                                              :id id})
-                              {:new-messages (get-in @db* [:chats chat-id :messages])}))))
+                                             (assoc-some
+                                               {:type :toolCallRejected
+                                                :origin (tool-name->origin name all-tools)
+                                                :name name
+                                                :arguments arguments
+                                                :reason :user
+                                                :id id}
+                                               :details details))))
+                          (swap! tool-call-by-id* dissoc id)
+                          (send-content! chat-ctx :system {:type :progress :state :running :text "Generating"})
+                          {:new-messages (get-in @db* [:chats chat-id :messages])}))
       :on-reason (fn [{:keys [status id text external-id]}]
                    (assert-chat-not-stopped! chat-ctx)
                    (case status

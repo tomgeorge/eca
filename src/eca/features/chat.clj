@@ -252,13 +252,13 @@
                                                                                                                         :type :text}]})})
                               (send-content! chat-ctx :assistant
                                              (assoc-some
-                                               {:type :toolCallRejected
-                                                :origin (tool-name->origin name all-tools)
-                                                :name name
-                                                :arguments arguments
-                                                :reason :user
-                                                :id id}
-                                               :details details))))
+                                              {:type :toolCallRejected
+                                               :origin (tool-name->origin name all-tools)
+                                               :name name
+                                               :arguments arguments
+                                               :reason :user
+                                               :id id}
+                                              :details details))))
                           (swap! tool-call-by-id* dissoc id)
                           (send-content! chat-ctx :system {:type :progress :state :running :text "Generating"})
                           {:new-messages (get-in @db* [:chats chat-id :messages])}))
@@ -296,23 +296,25 @@
     (prompt-messages! messages false chat-ctx)))
 
 (defn ^:private handle-command! [{:keys [command]} {:keys [chat-id db* model] :as chat-ctx}]
-  (case command
-    "costs" (let [db @db*
-                  total-input-tokens (get-in db [:chats chat-id :total-input-tokens] 0)
-                  total-input-cache-creation-tokens (get-in db [:chats chat-id :total-input-cache-creation-tokens] nil)
-                  total-input-cache-read-tokens (get-in db [:chats chat-id :total-input-cache-read-tokens] nil)
-                  total-output-tokens (get-in db [:chats chat-id :total-output-tokens] 0)
-                  text (multi-str (str "Total input tokens: " total-input-tokens)
-                                  (when total-input-cache-creation-tokens
-                                    (str "Total input cache creation tokens: " total-input-cache-creation-tokens))
-                                  (when total-input-cache-read-tokens
-                                    (str "Total input cache read tokens: " total-input-cache-read-tokens))
-                                  (str "Total output tokens: " total-output-tokens)
-                                  (str "Total cost: $" (tokens->cost total-input-tokens total-input-cache-creation-tokens total-input-cache-read-tokens total-output-tokens model db)))]
-              (send-content! chat-ctx :system {:type :text
-                                               :text text}))
-    (send-content! chat-ctx :system {:type :text
-                                     :text (str "Unknown command: " command)}))
+  (let [db @db*]
+    (case command
+      "costs" (let [total-input-tokens (get-in db [:chats chat-id :total-input-tokens] 0)
+                    total-input-cache-creation-tokens (get-in db [:chats chat-id :total-input-cache-creation-tokens] nil)
+                    total-input-cache-read-tokens (get-in db [:chats chat-id :total-input-cache-read-tokens] nil)
+                    total-output-tokens (get-in db [:chats chat-id :total-output-tokens] 0)
+                    text (multi-str (str "Total input tokens: " total-input-tokens)
+                                    (when total-input-cache-creation-tokens
+                                      (str "Total input cache creation tokens: " total-input-cache-creation-tokens))
+                                    (when total-input-cache-read-tokens
+                                      (str "Total input cache read tokens: " total-input-cache-read-tokens))
+                                    (str "Total output tokens: " total-output-tokens)
+                                    (str "Total cost: $" (tokens->cost total-input-tokens total-input-cache-creation-tokens total-input-cache-read-tokens total-output-tokens model db)))]
+                (send-content! chat-ctx :system {:type :text
+                                                 :text text}))
+      "repo-map-show" (send-content! chat-ctx :system {:type :text
+                                                       :text (f.index/repo-map db {:as-string? true})})
+      (send-content! chat-ctx :system {:type :text
+                                       :text (str "Unknown command: " command)})))
   (finish-chat-prompt! :idle chat-ctx))
 
 (defn prompt
@@ -398,6 +400,10 @@
         eca-commands [{:name "costs"
                        :type :native
                        :description "Show the total costs of the current chat session."
+                       :arguments []}
+                      {:name "repo-map-show"
+                       :type :native
+                       :description "Show the actual repoMap of current session."
                        :arguments []}]
         commands (concat mcp-prompts
                          eca-commands)

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `/repo-map-show` command.
+
 ## 0.16.0
 
 - Support custom system prompts via config `systemPromptTemplate`.

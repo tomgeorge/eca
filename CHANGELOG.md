@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.15.1
+
 - Fix mcp tool calls.
 - Improve eca filesystem calls for better tool usage from LLM.
 - Fix default model selection to check anthropic api key before.

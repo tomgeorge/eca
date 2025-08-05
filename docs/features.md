@@ -40,6 +40,7 @@ Here are the current supported contexts types:
 - `file`: a file in the workspace, server will pass its content to LLM (Supports optional line range).
 - `directory`: a directory in the workspace, server will read all file contexts and pass to LLM.
 - `repoMap`: a summary view of workspaces files and folders, server will calculate this and pass to LLM. Currently, the repo-map includes only the file paths in git.
+- `mcpResource`: resources provided by running MCPs servers.
 
 ### Commands
 

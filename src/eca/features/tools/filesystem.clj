@@ -163,21 +163,23 @@
           (tools.util/single-text-content (string/join "\n" paths))
           (tools.util/single-text-content "No files found for given pattern" :error)))))
 
-(defn ^:private replace-in-file [arguments {:keys [db]}]
+(defn ^:private edit-file [arguments {:keys [db]}]
   (or (tools.util/invalid-arguments arguments (concat (path-validations db)
-                                                      [["path" fs/readable? "File $path is not readable"]]))
+                                                      [["path" fs/readable? "File $path is not readable"]
+                                                       ["start_line" #(and (integer? %) (pos? %)) "$start_line must be a positive integer"]
+                                                       ["end_line" #(and (integer? %) (pos? %)) "$end_line must be a positive integer"]
+                                                       ["content" #(string? %) "$content must be a string"]]))
       (let [path (get arguments "path")
-            original-content (get arguments "original_content")
-            new-content (get arguments "new_content")
-            all? (boolean (get arguments "all_occurrences"))
-            content (slurp path)]
-        (if (string/includes? content original-content)
-          (let [content (if all?
-                          (string/replace content original-content new-content)
-                          (string/replace-first content original-content new-content))]
-            (spit path content)
-            (tools.util/single-text-content (format "Successfully replaced content in %s." path)))
-          (tools.util/single-text-content (format "Original content not found in %s" path) :error)))))
+            start-line (dec (int (get arguments "start_line"))) ; convert 1-based to 0-based
+            end-line (dec (int (get arguments "end_line")))     ; inclusive, 0-based
+            new-lines (string/split-lines (get arguments "content"))
+            old-lines (vec (string/split-lines (slurp path)))
+            before (subvec old-lines 0 start-line)
+            after (subvec old-lines (inc end-line))
+            new-content-lines (vec (concat before new-lines after))
+            new-file-content (string/join "\n" new-content-lines)]
+        (spit path new-file-content)
+        (tools.util/single-text-content (format "Successfully replaced lines %d-%d in %s." (inc start-line) (inc end-line) path)))))
 
 (defn ^:private move-file [arguments {:keys [db]}]
   (let [workspace-dirs (tools.util/workspace-roots-strs db)]
@@ -203,11 +205,10 @@
                  :required ["path"]}
     :handler #'list-directory}
    "eca_read_file"
-   {:description (str "Read the complete contents of a file from the file system. "
-                      "Handles various text encodings and provides detailed error messages "
-                      "if the file cannot be read. Use this tool when you need to examine "
+   {:description (str "Read the contents of a file from the file system. "
+                      "Use this tool when you need to examine "
                       "the contents of a single file. Optionally use the 'line_offset' and/or 'limit' "
-                      "parameters to read specific contents of the file when you know the lines."
+                      "parameters to read specific contents of the file when you know the range."
                       "**Only works within the directories: $workspaceRoots.**")
     :parameters {:type "object"
                  :properties {"path" {:type "string"
@@ -219,9 +220,7 @@
                  :required ["path"]}
     :handler #'read-file}
    "eca_write_file"
-   {:description (str "Create a new file or completely overwrite an existing file with new content. "
-                      "Use with caution as it will overwrite existing files without warning. "
-                      "Handles text content with proper encoding. "
+   {:description (str "Create a new file with new content. To edit existing files use eca_edit_file. "
                       "**Only works within the directories: $workspaceRoots.**")
     :parameters {:type "object"
                  :properties {"path" {:type "string"
@@ -230,6 +229,21 @@
                                          :description "The content of the new file"}}
                  :required ["path" "content"]}
     :handler #'write-file}
+   "eca_edit_file"
+   {:description (str "Change the specified file replacing the lines range with the given content. "
+                      "Make sure to have the existing file content updated via your context or eca_read_file before calling this. "
+                      "This can also be used to prepend, append, or delete contents from a file.")
+    :parameters  {:type "object"
+                  :properties {"path" {:type "string"
+                                       :description "The absolute file path to do the replace."}
+                               "start_line" {:type "number"
+                                             :description "The 1-based start line number"}
+                               "end_line" {:type "number"
+                                           :description "The 1-based end line number"}
+                               "content" {:type "string"
+                                          :description "The new content to be inserted"}}
+                  :required ["path" "start_line" "end_line" "content"]}
+    :handler #'edit-file}
    "eca_move_file"
    {:description (str "Move or rename files and directories. Can move files between directories "
                       "and rename them in a single operation. If the destination exists, the "
@@ -274,21 +288,4 @@
                                "max_results" {:type "integer"
                                               :description "Maximum number of results to return (default: 1000)"}}
                   :required ["path" "pattern"]}
-    :handler #'grep}
-   "eca_replace_in_file"
-   {:description (str "Replace a specific string or content block in a file with new content. "
-                      "Finds the exact original content and replaces it with new content. "
-                      "Be extra careful to format the original-content exactly correctly, "
-                      "taking extra care with whitespace and newlines. In addition to replacing strings, "
-                      "this can also be used to prepend, append, or delete contents from a file.")
-    :parameters  {:type "object"
-                  :properties {"path" {:type "string"
-                                       :description "The absolute file path to do the replace."}
-                               "original_content" {:type "string"
-                                                   :description "The exact content to find and replace"}
-                               "new_content" {:type "string"
-                                              :description "The new content to replace the original content with"}
-                               "all_occurrences" {:type "boolean"
-                                                  :description "Whether to replace all occurences of the file or just the first one (default)"}}
-                  :required ["path" "original_content" "new_content"]}
-    :handler #'replace-in-file}})
+    :handler #'grep}})

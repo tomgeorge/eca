@@ -27,8 +27,8 @@
          {:error true
           :contents [{:type :text
                       :text (format "Access denied - path %s outside allowed directories: %s"
-                                       (h/file-path "/foo/qux")
-                                       (h/file-path "/foo/bar/baz"))}]}
+                                    (h/file-path "/foo/qux")
+                                    (h/file-path "/foo/bar/baz"))}]}
          (with-redefs [fs/canonicalize (constantly (h/file-path "/foo/qux"))
                        fs/exists? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["eca_list_directory" :handler])
@@ -39,9 +39,9 @@
          {:error false
           :contents [{:type :text
                       :text (format (str "[FILE] %s\n"
-                                            "[DIR] %s\n")
-                                       (h/file-path "/foo/bar/baz/some.clj")
-                                       (h/file-path "/foo/bar/baz/qux"))}]}
+                                         "[DIR] %s\n")
+                                    (h/file-path "/foo/bar/baz/some.clj")
+                                    (h/file-path "/foo/bar/baz/qux"))}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/starts-with? (constantly true)
                        fs/list-dir (constantly [(fs/path (h/file-path "/foo/bar/baz/some.clj"))
@@ -119,8 +119,8 @@
          {:error true
           :contents [{:type :text
                       :text (format "Access denied - path %s outside allowed directories: %s"
-                                       (h/file-path "/foo/qux/new_file.clj")
-                                       (h/file-path "/foo/bar"))}]}
+                                    (h/file-path "/foo/qux/new_file.clj")
+                                    (h/file-path "/foo/bar"))}]}
          (with-redefs [f.tools.filesystem/allowed-path? (constantly false)]
            ((get-in f.tools.filesystem/definitions ["eca_write_file" :handler])
             {"path" (h/file-path "/foo/qux/new_file.clj")}
@@ -153,8 +153,8 @@
          {:error false
           :contents [{:type :text
                       :text (str (h/file-path "/project/foo/bar/baz.txt") "\n"
-                                    (h/file-path "/project/foo/qux.txt") "\n"
-                                    (h/file-path "/project/foo/qux.clj"))}]}
+                                 (h/file-path "/project/foo/qux.txt") "\n"
+                                 (h/file-path "/project/foo/qux.clj"))}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/glob (constantly [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
                                             (fs/path (h/file-path "/project/foo/qux.txt"))
@@ -168,7 +168,7 @@
          {:error false
           :contents [{:type :text
                       :text (str (h/file-path "/project/foo/bar/baz.txt") "\n"
-                                    (h/file-path "/project/foo/qux.txt"))}]}
+                                 (h/file-path "/project/foo/qux.txt"))}]}
          (with-redefs [fs/exists? (constantly true)
                        fs/glob (constantly [(fs/path (h/file-path "/project/foo/bar/baz.txt"))
                                             (fs/path (h/file-path "/project/foo/qux.txt"))])]
@@ -268,63 +268,88 @@
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly false)
                        f.tools.filesystem/allowed-path? (constantly true)]
-           ((get-in f.tools.filesystem/definitions ["eca_replace_in_file" :handler])
+           ((get-in f.tools.filesystem/definitions ["eca_edit_file" :handler])
             {"path" (h/file-path "/foo/qux")
-             "original_content" "some-cool-text"
-             "new_content" "another-boring-text"}
+             "start_line" 2
+             "end_line" 3
+             "content" "updated"}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
-  (testing "original content not found"
-    (is (match?
-         {:error true
-          :contents [{:type :text
-                      :text (format "Original content not found in %s" (h/file-path "/project/foo/my-file.txt"))}]}
+
+  (testing "invalid line range (start_line > end_line)"
+    (is (thrown?
+         Exception
          (with-redefs [fs/exists? (constantly true)
                        fs/readable? (constantly true)
                        f.tools.filesystem/allowed-path? (constantly true)
-                       slurp (constantly "Hey, here is some-cool-text in this file!")]
-           ((get-in f.tools.filesystem/definitions ["eca_replace_in_file" :handler])
-            {"path" (h/file-path "/project/foo/my-file.txt")
-             "original_content" "other-cool-text"
-             "new_content" "another-boring-text"}
-            {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}})))))
-  (testing "original content found and replaced first"
+                       slurp (constantly "a\nb\nc")] ; just for completeness
+           ((get-in f.tools.filesystem/definitions ["eca_edit_file" :handler])
+            {"path" (h/file-path "/foo/qux")
+             "start_line" 3
+             "end_line" 2
+             "content" "no-op"}
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar") :name "bar"}]}})))))
+
+  (testing "replace 2nd and 3rd lines in file"
     (let [file-content* (atom {})]
       (is (match?
            {:error false
             :contents [{:type :text
-                        :text (format "Successfully replaced content in %s." (h/file-path "/project/foo/my-file.txt"))}]}
+                        :text (format "Successfully replaced lines 2-3 in %s." (h/file-path "/project/foo/my-file.txt"))}]}
            (with-redefs [fs/exists? (constantly true)
                          fs/readable? (constantly true)
                          f.tools.filesystem/allowed-path? (constantly true)
-                         slurp (constantly "Hey, here is some-cool-text in this file! here as well: some-cool-text")
+                         slurp (constantly "line1\nold2\nold3\nline4")
                          spit (fn [f content] (swap! file-content* assoc f content))]
-             ((get-in f.tools.filesystem/definitions ["eca_replace_in_file" :handler])
+             ((get-in f.tools.filesystem/definitions ["eca_edit_file" :handler])
               {"path" (h/file-path "/project/foo/my-file.txt")
-               "original_content" "some-cool-text"
-               "new_content" "another-boring-text"}
+               "start_line" 2
+               "end_line" 3
+               "content" "new2\nnew3"}
               {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}}))))
       (is (match?
-           {(h/file-path "/project/foo/my-file.txt") "Hey, here is another-boring-text in this file! here as well: some-cool-text"}
+           {(h/file-path "/project/foo/my-file.txt") "line1\nnew2\nnew3\nline4"}
            @file-content*))))
-  (testing "original content found and replaced all"
+
+  (testing "replace first line only in file"
     (let [file-content* (atom {})]
       (is (match?
            {:error false
             :contents [{:type :text
-                        :text (format "Successfully replaced content in %s." (h/file-path "/project/foo/my-file.txt"))}]}
+                        :text (format "Successfully replaced lines 1-1 in %s." (h/file-path "/project/foo/my-file.txt"))}]}
            (with-redefs [fs/exists? (constantly true)
                          fs/readable? (constantly true)
                          f.tools.filesystem/allowed-path? (constantly true)
-                         slurp (constantly "Hey, here is some-cool-text in this file! here as well: some-cool-text")
+                         slurp (constantly "orig1\nkeep2\nkeep3")
                          spit (fn [f content] (swap! file-content* assoc f content))]
-             ((get-in f.tools.filesystem/definitions ["eca_replace_in_file" :handler])
+             ((get-in f.tools.filesystem/definitions ["eca_edit_file" :handler])
               {"path" (h/file-path "/project/foo/my-file.txt")
-               "original_content" "some-cool-text"
-               "new_content" "another-boring-text"
-               "all_occurrences" true}
+               "start_line" 1
+               "end_line" 1
+               "content" "updated1"}
               {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}}))))
       (is (match?
-           {(h/file-path "/project/foo/my-file.txt") "Hey, here is another-boring-text in this file! here as well: another-boring-text"}
+           {(h/file-path "/project/foo/my-file.txt") "updated1\nkeep2\nkeep3"}
+           @file-content*))))
+
+  (testing "replace last line in file"
+    (let [file-content* (atom {})]
+      (is (match?
+           {:error false
+            :contents [{:type :text
+                        :text (format "Successfully replaced lines 4-4 in %s." (h/file-path "/project/foo/my-file.txt"))}]}
+           (with-redefs [fs/exists? (constantly true)
+                         fs/readable? (constantly true)
+                         f.tools.filesystem/allowed-path? (constantly true)
+                         slurp (constantly "keep1\nkeep2\nkeep3\nlast")
+                         spit (fn [f content] (swap! file-content* assoc f content))]
+             ((get-in f.tools.filesystem/definitions ["eca_edit_file" :handler])
+              {"path" (h/file-path "/project/foo/my-file.txt")
+               "start_line" 4
+               "end_line" 4
+               "content" "newlast"}
+              {:db {:workspace-folders [{:uri (h/file-uri "file:///project/foo") :name "foo"}]}}))))
+      (is (match?
+           {(h/file-path "/project/foo/my-file.txt") "keep1\nkeep2\nkeep3\nnewlast"}
            @file-content*)))))
 
 (deftest move-file-test
@@ -354,8 +379,8 @@
          {:error false
           :contents [{:type :text
                       :text (format "Successfully moved %s to %s"
-                                       (h/file-path "/foo/bar/some_file.clj")
-                                       (h/file-path "/foo/bar/other_file.clj"))}]}
+                                    (h/file-path "/foo/bar/some_file.clj")
+                                    (h/file-path "/foo/bar/other_file.clj"))}]}
          (with-redefs [fs/exists? (fn [path] (not (string/includes? path "other_file.clj")))
                        f.tools.filesystem/allowed-path? (constantly true)
                        fs/move (constantly true)]

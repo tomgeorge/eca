@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Fix mcp tool calls.
+- Improve eca filesystem calls for better tool usage from LLM.
 
 ## 0.15.0
 

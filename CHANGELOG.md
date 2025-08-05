@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.14.4
+
 - Fix usage miscalculation.
 
 ## 0.14.3

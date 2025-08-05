@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.15.0
+
 - Support MCP resources as a new context.
 
 ## 0.14.4

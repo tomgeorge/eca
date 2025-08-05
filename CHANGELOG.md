@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.15.3
+
 - Rename `eca_list_directory` to `eca_directory_tree` tool for better overview of project files/dirs.
 
 ## 0.15.2

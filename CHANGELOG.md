@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.16.0
+
 - Support custom system prompts via config `systemPromptTemplate`.
 - Add support for file change diffs on `eca_edit_file` tool call.
 - Fix response output to LLM when tool call is rejected.

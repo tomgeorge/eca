@@ -19,12 +19,11 @@ Some native tools like `filesystem` have MCP alternatives, but ECA having them b
 
 Provides access to filesystem under workspace root, listing and reading files and directories a subset of [official MCP filesystem](https://mcpserverhub.com/servers/filesystem), important for agentic operations, without the need to support NPM or other tools.
 
+- `eca_directory_tree`: list a directory as a tree (can be recursive).
 - `eca_read_file`: read a file content.
 - `eca_write_file`: write content to a new file.
 - `eca_edit_file`: replace lines of a file with a new content.
 - `eca_move_file`: move/rename a file.
-- `eca_list_directory`: list a directory.
-- `eca_search_files`: search in a path for files matching a pattern.
 - `eca_grep`: ripgrep/grep for paths with specified content.
 
 #### Shell

@@ -54,23 +54,6 @@
         (spit path content)
         (tools.util/single-text-content (format "Successfully wrote to %s" path)))))
 
-(defn ^:private search-files [arguments {:keys [db]}]
-  (or (tools.util/invalid-arguments arguments (concat (path-validations db)
-                                                      [["pattern" #(not (string/blank? %)) "Invalid glob pattern '$pattern'"]]))
-      (let [pattern (get arguments "pattern")
-            pattern (if (string/includes? pattern "*")
-                      pattern
-                      (format "**%s**" pattern))
-            paths (reduce
-                   (fn [paths {:keys [uri]}]
-                     (concat paths (fs/glob (shared/uri->filename uri)
-                                            pattern)))
-                   []
-                   (:workspace-folders db))]
-        (if (seq paths)
-          (tools.util/single-text-content (string/join "\n" paths))
-          (tools.util/single-text-content "No matches found" :error)))))
-
 (defn ^:private run-ripgrep [path pattern include]
   (let [cmd (cond-> ["rg" "--files-with-matches" "--no-heading"]
               include (concat ["--glob" include])
@@ -264,20 +247,6 @@
                                               :description "The new absolute file path to move to."}}
                   :required ["source" "destination"]}
     :handler #'move-file}
-   "eca_search_files"
-   {:description (str "Recursively search for files and directories matching a pattern. "
-                      "Searches through all subdirectories from the starting path. The search "
-                      "is case-insensitive and matches partial names following java's FileSystem#getPathMatcher. Returns full paths to all "
-                      "matching items. Great for finding files when you don't know their exact location. "
-                      "**Only works within the directories: $workspaceRoots.**")
-    :parameters {:type "object"
-                 :properties {"path" {:type "string"
-                                      :description "The absolute path to start searching files from there."}
-                              "pattern" {:type "string"
-                                         :description (str "Glob pattern following java FileSystem#getPathMatcher matching files or directory names."
-                                                           "Use '**' to match search in multiple levels like '**.txt'")}}
-                 :required ["path" "pattern"]}
-    :handler #'search-files}
    "eca_grep"
    {:description (str "Fast content search tool that works with any codebase size. "
                       "Finds the paths to files that have matching contents using regular expressions. "

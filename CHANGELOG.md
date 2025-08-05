@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.17.0
+
 - Add `/repo-map-show` command. #37
 
 ## 0.16.0

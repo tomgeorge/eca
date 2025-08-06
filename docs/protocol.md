@@ -579,7 +579,7 @@ interface ToolCallPrepareContent {
      * Extra details about this call. 
      * Clients may use this to present different UX for this tool call.
      */
-    details?: ToolCallRunDetails;
+    details?: ToolCallDetails;
 }
 
 /**
@@ -614,7 +614,7 @@ interface ToolCallRunContent {
      * Extra details about this call. 
      * Clients may use this to present different UX for this tool call.
      */
-    details?: ToolCallRunDetails;
+    details?: ToolCallDetails;
 }
 
 /**
@@ -664,7 +664,7 @@ interface ToolCalledContent {
      * Extra details about this call. 
      * Clients may use this to present different UX for this tool call.
      */
-    details?: ToolCallRunDetails;
+    details?: ToolCallDetails;
 }
 
 interface ToolCallRejected {
@@ -696,12 +696,12 @@ interface ToolCallRejected {
      * Extra details about this call. 
      * Clients may use this to present different UX for this tool call.
      */
-    details?: ToolCallRunDetails;
+    details?: ToolCallDetails;
 }
 
 type ToolCallOrigin = 'mcp' | 'native';
 
-type ToolCallRunDetails = FileChangeDetails;
+type ToolCallDetails = FileChangeDetails;
 
 interface FileChangeDetails {
     type: 'fileChange';

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.17.2
+
 - fix query context refactor
 
 ## 0.17.1

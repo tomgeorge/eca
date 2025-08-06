@@ -43,7 +43,7 @@
         allowed-files (f.index/filter-allowed all-files root-filename config)]
     allowed-files))
 
-(defn all-contexts [query config db*]
+(defn all-contexts [query db* config]
   (let [all-subfiles-and-dirs (into []
                                     (comp
                                      (map :uri)

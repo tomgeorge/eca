@@ -34,7 +34,8 @@
 
 (defn ^:private read-file [arguments {:keys [db]}]
   (or (tools.util/invalid-arguments arguments (concat (path-validations db)
-                                                      [["path" fs/readable? "File $path is not readable"]]))
+                                                      [["path" fs/readable? "File $path is not readable"]
+                                                       ["path" (complement fs/directory?) "$path is a directory, not a file"]]))
       (let [line-offset (get arguments "line_offset")
             limit (or (get arguments "limit") read-file-max-lines)
             content (cond-> (slurp (fs/file (fs/canonicalize (get arguments "path"))))

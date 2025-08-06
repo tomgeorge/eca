@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix query context refactor
+
 ## 0.17.1
 
 - Avoid crash MCP start if doesn't support some capabilities.

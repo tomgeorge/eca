@@ -1,9 +1,9 @@
 (ns eca.features.chat
   (:require
-   [babashka.fs :as fs]
    [cheshire.core :as json]
    [clojure.set :as set]
    [clojure.string :as string]
+   [eca.features.context :as f.context]
    [eca.features.index :as f.index]
    [eca.features.prompt :as f.prompt]
    [eca.features.rules :as f.rules]
@@ -17,29 +17,6 @@
 (set! *warn-on-reflection* true)
 
 (def ^:private logger-tag "[CHAT]")
-
-(defn ^:private raw-contexts->refined [contexts db]
-  (mapcat (fn [{:keys [type path lines-range uri]}]
-            (case (name type)
-              "file" [{:type :file
-                       :path path
-                       :partial (boolean lines-range)
-                       :content (llm-api/refine-file-context path lines-range)}]
-              "directory" (->> (fs/glob path "**")
-                               (remove fs/directory?)
-                               (map (fn [path]
-                                      (let [filename (str (fs/canonicalize path))]
-                                        {:type :file
-                                         :path filename
-                                         :content (llm-api/refine-file-context filename nil)}))))
-              "repoMap" [{:type :repoMap}]
-              "mcpResource" (mapv
-                             (fn [{:keys [text]}]
-                               {:type :mcpResource
-                                :uri uri
-                                :content text})
-                             (:contents (f.mcp/get-resource! uri db)))))
-          contexts))
 
 (defn default-model [db config]
   (llm-api/default-model db config))
@@ -144,7 +121,7 @@
   (let [db @db*
         manual-approval? (get-in config [:toolCall :manualApproval] false)
         rules (f.rules/all config (:workspace-folders db))
-        refined-contexts (raw-contexts->refined contexts db)
+        refined-contexts (f.context/raw-contexts->refined contexts db)
         repo-map* (delay (f.index/repo-map db {:as-string? true}))
         instructions (f.prompt/build-instructions refined-contexts rules repo-map* (or behavior (:chat-default-behavior db)) config)
         past-messages (get-in db [:chats chat-id :messages] [])
@@ -292,8 +269,12 @@
    {:keys [db*] :as chat-ctx}]
   (let [{:keys [arguments]} (first (filter #(= prompt (:name %)) (f.mcp/all-prompts @db*)))
         args-vals (zipmap (map :name arguments) args)
-        {:keys [messages]} (f.mcp/get-prompt! prompt args-vals @db*)]
-    (prompt-messages! messages false chat-ctx)))
+        {:keys [messages error-message]} (f.prompt/get-prompt! prompt args-vals @db*)]
+    (if error-message
+      (send-content! chat-ctx :system
+                     {:type :text
+                      :text error-message})
+      (prompt-messages! messages false chat-ctx))))
 
 (defn ^:private handle-command! [{:keys [command]} {:keys [chat-id db* model] :as chat-ctx}]
   (let [db @db*]
@@ -355,38 +336,13 @@
 (defn tool-call-reject [{:keys [chat-id tool-call-id]} db*]
   (deliver (get-in @db* [:chats chat-id :tool-calls tool-call-id :approved?*]) false))
 
-(defn ^:private contexts-for [root-filename query config]
-  (let [all-files (fs/glob root-filename (str "**" (or query "") "**"))
-        allowed-files (f.index/filter-allowed all-files root-filename config)]
-    allowed-files))
-
 (defn query-context
   [{:keys [query contexts chat-id]}
    db*
    config]
-  (let [all-subfiles-and-dirs (into []
-                                    (comp
-                                     (map :uri)
-                                     (map shared/uri->filename)
-                                     (mapcat #(contexts-for % query config))
-                                     (take 200) ;; for performance, user can always make query specific for better results.
-                                     (map (fn [file-or-dir]
-                                            {:type (if (fs/directory? file-or-dir)
-                                                     :directory
-                                                     :file)
-                                             :path (str (fs/canonicalize file-or-dir))})))
-                                    (:workspace-folders @db*))
-        root-dirs (mapv (fn [{:keys [uri]}] {:type :directory
-                                             :path (shared/uri->filename uri)})
-                        (:workspace-folders @db*))
-        mcp-resources (mapv #(assoc % :type :mcpResource) (f.mcp/all-resources @db*))
-        all-contexts (concat [{:type :repoMap}]
-                             root-dirs
-                             all-subfiles-and-dirs
-                             mcp-resources)]
-    {:chat-id chat-id
-     :contexts (set/difference (set all-contexts)
-                               (set contexts))}))
+  {:chat-id chat-id
+   :contexts (set/difference (set (f.context/all-contexts query db* config))
+                             (set contexts))})
 
 (defn query-commands
   [{:keys [query chat-id]}

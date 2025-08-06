@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Avoid crash MCP start if doesn't support some capabilities.
+- Improve tool calling to avoid stop LLM loop if any exception happens.
 
 ## 0.17.0
 

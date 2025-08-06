@@ -51,9 +51,17 @@
 (defn call-tool! [^String name ^Map arguments db config]
   (logger/info logger-tag (format "Calling tool '%s' with args '%s'" name arguments))
   (let [arguments (update-keys arguments clojure.core/name)]
-    (if-let [native-tool-handler (get-in (native-definitions db config) [name :handler])]
-      (native-tool-handler arguments {:db db :config config})
-      (f.mcp/call-tool! name arguments db))))
+    (try
+      (let [result (if-let [native-tool-handler (get-in (native-definitions db config) [name :handler])]
+                     (native-tool-handler arguments {:db db :config config})
+                     (f.mcp/call-tool! name arguments db))]
+        (logger/debug logger-tag "Tool call result: " result)
+        result)
+      (catch Exception e
+        (logger/warn logger-tag (format "Error calling tool %s: %s" name (.getMessage e)))
+        {:error true
+         :contents [{:type :text
+                     :text (str "Error calling tool: " (.getMessage e))}]}))))
 
 (defn init-servers! [db* messenger config]
   (let [disabled-tools (set (get-in config [:disabledTools] []))

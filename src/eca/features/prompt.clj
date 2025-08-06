@@ -2,7 +2,15 @@
   (:require
    [clojure.java.io :as io]
    [clojure.string :as string]
-   [eca.shared :refer [multi-str]]))
+   [eca.features.tools.mcp :as f.mcp]
+   [eca.logger :as logger]
+   [eca.shared :refer [multi-str]])
+  (:import
+   [java.util Map]))
+
+(set! *warn-on-reflection* true)
+
+(def ^:private logger-tag "[PROMPT]")
 
 (defn ^:private eca-prompt-template* [] (slurp (io/resource "eca_prompt.txt")))
 
@@ -43,3 +51,13 @@
     ""
     refined-contexts)
    "</contexts>"))
+
+(defn get-prompt! [^String name ^Map arguments db]
+  (logger/info logger-tag (format "Calling prompt '%s' with args '%s'" name arguments))
+  (try
+    (let [result (f.mcp/get-prompt! name arguments db)]
+      (logger/debug logger-tag "Prompt result: " result)
+      result)
+    (catch Exception e
+      (logger/warn logger-tag (format "Error calling prompt %s: %s" name (.getMessage e)))
+      {:error-message (str "Error calling prompt: " (.getMessage e))})))

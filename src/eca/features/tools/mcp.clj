@@ -203,17 +203,10 @@
                                 (when (some #(= name (:name %)) tools)
                                   client)))
                         first)
-        result (try
-                 (let [result (.callTool ^McpSyncClient mcp-client
-                                         (McpSchema$CallToolRequest. name arguments))]
-                   {:error (.isError result)
-                    :contents (mapv ->content (.content result))})
-                 (catch Exception e
-                   {:error true
-                    :contents [{:type :text
-                                :text (.getMessage e)}]}))]
-    (logger/debug logger-tag "ToolCall result: " result)
-    result))
+        result (.callTool ^McpSyncClient mcp-client
+                          (McpSchema$CallToolRequest. name arguments))]
+    {:error (.isError result)
+     :contents (mapv ->content (.content result))}))
 
 (defn all-prompts [db]
   (into []
@@ -233,14 +226,12 @@
                                 (when (some #(= name (:name %)) prompts)
                                   client)))
                         first)
-        prompt (.getPrompt ^McpSyncClient mcp-client (McpSchema$GetPromptRequest. name arguments))
-        result {:description (.description prompt)
-                :messages (mapv (fn [^McpSchema$PromptMessage message]
-                                  {:role (string/lower-case (str (.role message)))
-                                   :content [(->content (.content message))]})
-                                (.messages prompt))}]
-    (logger/debug logger-tag "Prompt result:" result)
-    result))
+        prompt (.getPrompt ^McpSyncClient mcp-client (McpSchema$GetPromptRequest. name arguments))]
+    {:description (.description prompt)
+     :messages (mapv (fn [^McpSchema$PromptMessage message]
+                       {:role (string/lower-case (str (.role message)))
+                        :content [(->content (.content message))]})
+                     (.messages prompt))}))
 
 (defn get-resource! [^String uri db]
   (let [mcp-client (->> (vals (:mcp-clients db))
@@ -248,10 +239,8 @@
                                 (when (some #(= uri (:uri %)) resources)
                                   client)))
                         first)
-        resource (.readResource ^McpSyncClient mcp-client (McpSchema$ReadResourceRequest. uri))
-        result {:contents (mapv ->resource-content (.contents resource))}]
-    (logger/debug logger-tag "Resource result:" result)
-    result))
+        resource (.readResource ^McpSyncClient mcp-client (McpSchema$ReadResourceRequest. uri))]
+    {:contents (mapv ->resource-content (.contents resource))}))
 
 (defn shutdown! [db*]
   (doseq [[_name {:keys [client]}] (:mcp-clients @db*)]

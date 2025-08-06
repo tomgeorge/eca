@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Avoid crash MCP start if doesn't support some capabilities.
+
 ## 0.17.0
 
 - Add `/repo-map-show` command. #37

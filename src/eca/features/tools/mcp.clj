@@ -101,33 +101,44 @@
     nil))
 
 (defn ^:private list-server-tools [^ObjectMapper obj-mapper ^McpSyncClient client]
-  (mapv (fn [^McpSchema$Tool tool-client]
-          {:name (.name tool-client)
-           :description (.description tool-client)
-           ;; We convert to json to then read so we have a clojure map
-           ;; TODO avoid this converting to clojure map directly
-           :parameters (json/parse-string (.writeValueAsString obj-mapper (.inputSchema tool-client)) true)})
-        (.tools (.listTools client))))
+  (try
+    (when (.tools (.getServerCapabilities client))
+      (mapv (fn [^McpSchema$Tool tool-client]
+              {:name (.name tool-client)
+               :description (.description tool-client)
+               ;; We convert to json to then read so we have a clojure map
+               ;; TODO avoid this converting to clojure map directly
+               :parameters (json/parse-string (.writeValueAsString obj-mapper (.inputSchema tool-client)) true)})
+            (.tools (.listTools client))))
+    (catch Exception e
+      (logger/debug logger-tag "Could not list tools:" (.getMessage e))
+      [])))
 
 (defn ^:private list-server-prompts [^McpSyncClient client]
-  (mapv (fn [^McpSchema$Prompt prompt-client]
-          {:name (.name prompt-client)
-           :description (.description prompt-client)
-           :arguments (mapv (fn [^McpSchema$PromptArgument content]
-                              {:name (.name content)
-                               :description (.description content)
-                               :required (.required content)})
-                            (.arguments prompt-client))})
-        (.prompts (.listPrompts client))))
+  (try
+    (when (.prompts (.getServerCapabilities client))
+      (mapv (fn [^McpSchema$Prompt prompt-client]
+              {:name (.name prompt-client)
+               :description (.description prompt-client)
+               :arguments (mapv (fn [^McpSchema$PromptArgument content]
+                                  {:name (.name content)
+                                   :description (.description content)
+                                   :required (.required content)})
+                                (.arguments prompt-client))})
+            (.prompts (.listPrompts client))))
+    (catch Exception e
+      (logger/debug logger-tag "Could not list prompts:" (.getMessage e))
+      [])))
 
 (defn ^:private list-server-resources [^McpSyncClient client]
   (try
-    (mapv (fn [^McpSchema$Resource resource-client]
-            {:uri (.uri resource-client)
-             :name (.name resource-client)
-             :description (.description resource-client)
-             :mime-type (.mimeType resource-client)})
-          (.resources (.listResources client)))
+    (when (.resources (.getServerCapabilities client))
+      (mapv (fn [^McpSchema$Resource resource-client]
+              {:uri (.uri resource-client)
+               :name (.name resource-client)
+               :description (.description resource-client)
+               :mime-type (.mimeType resource-client)})
+            (.resources (.listResources client))))
     (catch Exception e
       (logger/debug logger-tag "Could not list resources:" (.getMessage e))
       [])))

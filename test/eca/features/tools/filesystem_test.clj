@@ -64,6 +64,18 @@
            ((get-in f.tools.filesystem/definitions ["eca_read_file" :handler])
             {"path" (h/file-path "/foo/qux")}
             {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
+  (testing "Path is a directory"
+    (is (match?
+         {:error true
+          :contents [{:type :text
+                      :text (format "%s is a directory, not a file" (h/file-path "/foo/dir"))}]}
+         (with-redefs [fs/exists? (constantly true)
+                       fs/readable? (constantly true)
+                       fs/directory? (constantly true)
+                       f.tools.filesystem/allowed-path? (constantly true)]
+           ((get-in f.tools.filesystem/definitions ["eca_read_file" :handler])
+            {"path" (h/file-path "/foo/dir")}
+            {:db {:workspace-folders [{:uri (h/file-uri "file:///foo/bar/baz") :name "foo"}]}})))))
   (testing "Readable path"
     (is (match?
          {:error false
@@ -72,6 +84,7 @@
          (with-redefs [slurp (constantly "fooo")
                        fs/exists? (constantly true)
                        fs/readable? (constantly true)
+                       fs/directory? (constantly false)
                        f.tools.filesystem/allowed-path? (constantly true)]
            ((get-in f.tools.filesystem/definitions ["eca_read_file" :handler])
             {"path" (h/file-path "/foo/qux")}

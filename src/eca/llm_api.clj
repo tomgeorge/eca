@@ -136,6 +136,7 @@
 
       (contains? #{"claude-sonnet-4-0"
                    "claude-opus-4-0"
+                   "claude-opus-4-1"
                    "claude-3-5-haiku-latest"} model)
       (llm-providers.anthropic/completion!
        {:model model

@@ -18,6 +18,7 @@
 
 - [claude-sonnet-4-0](https://docs.anthropic.com/en/docs/about-claude/models/overview)
 - [claude-opus-4-0](https://docs.anthropic.com/en/docs/about-claude/models/overview)
+- [claude-opus-4-1](https://docs.anthropic.com/en/docs/about-claude/models/overview)
 - [claude-3-5-haiku-latest](https://docs.anthropic.com/en/docs/about-claude/models/overview)
 
 ### Ollama

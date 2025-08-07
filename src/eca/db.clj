@@ -45,6 +45,15 @@
                                :input-cache-creation-token-cost (/ 18.75 one-million)
                                :input-cache-read-token-cost (/ 1.5 one-million)
                                :output-token-cost (/ 75.0 one-million)}
+            "claude-opus-4-1" {:tools true
+                               :web-search true
+                               :max-output-tokens 8196
+                               :reason? true
+                               :reason-tokens 2048
+                               :input-token-cost (/ 15.0 one-million)
+                               :input-cache-creation-token-cost (/ 18.75 one-million)
+                               :input-cache-read-token-cost (/ 1.5 one-million)
+                               :output-token-cost (/ 75.0 one-million)}
             "claude-3-5-haiku-latest" {:tools true
                                        :web-search true
                                        :reason? false

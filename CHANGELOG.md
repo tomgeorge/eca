@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Support `claude-opus-4-1` model;
+
 ## 0.18.0
 
 - Replace `chat` behavior with `plan`.

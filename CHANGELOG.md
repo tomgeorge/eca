@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Replace `chat` behavior with `plan`.
+
 ## 0.17.2
 
 - fix query context refactor

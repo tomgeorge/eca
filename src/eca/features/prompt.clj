@@ -12,20 +12,25 @@
 
 (def ^:private logger-tag "[PROMPT]")
 
-(defn ^:private eca-prompt-template* [] (slurp (io/resource "eca_prompt.txt")))
+(defn ^:private base-prompt-template* [] (slurp (io/resource "prompts/eca_base.txt")))
+(def ^:private base-prompt-template (memoize base-prompt-template*))
 
-(def ^:private eca-prompt-template (memoize eca-prompt-template*))
+(defn ^:private plan-behavior* [] (slurp (io/resource "prompts/plan_behavior.txt")))
+(def ^:private plan-behavior (memoize plan-behavior*))
+
+(defn ^:private agent-behavior* [] (slurp (io/resource "prompts/agent_behavior.txt")))
+(def ^:private agent-behavior (memoize agent-behavior*))
 
 (defn ^:private eca-prompt [behavior config]
   (let [prompt (or (:systemPromptTemplate config)
-                   (eca-prompt-template))]
+                   (base-prompt-template))]
     (reduce
      (fn [p [k v]]
        (string/replace p (str "{" (name k) "}") v))
      prompt
      {:behavior (case behavior
-                  "chat" "Answer questions, and provide explanations."
-                  "agent" "You are an agent - please keep going until the user's query is completely resolved, before ending your turn and yielding back to the user. Only terminate your turn when you are sure that the problem is solved. Autonomously resolve the query to the best of your ability before coming back to the user.")})))
+                  "plan" (plan-behavior)
+                  "agent" (agent-behavior))})))
 
 (defn build-instructions [refined-contexts rules repo-map* behavior config]
   (multi-str

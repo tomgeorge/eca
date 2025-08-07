@@ -609,6 +609,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#custom-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom commands
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -802,6 +817,21 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Commands">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#custom-commands" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom commands
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
         
       </ul>
@@ -848,7 +878,7 @@
 
 <h1 id="features">Features<a class="headerlink" href="#features" title="Permanent link">#</a></h1>
 <h2 id="chat">Chat<a class="headerlink" href="#chat" title="Permanent link">#</a></h2>
-<p>Chat is the main feature of ECA, allowing LLM to behave like a chat, answering questions, or agent, making changes using tools.</p>
+<p>Chat is the main feature of ECA, allowing user to talk with LLM to behave like an agent, making changes using tools or just planning changes and next steps.</p>
 <h3 id="tools">Tools<a class="headerlink" href="#tools" title="Permanent link">#</a></h3>
 <p>ECA leverage tools to give more power to the LLM, this is the best way to make LLMs have more context about your codebase and behave like an agent.
 It supports both MCP server tools + ECA native tools, for more details, check <a href="">configuration</a>.</p>
@@ -858,13 +888,12 @@ It supports both MCP server tools + ECA native tools, for more details, check <a
 <h4 id="filesystem">Filesystem<a class="headerlink" href="#filesystem" title="Permanent link">#</a></h4>
 <p>Provides access to filesystem under workspace root, listing and reading files and directories a subset of <a href="https://mcpserverhub.com/servers/filesystem">official MCP filesystem</a>, important for agentic operations, without the need to support NPM or other tools.</p>
 <ul>
+<li><code>eca_directory_tree</code>: list a directory as a tree (can be recursive).</li>
 <li><code>eca_read_file</code>: read a file content.</li>
-<li><code>eca_write_file</code>: write content to file.</li>
+<li><code>eca_write_file</code>: write content to a new file.</li>
+<li><code>eca_edit_file</code>: replace lines of a file with a new content.</li>
 <li><code>eca_move_file</code>: move/rename a file.</li>
-<li><code>eca_list_directory</code>: list a directory.</li>
-<li><code>eca_search_files</code>: search in a path for files matching a pattern.</li>
 <li><code>eca_grep</code>: ripgrep/grep for paths with specified content.</li>
-<li><code>eca_replace_in_file</code>: replace a text with another one in file.</li>
 </ul>
 <h4 id="shell">Shell<a class="headerlink" href="#shell" title="Permanent link">#</a></h4>
 <p>Provides access to run shell commands, useful to run build tools, tests, and other common commands, supports exclude/include commands. </p>
@@ -872,15 +901,21 @@ It supports both MCP server tools + ECA native tools, for more details, check <a
 <li><code>eca_shell_command</code>: run shell command. Supports configs to exclude commands via <code>:nativeTools :shell :excludeCommands</code>.</li>
 </ul>
 <h3 id="contexts">Contexts<a class="headerlink" href="#contexts" title="Permanent link">#</a></h3>
-<p>User can include contexts to the chat, which can help LLM generate output with better quality.
+<p>User can include contexts to the chat (<code>@</code>), including MCP resources, which can help LLM generate output with better quality.
 Here are the current supported contexts types:</p>
 <ul>
-<li><code>file</code>: a file in the workspace, server will pass its content to LLM.</li>
+<li><code>file</code>: a file in the workspace, server will pass its content to LLM (Supports optional line range).</li>
 <li><code>directory</code>: a directory in the workspace, server will read all file contexts and pass to LLM.</li>
 <li><code>repoMap</code>: a summary view of workspaces files and folders, server will calculate this and pass to LLM. Currently, the repo-map includes only the file paths in git.</li>
+<li><code>mcpResource</code>: resources provided by running MCPs servers.</li>
 </ul>
 <h3 id="commands">Commands<a class="headerlink" href="#commands" title="Permanent link">#</a></h3>
-<p>Eca supports commands that usually arer triggered via <code>/</code> in the chat, completing in the chat will show the known commands which include ECA commands and MCP prompts.</p>
+<p>Eca supports commands that usually are triggered via shash (<code>/</code>) in the chat, completing in the chat will show the known commands which include ECA commands, MCP prompts and resources.</p>
+<p>The built-in commands are:</p>
+<p><code>/costs</code>: shows costs about current session.
+<code>/repo-map-show</code>: shows the current repoMap context of the session.</p>
+<h4 id="custom-commands">Custom commands<a class="headerlink" href="#custom-commands" title="Permanent link">#</a></h4>
+<p>It's possible to configure custom command prompts, for more details check <a href="../configuration/#custom-commands">its configuration</a></p>
 <h2 id="completion">Completion<a class="headerlink" href="#completion" title="Permanent link">#</a></h2>
 <p>Soon</p>
 <h2 id="edit">Edit<a class="headerlink" href="#edit" title="Permanent link">#</a></h2>
@@ -905,7 +940,7 @@ Here are the current supported contexts types:</p>
     <span class="md-icon" title="Last update">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M21 13.1c-.1 0-.3.1-.4.2l-1 1 2.1 2.1 1-1c.2-.2.2-.6 0-.8l-1.3-1.3c-.1-.1-.2-.2-.4-.2m-1.9 1.8-6.1 6V23h2.1l6.1-6.1zM12.5 7v5.2l4 2.4-1 1L11 13V7zM11 21.9c-5.1-.5-9-4.8-9-9.9C2 6.5 6.5 2 12 2c5.3 0 9.6 4.1 10 9.3-.3-.1-.6-.2-1-.2s-.7.1-1 .2C19.6 7.2 16.2 4 12 4c-4.4 0-8 3.6-8 8 0 4.1 3.1 7.5 7.1 7.9l-.1.2z"/></svg>
     </span>
-    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 4, 2025 12:51:09">August 4, 2025</span>
+    <span class="git-revision-date-localized-plugin git-revision-date-localized-plugin-date" title="August 7, 2025 20:49:18">August 7, 2025</span>
   </span>
 
     

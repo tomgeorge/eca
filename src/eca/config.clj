@@ -19,6 +19,7 @@
   {:openaiApiKey nil
    :anthropicApiKey nil
    :rules []
+   :commands []
    :nativeTools {:filesystem {:enabled true}
                  :shell {:enabled true
                          :excludeCommands []}}

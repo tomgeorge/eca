@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Support custom commands via md files in `~/.config/eca/commands/` or `.eca/commands/`.
+
 ## 0.19.0
 
 - Support `claude-opus-4-1` model.

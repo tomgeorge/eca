@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Support `claude-opus-4-1` model;
+- Support `claude-opus-4-1` model.
+- Support `gpt-5`, `gpt-5-mini`, `gpt-5-nano` models.
 
 ## 0.18.0
 

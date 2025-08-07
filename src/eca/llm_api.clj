@@ -119,7 +119,10 @@
     (cond
       (contains? #{"o4-mini"
                    "o3"
-                   "gpt-4.1"} model)
+                   "gpt-4.1"
+                   "gpt-5"
+                   "gpt-5-mini"
+                   "gpt-5-nano"} model)
       (llm-providers.openai/completion!
        {:model model
         :instructions instructions

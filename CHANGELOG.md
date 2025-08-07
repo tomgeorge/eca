@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.18.0
+
 - Replace `chat` behavior with `plan`.
 
 ## 0.17.2

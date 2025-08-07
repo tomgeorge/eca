@@ -2,7 +2,7 @@
 
 ## Chat
 
-Chat is the main feature of ECA, allowing LLM to behave like a chat, answering questions, or agent, making changes using tools.
+Chat is the main feature of ECA, allowing user to talk with LLM to behave like an agent, making changes using tools or just planning changes and next steps.
 
 ### Tools
 

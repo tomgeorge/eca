@@ -133,7 +133,7 @@ interface ClientCapabilities {
     }
 }
 
-type ChatBehavior = 'agent' | 'chat';
+type ChatBehavior = 'agent' | 'plan';
 ```
 
 _Response:_
